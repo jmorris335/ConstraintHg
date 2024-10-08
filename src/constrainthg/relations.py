@@ -5,6 +5,10 @@ Purpose: A list of basic relations employable with edges in the hypergraph.
 License: All rights reserved.
 Versions:
 - 0.0, 7 Oct. 2024: initialized
+Notes:
+- Generally imported as import relations as R
+- All relationship functions begin with a capital R, so that they are normally called as `R.Rfunction`
+- Each relationships should have *args, and **kwargs as its arguments and only arguments. Specific keywords referenced in kwargs should be `s1`, `s2`, ... only.
 """
 
 import numpy as np
@@ -69,6 +73,12 @@ def Rmean(*args, **kwargs):
     """Returns the mean of all arguments."""
     args = extend(args, kwargs)
     return np.mean(args)
+
+# Operations
+def Rincrement(*args, **kwargs):
+    """Increments the maximum source by 1."""
+    args = extend(args, kwargs)
+    return max(args) + 1
 
 if __name__ == '__main__':
     a = Rsubtract(4, s1=10)
