@@ -31,7 +31,7 @@ def Rsum(*args, **kwargs):
     args = extend(args, kwargs)
     return sum(args)
 
-def Rmuliply(*args, **kwargs):
+def Rmultiply(*args, **kwargs):
     """Multiplies all arguments together."""
     args = extend(args, kwargs)
     out = 1
@@ -74,7 +74,7 @@ def Rmean(*args, **kwargs):
     args = extend(args, kwargs)
     return np.mean(args)
 
-# Operations
+# OPERATIONS
 def Rincrement(*args, **kwargs):
     """Increments the maximum source by 1."""
     args = extend(args, kwargs)

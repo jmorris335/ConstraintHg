@@ -10,11 +10,12 @@ class pNode:
         elbow_stop = "└●─"
         tee_stop = "├●─"
     
-    def __init__(self, label, value=None, children: list=None, join_status: str='None'):
+    def __init__(self, label, value=None, children: list=None, join_status: str='None', cost: float=None):
         self.label = label
         self.value = value
         self.children = list() if children is None else children
         self.join_status = join_status
+        self.cost = cost
 
     def printConn(self, last=True):
         if last:
@@ -27,7 +28,7 @@ class pNode:
         if self.join_status == 'join':
             return self.conn.tee_join
         elif self.join_status == 'join_stop':
-            return self.conn.elbow_stop
+            return self.conn.tee_stop
         return self.conn.tee
 
     def printTree(self, last=True, header=''):
@@ -48,16 +49,20 @@ class pNode:
         out = self.label
         if self.value is not None:
             if isinstance(self.value, float):
-                out += f'({self.value:5.2f})'
+                out += f'= {self.value:.4g}'
             else:
-                out += f'({self.value})'
+                out += f'= {self.value}'
+        if self.cost is not None:
+            out += f', cost={self.cost:.4g}'
         return out
 
 class Node:
-    def __init__(self, label=str, value=None, generating_edges: list=None):
+    def __init__(self, label: str, value=None, generating_edges: list=None, description: str=None):
         self.label = label
         self.value = value
-        self.generating_edges = list() if generating_edges is None else generating_edges 
+        self.generating_edges = list() if generating_edges is None else generating_edges
+        self.description = description
+        self.is_simulated = False
 
     def solveValue(self, p: pNode=None):
         """Recursively solve for the value of the node."""
@@ -65,12 +70,16 @@ class Node:
             return self.value, p
         for edge in self.generating_edges:
             self.value, p = edge.solveValue(p)
+            self.is_simulated = True
             if self.value is not None:
                 return self.value, p
         return None, p
         
-    def __str__(self):
-        return self.label
+    def __str__(self)-> str:
+        out = self.label
+        if self.description is not None:
+            out += ': ' + self.description
+        return out
 
 class Edge:
     def __init__(self, source_nodes: list, rel, via=None, weight: float=0.0):
@@ -83,23 +92,34 @@ class Edge:
         """Recursively solves for the value of target node."""
         child_values = list()
         sub_p_list = list()
-        for i, node in enumerate(self.source_nodes):
-            if len(self.source_nodes) > 1:
-                join_status = 'join_stop' if i == len(self.source_nodes)-1 else 'join'
-            else:
-                join_status = 'none'
-            sub_node_p = pNode(node.label, join_status=join_status)
-            node_value, sub_node_p = node.solveValue(sub_node_p)
+
+        for node in self.source_nodes:
+            node_value, sub_pNode = self.getSourceValues(node)
             if node_value is None:
                 return None, p
-            sub_node_p.value = node_value
             child_values.append(node_value)
-            sub_p_list.append(sub_node_p)
+            sub_p_list.append(sub_pNode)
+        
         target_val = self.process(child_values)
-        if target_val is not None and p is not None:
-            p.value = target_val
-            p.children = sub_p_list
+        p = self.preparePNode(p, target_val, sub_p_list)
         return target_val, p
+    
+    def getSourceValues(self, node):
+        """Calculates the value of the node (recursive helper)."""
+        sub_pNode = pNode(node.label, join_status='none')
+        node_value, sub_pNode = node.solveValue(sub_pNode)
+        if node_value is None:
+            return None, None
+        sub_pNode.value = node_value
+        return node_value, sub_pNode
+    
+    def preparePNode(self, p: pNode, value, child_pNodes: list):
+        if value is not None and p is not None:
+            child_costs = [c.cost if c.cost is not None else 0.0 for c in child_pNodes]
+            p.cost = sum(child_costs) + self.weight
+            p.value = value
+            p.children = child_pNodes
+        return p
 
     def process(self, source_vals):
         '''Finds the target value based on the source values.'''
@@ -134,7 +154,10 @@ class Hypergraph:
     def reset(self):
         """Clears all values in the hypergraph."""
         for key in self.nodes:
-            self.nodes[key].value = None
+            node = self.nodes[key]
+            if node.is_simulated:
+                node.value = None
+            node.is_simulated = False
 
     def generateNodeLabel(self)-> str:
         """Generates a label for a node in the hypergraph."""
@@ -148,11 +171,11 @@ class Hypergraph:
             return self.getNodeLabel(requested_label + self.generateNodeLabel())
         return requested_label
 
-    def addNode(self, node: Node=None, value=None)-> Node:
+    def addNode(self, node: Node, value=None)-> Node:
         """Adds a node to the hypergraph via a union operation."""
         label = node.label if isinstance(node, Node) else node
         if label in self.nodes: #Return node if node in hypergraph
-            self.nodes[label].value = value
+            self.nodes[label].value = node.value if isinstance(node, Node) else value
             return self.nodes[label]
 
         label = self.getNodeLabel(label) #Get unique label
@@ -183,15 +206,12 @@ class Hypergraph:
             node = self.getNode(key)
             node.value = node_values[key]
     
-    def DFS(self, node_values: dict, target, toPrint: bool=False):
+    def solve(self, node_values: dict, target, toPrint: bool=False):
         """Runs a DFS search to identify the first valid solution for `target`."""
         self.reset()
-        if toPrint:
-            p = pNode(target)
-        else:
-            p = None
         self.setNodeValues(node_values)
         target_node = self.getNode(target)
+        p = pNode(target_node.label) if toPrint else None
         target_val, p = target_node.solveValue(p)
         if toPrint:
             print(p.printTree())
@@ -216,6 +236,8 @@ class Hypergraph:
                 else:
                     c_join_status = 'none'
                 p.children.append(self.printPathsHelper(child, c_join_status))
+            child_costs = [c.cost if c.cost is not None else 0.0 for c in p.children]
+            p.cost = sum(child_costs) + edge.weight
         return p
     
     def __str__(self)-> str:
