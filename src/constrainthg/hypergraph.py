@@ -146,7 +146,7 @@ class Edge:
             return self.rel(*source_vals)
         else:
             return None
-        
+
     @staticmethod
     def via_true(*source):
         """Returns true for all inputs (unconditional edge)."""
