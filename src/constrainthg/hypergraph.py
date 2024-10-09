@@ -10,12 +10,14 @@ class tNode:
         elbow_stop = "└●─"
         tee_stop = "├●─"
     
-    def __init__(self, label, value=None, children: list=None, join_status: str='None', cost: float=None):
+    def __init__(self, label, value=None, children: list=None, join_status: str='None', cost: float=None, trace: list=None):
         self.label = label
         self.value = value
         self.children = list() if children is None else children
         self.join_status = join_status
         self.cost = cost
+        self.trace = list() if trace is None else trace
+        """List of super-roots"""
 
     def printConn(self, last=True):
         if last:
@@ -85,6 +87,14 @@ class Node:
         if len(candidate_edges) == 0:
             return None, t
         return candidate_edges[min(candidate_edges.keys())]
+    
+    def findBestNpath(self, enter, exit, cycle_edges: list, t_enter: tNode):
+        """Finds the best n-cycle path between the enter and exit point by cost."""
+        from CONTROL import CYCLE_SEARCH_DEPTH #TODO: Move to top
+        
+        
+        
+        enter.solveValue(t_enter)
         
     def __str__(self)-> str:
         out = self.label
@@ -105,7 +115,7 @@ class Edge:
         sub_p_list = list()
 
         for node in self.source_nodes:
-            node_value, sub_tNode = self.getSourceValues(node)
+            node_value, sub_tNode = self.getSourceValues(node, t)
             if node_value is None:
                 return None, t
             child_values.append(node_value)
@@ -115,12 +125,17 @@ class Edge:
         t = self.prepareTNode(t, target_val, sub_p_list)
         return target_val, t
     
-    def getSourceValues(self, node):
+    def getSourceValues(self, node: Node, t: tNode):
         """Calculates the value of the node (recursive helper)."""
         sub_tNode = tNode(node.label, join_status='none')
-        node_value, sub_tNode = node.solveValue(sub_tNode)
+        if self.label in t.trace:
+            node_value, sub_tNode = self.solveCycle(sub_tNode)
+        else:
+            node_value, sub_tNode = node.solveValue(sub_tNode)
+
         if node_value is None:
             return None, None
+        sub_tNode.trace = t.trace + [node]
         sub_tNode.value = node_value
         return node_value, sub_tNode
     
@@ -139,14 +154,32 @@ class Edge:
         return cost
 
     def process(self, source_vals):
-        '''Finds the target value based on the source values.'''
+        """Finds the target value based on the source values."""
         if None in source_vals:
             return None
         if self.via(*source_vals):
             return self.rel(*source_vals)
         else:
             return None
+        
+    def solveCycle(self, t: tNode, exit: Node):
+        """Returns the maximally preferential n-cycle path in a loop."""
+        cycle_nodes = t.trace[t.trace.index(t.label):]
+        enter_nodes = self.findCycleEnterNodes(cycle_nodes)
+        for enter in enter_nodes:
+            value, cost = self.findBestNpath(enter, exit, cycle_nodes)
 
+    def findCycleEnterNodes(self, cycle_nodes)-> list:
+        """Returns a list of nodes that serve as entry points for a cycle (defined as node in the cycle pointed to by an edge
+        with only non-cyclical nodes as its source)."""
+        num_shared_nodes = lambda edge : len(set(s.label for s in edge.source_nodes).intersection(cycle_nodes))
+        enter_nodes = list()
+        for c_node in cycle_nodes:
+            for edge in c_node.generating_edges:
+                if num_shared_nodes(edge) == 0:
+                    enter_nodes.append(c_node)
+        return enter_nodes
+    
     @staticmethod
     def via_true(*source):
         """Returns true for all inputs (unconditional edge)."""
