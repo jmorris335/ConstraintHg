@@ -1,4 +1,4 @@
-class pNode:
+class tNode:
     """A basic tree node for printing tree structures."""
     class conn:
         elbow = "└──"
@@ -32,7 +32,7 @@ class pNode:
         return self.conn.tee
 
     def printTree(self, last=True, header=''):
-        """Prints the tree centered at the pNode
+        """Prints the tree centered at the tNode
         
         Adapted from https://stackoverflow.com/a/76691030/15496939, PierreGtch, 
         under CC BY-SA 4.0
@@ -64,16 +64,27 @@ class Node:
         self.description = description
         self.is_simulated = False
 
-    def solveValue(self, p: pNode=None):
+    def solveValue(self, t: tNode):
         """Recursively solve for the value of the node."""
         if self.value is not None:
-            return self.value, p
+            return self.value, t
+        self.value, t = self.findOptimalEdge(t)
+        return self.value, t
+    
+    def findOptimalEdge(self, t: tNode):
+        """Returns the best possible edge found from an exhuastive search."""
+        candidate_edges = dict()
         for edge in self.generating_edges:
-            self.value, p = edge.solveValue(p)
+            value, t = edge.solveValue(t)
             self.is_simulated = True
-            if self.value is not None:
-                return self.value, p
-        return None, p
+            if value is None:
+                continue
+            if t.cost is None:
+                return value, t
+            candidate_edges[t.cost] = (value, t)
+        if len(candidate_edges) == 0:
+            return None, t
+        return candidate_edges[min(candidate_edges.keys())]
         
     def __str__(self)-> str:
         out = self.label
@@ -88,38 +99,44 @@ class Edge:
         self.via = self.via_true if via is None else via
         self.weight = weight
 
-    def solveValue(self, p: pNode=None):
+    def solveValue(self, t: tNode):
         """Recursively solves for the value of target node."""
         child_values = list()
         sub_p_list = list()
 
         for node in self.source_nodes:
-            node_value, sub_pNode = self.getSourceValues(node)
+            node_value, sub_tNode = self.getSourceValues(node)
             if node_value is None:
-                return None, p
+                return None, t
             child_values.append(node_value)
-            sub_p_list.append(sub_pNode)
+            sub_p_list.append(sub_tNode)
         
         target_val = self.process(child_values)
-        p = self.preparePNode(p, target_val, sub_p_list)
-        return target_val, p
+        t = self.prepareTNode(t, target_val, sub_p_list)
+        return target_val, t
     
     def getSourceValues(self, node):
         """Calculates the value of the node (recursive helper)."""
-        sub_pNode = pNode(node.label, join_status='none')
-        node_value, sub_pNode = node.solveValue(sub_pNode)
+        sub_tNode = tNode(node.label, join_status='none')
+        node_value, sub_tNode = node.solveValue(sub_tNode)
         if node_value is None:
             return None, None
-        sub_pNode.value = node_value
-        return node_value, sub_pNode
+        sub_tNode.value = node_value
+        return node_value, sub_tNode
     
-    def preparePNode(self, p: pNode, value, child_pNodes: list):
-        if value is not None and p is not None:
-            child_costs = [c.cost if c.cost is not None else 0.0 for c in child_pNodes]
-            p.cost = sum(child_costs) + self.weight
-            p.value = value
-            p.children = child_pNodes
-        return p
+    def prepareTNode(self, t: tNode, value, child_tNodes: list):
+        """Preps the tree node recording the edge traversal."""
+        if value is not None and t is not None:
+            t.cost = self.calculateCost(child_tNodes)
+            t.value = value
+            t.children = child_tNodes
+        return t
+    
+    def calculateCost(self, source_tNodes: list):
+        """Calculates the cost of traversing the edge including solving for the costs of each source node"""
+        child_costs = [c.cost if c.cost is not None else 0.0 for c in source_tNodes]
+        cost = sum(child_costs) + self.weight
+        return cost
 
     def process(self, source_vals):
         '''Finds the target value based on the source values.'''
@@ -206,39 +223,49 @@ class Hypergraph:
             node = self.getNode(key)
             node.value = node_values[key]
     
-    def solve(self, node_values: dict, target, toPrint: bool=False):
+    def solve(self, target, node_values: dict=None, toPrint: bool=False):
         """Runs a DFS search to identify the first valid solution for `target`."""
         self.reset()
-        self.setNodeValues(node_values)
+        if node_values is not None:
+            self.setNodeValues(node_values)
         target_node = self.getNode(target)
-        p = pNode(target_node.label) if toPrint else None
-        target_val, p = target_node.solveValue(p)
+        t = tNode(target_node.label) if toPrint else None
+        target_val, t = target_node.solveValue(t)
         if toPrint:
-            print(p.printTree())
+            print(t.printTree())
         return target_val
     
     def printPaths(self, target, toPrint: bool=True)-> str:
         """Prints the hypertree of all paths to the target node."""
         target_node = self.getNode(target)
-        target_pNode = self.printPathsHelper(target_node)
-        out = target_pNode.printTree()
+        target_tNode = self.printPathsHelper(target_node)
+        out = target_tNode.printTree()
         if toPrint:
             print(out)
         return out
 
-    def printPathsHelper(self, node: Node, join_status='none')-> pNode:
+    def printPathsHelper(self, node: Node, join_status='none')-> tNode:
         """Recursive helper to print all paths to the target node."""
-        p = pNode(node.label, node.value, join_status=join_status)
+        t = tNode(node.label, node.value, join_status=join_status)
+        branch_costs = list()
         for edge in node.generating_edges:
+            child_cost = 0
             for i, child in enumerate(edge.source_nodes):
-                if len(edge.source_nodes) > 1:
-                    c_join_status = 'join_stop' if i == len(edge.source_nodes) - 1 else 'join'
-                else:
-                    c_join_status = 'none'
-                p.children.append(self.printPathsHelper(child, c_join_status))
-            child_costs = [c.cost if c.cost is not None else 0.0 for c in p.children]
-            p.cost = sum(child_costs) + edge.weight
-        return p
+                c_join_status = self.getJoinStatus(i, len(edge.source_nodes))
+                c_tNode = self.printPathsHelper(child, c_join_status)
+                child_cost += c_tNode.cost if c_tNode.cost is not None else 0.0
+                t.children.append(c_tNode)
+            branch_costs.append(child_cost + edge.weight)
+
+        t.cost = min(branch_costs) if len(branch_costs) > 0 else 0.
+        return t
+    
+    def getJoinStatus(self, index, num_children):
+        """Returns whether or not the node at the given index is part of a hyperedge (`join`) or specifically the last node 
+        in a hyperedge (`join_stop`) or a singular edge (`none`)"""
+        if num_children > 1:
+            return 'join_stop' if index == num_children - 1 else 'join'
+        return 'none'
     
     def __str__(self)-> str:
         return

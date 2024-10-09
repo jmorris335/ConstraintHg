@@ -74,6 +74,6 @@ hg.addEdge(['del_v', v_0], vel, R.Rsum)
 hg.addEdge([vel, step], 'del_y', R.Rmultiply)
 hg.addEdge(['del_y', y_0], height, R.Rsum)
 
-hg.printPaths(height)
+# hg.printPaths(height)
 
-hg.solve({}, height, toPrint=True)
+hg.solve(height, toPrint=True)
