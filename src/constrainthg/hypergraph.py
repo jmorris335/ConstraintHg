@@ -224,10 +224,6 @@ class Hypergraph:
                 node.value = None
             node.is_simulated = False
 
-    def generateNodeLabel(self)-> str:
-        """Generates a label for a node in the hypergraph."""
-        return f'{len(self.nodes) + 1}'
-
     def requestNodeLabel(self, requested_label=None)-> str:
         """Generates a unique label for a node in the hypergraph"""
         label = 'n'
