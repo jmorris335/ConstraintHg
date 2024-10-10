@@ -103,11 +103,16 @@ class Node:
         return out
 
 class Edge:
+    """A relationship along a set of nodes (the source) that produces a single value (the target)."""
     def __init__(self, source_nodes: list, rel, via=None, weight: float=0.0):
         self.source_nodes = source_nodes
+        """List of Node objects."""
         self.rel = rel
+        """Method for calculating the target value from the `source_nodes`"""
         self.via = self.via_true if via is None else via
-        self.weight = weight
+        """Method for determining if the edge is viable."""
+        self.weight = abs(weight)
+        """Cost of traversing the edge."""
 
     def solveValue(self, t: tNode):
         """Recursively solves for the value of target node."""
@@ -117,8 +122,7 @@ class Edge:
         for source_node in self.source_nodes:
             source_tNode = tNode(source_node.label, join_status='none')
             if self in t.trace:
-                pass
-                # node_value, sub_tNode = self.solveCycle(node, t)
+                node_value, source_tNode = self.solveCycle(source_tNode)
             else:
                 node_value, source_tNode = source_node.solveValue(source_tNode)
             if node_value is None:
