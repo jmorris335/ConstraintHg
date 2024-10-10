@@ -1,3 +1,5 @@
+from src.constrainthg.CONTROL import CYCLE_SEARCH_DEPTH
+
 class tNode:
     """A basic tree node for printing tree structures."""
     class conn:
@@ -17,7 +19,7 @@ class tNode:
         self.join_status = join_status
         self.cost = cost
         self.trace = list() if trace is None else trace
-        """List of super-roots"""
+        """List of edges for which the node is a leaf for."""
 
     def printConn(self, last=True):
         if last:
@@ -65,6 +67,12 @@ class Node:
         self.generating_edges = list() if generating_edges is None else generating_edges
         self.description = description
         self.is_simulated = False
+        """Marker saying that the value was artificially generated (used for resetting the Node after a simulation)."""
+
+    def setValue(self, value, is_simulated: bool=True):
+        """Sets the value for the node"""
+        self.value = value
+        self.is_simulated = is_simulated
 
     def solveValue(self, t: tNode):
         """Recursively solve for the value of the node."""
@@ -87,14 +95,6 @@ class Node:
         if len(candidate_edges) == 0:
             return None, t
         return candidate_edges[min(candidate_edges.keys())]
-    
-    def findBestNpath(self, enter, exit, cycle_edges: list, t_enter: tNode):
-        """Finds the best n-cycle path between the enter and exit point by cost."""
-        from CONTROL import CYCLE_SEARCH_DEPTH #TODO: Move to top
-        
-        
-        
-        enter.solveValue(t_enter)
         
     def __str__(self)-> str:
         out = self.label
@@ -114,30 +114,21 @@ class Edge:
         child_values = list()
         sub_p_list = list()
 
-        for node in self.source_nodes:
-            node_value, sub_tNode = self.getSourceValues(node, t)
+        for source_node in self.source_nodes:
+            source_tNode = tNode(source_node.label, join_status='none')
+            if self in t.trace:
+                pass
+                # node_value, sub_tNode = self.solveCycle(node, t)
+            else:
+                node_value, source_tNode = source_node.solveValue(source_tNode)
             if node_value is None:
                 return None, t
             child_values.append(node_value)
-            sub_p_list.append(sub_tNode)
+            sub_p_list.append(source_tNode)
         
         target_val = self.process(child_values)
         t = self.prepareTNode(t, target_val, sub_p_list)
         return target_val, t
-    
-    def getSourceValues(self, node: Node, t: tNode):
-        """Calculates the value of the node (recursive helper)."""
-        sub_tNode = tNode(node.label, join_status='none')
-        if self.label in t.trace:
-            node_value, sub_tNode = self.solveCycle(sub_tNode)
-        else:
-            node_value, sub_tNode = node.solveValue(sub_tNode)
-
-        if node_value is None:
-            return None, None
-        sub_tNode.trace = t.trace + [node]
-        sub_tNode.value = node_value
-        return node_value, sub_tNode
     
     def prepareTNode(self, t: tNode, value, child_tNodes: list):
         """Preps the tree node recording the edge traversal."""
@@ -145,6 +136,7 @@ class Edge:
             t.cost = self.calculateCost(child_tNodes)
             t.value = value
             t.children = child_tNodes
+            t.trace = t.trace + [self]
         return t
     
     def calculateCost(self, source_tNodes: list):
@@ -179,6 +171,22 @@ class Edge:
                 if num_shared_nodes(edge) == 0:
                     enter_nodes.append(c_node)
         return enter_nodes
+    
+    def findBestNpath(self, cycle_nodes: list, cycle_edges: list):
+        """Finds the best n-cycle path between the enter and exit point by cost."""
+        n = 0
+        while n < CYCLE_SEARCH_DEPTH:
+            for edge in cycle_edges:
+                target_node = Node()
+                source_vals = self.getSourceValues()
+                target_val = self.process(source_vals)
+                if target_val is None:
+                    return None
+                target_node.setValue(target_val)
+            if cycle_edges[-1].via():
+                return n
+        return None
+
     
     @staticmethod
     def via_true(*source):
