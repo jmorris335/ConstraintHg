@@ -61,19 +61,19 @@ def Rset_status(*args, **kwargs):
 # Forces
 hg.addEdge([mu_pass_m, occ], pass_m, R.Rmultiply)
 hg.addEdge([pass_m, empty_m], mass, R.Rsum)
-hg.addEdge([g, mass], '_gm', R.Rmultiply)
-hg.addEdge([pid, '_gm'], F, R.Rsum)
+hg.addEdge([g, mass], '/gm', R.Rmultiply)
+hg.addEdge([pid, '/gm'], F, R.Rsum)
 hg.addEdge([damping_coef, v_0], damping, R.Rmultiply)
 #TODO: address labeling issues with adding edges
-hg.addEdge(['_fd', mass], acc, R.Rdivide)
+hg.addEdge(['/fd', mass], acc, R.Rdivide)
 hg.addEdge([F, mass], acc, R.Rdivide)
-hg.addEdge([F, damping], '_fd', R.Rsubtract)
+hg.addEdge([F, damping], '/fd', R.Rsubtract)
 #TODO: replace v_0, y_0 with loop behavior
 hg.addEdge([acc, step], 'del_v', R.Rmultiply)
 hg.addEdge(['del_v', v_0], vel, R.Rsum)
 hg.addEdge([vel, step], 'del_y', R.Rmultiply)
 hg.addEdge(['del_y', y_0], height, R.Rsum)
 
-# hg.printPaths(height)
+hg.printPaths(height)
 
 hg.solve(height, toPrint=True)
