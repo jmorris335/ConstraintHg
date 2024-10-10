@@ -104,7 +104,7 @@ class Node:
 
 class Edge:
     """A relationship along a set of nodes (the source) that produces a single value (the target)."""
-    def __init__(self, source_nodes: list, rel, via=None, weight: float=0.0):
+    def __init__(self, label: str, source_nodes: list, rel, via=None, weight: float=0.0):
         self.source_nodes = source_nodes
         """List of Node objects."""
         self.rel = rel
@@ -113,6 +113,7 @@ class Edge:
         """Method for determining if the edge is viable."""
         self.weight = abs(weight)
         """Cost of traversing the edge."""
+        self.label = label
 
     def solveValue(self, t: tNode):
         """Recursively solves for the value of target node."""
@@ -158,8 +159,10 @@ class Edge:
         else:
             return None
         
-    def solveCycle(self, t: tNode, exit: Node):
+    def solveCycle(self, t: tNode):
         """Returns the maximally preferential n-cycle path in a loop."""
+        cycle_edges = t.trace[t.trace.index(self)]
+
         cycle_nodes = t.trace[t.trace.index(t.label):]
         enter_nodes = self.findCycleEnterNodes(cycle_nodes)
         for enter in enter_nodes:
@@ -202,7 +205,7 @@ class Hypergraph:
     def __init__(self):
         """Initialize a Hypergraph."""
         self.nodes = dict()
-        self.edges = list()
+        self.edges = dict()
 
     def getNode(self, node_key):
         """Caller function for finding a node in the hypergraph."""
@@ -223,15 +226,31 @@ class Hypergraph:
 
     def generateNodeLabel(self)-> str:
         """Generates a label for a node in the hypergraph."""
-        return f'n{(len(self.nodes) + 1)}'
+        return f'{len(self.nodes) + 1}'
 
-    def getNodeLabel(self, requested_label=None)-> str:
+    def requestNodeLabel(self, requested_label=None)-> str:
         """Generates a unique label for a node in the hypergraph"""
-        if requested_label is None:
-            return self.generateNodeLabel()
-        if requested_label in self.nodes:
-            return self.getNodeLabel(requested_label + self.generateNodeLabel())
-        return requested_label
+        label = 'n'
+        if requested_label is not None:
+            label = requested_label
+        i = 0
+        check_label = label
+        while check_label in self.nodes:
+            check_label = label + str(i := i + 1)
+        return check_label
+    
+    def requestEdgeLabel(self, requested_label: str=None, source_nodes: list=None)-> str:
+        """Generates a unique label for an edge in the hypergraph."""
+        label = 'e'
+        if requested_label is not None:
+            label = requested_label
+        elif source_nodes is not None:
+            label = ''.join(s.label[0] for s in source_nodes[:4])
+        i = 0
+        check_label = label
+        while check_label in self.edges:
+            check_label = label + str(i := i + 1)
+        return check_label
 
     def addNode(self, node: Node, value=None)-> Node:
         """Adds a node to the hypergraph via a union operation."""
@@ -240,7 +259,7 @@ class Hypergraph:
             self.nodes[label].value = node.value if isinstance(node, Node) else value
             return self.nodes[label]
 
-        label = self.getNodeLabel(label) #Get unique label
+        label = self.requestNodeLabel(label) #Get unique label
         if isinstance(node, Node):
             node.label = label
         else:
@@ -248,16 +267,17 @@ class Hypergraph:
         self.nodes[label] = node
         return node
 
-    def addEdge(self, sources: list, targets: list, rel, via=None, weight: float=1.0):
-        """Adds an edge to the hypergraph"""
+    def addEdge(self, sources: list, targets: list, rel, via=None, weight: float=1.0, label: str=None):
+        """Adds an edge to the hypergraph."""
         if not isinstance(sources, list):
             sources = [sources]
         if not isinstance(targets, list):
             targets = [targets]
         source_nodes = [self.addNode(source) for source in sources]
         target_nodes = [self.addNode(target) for target in targets]
-        edge = Edge(source_nodes, rel, via, weight)
-        self.edges.append(edge)
+        label = self.requestEdgeLabel(label, source_nodes)
+        edge = Edge(label, source_nodes, rel, via, weight)
+        self.edges[label] = edge
         for target in target_nodes:
             target.generating_edges.append(edge)
         return edge
