@@ -212,7 +212,7 @@ class Node:
                 return t
             candidate_edges[t.cost] = t
         if len(candidate_edges) == 0:
-            return None, t
+            return t
         return candidate_edges[min(candidate_edges.keys())]
         
     def __str__(self)-> str:
