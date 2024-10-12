@@ -83,7 +83,7 @@ class Cycle:
         start_index = [e.label for e in self.gen_t.trace].index(self.last_edge_label)
         self.edges = self.gen_t.trace[start_index:]
         self.nodes = self.findCycleNodes(self.edges)
-        self.exit_edge, self.exit_node = self.gen_t.trace[start_index-1], self.nodes[-1] #TODO: Check that exit_node is a source for exit_edge
+        self.exit_edge, self.exit_node = self.gen_t.trace[start_index-1], self.nodes[-1]
         self.enter_points = self.findCycleEnterPoints(self.nodes)
         self.node_labels = [c.label for c in self.nodes]
 
@@ -151,14 +151,14 @@ class Cycle:
         i = (self.node_labels.index(enter_node.label) + 1) % len(self.nodes)
         while abs(i) < CYCLE_SEARCH_DEPTH:
             edge, target_tNode = self.getTargetEdgeAndNode(i := i - 1)
-            source_tNodes, source_values = self.solveSources(edge, cycle_tNodes)
+            source_tNodes, source_values = self.solveSources(edge, target_tNode, cycle_tNodes)
 
             target_tNode = self.solveForTarget(target_tNode, source_values, source_tNodes, edge)
             cycle_tNodes.append(target_tNode)
 
             if target_tNode.label == self.exit_node.label:
             # if self.checkIfCycleStepCanExit(target_tNode, source_values):
-                source_tNodes, source_values = self.solveSources(self.exit_edge, cycle_tNodes)
+                source_tNodes, source_values = self.solveSources(self.exit_edge, target_tNode, cycle_tNodes)
                 if self.exit_edge.via(*source_values):
                     return target_tNode
 
@@ -183,7 +183,7 @@ class Cycle:
         target_tNode = edge.prepareTNode(target_tNode, target_tNode.value, source_tNodes)
         return target_tNode
     
-    def solveSources(self, edge, cycle_tNodes: list)-> tuple:
+    def solveSources(self, edge, target_tNode: tNode, cycle_tNodes: list)-> tuple:
         """Solves the sources for a cycle incremental solution, deferring to previous values for cycle nodes
         and solving traditional nodes recursively."""
         source_tNodes = list()
@@ -194,10 +194,14 @@ class Cycle:
                         source_tNodes.append(ct)
                         break
             else:
-                source_tNodes.append(s.solveValue())
+                source_tNodes.append(edge.solveSourceNode(target_tNode, s))
 
         source_values = [st.value for st in source_tNodes]
         return source_tNodes, source_values   
+    
+    def addTrace(self, exit_tNode: tNode):
+        """Replaces the trace on the fully solved cycle tNodes."""
+        #TODO: Implement this and call after route has been discovered
 
 class Node:
     def __init__(self, label: str, value=None, generating_edges: list=None, description: str=None):
@@ -283,7 +287,7 @@ class Edge:
 
     def solveValue(self, target_tNode: tNode)-> tNode:
         """Recursively solves for the value of target node."""
-        if self.label in [e.label for e in target_tNode.trace[:-1]]:
+        if self.edgeInLoop(target_tNode):
             source_tNodes = Cycle(target_tNode, self.label).solveCycle()
         else:
             source_tNodes = self.solveSourceNodes(target_tNode)
@@ -296,19 +300,28 @@ class Edge:
         target_tNode = self.prepareTNode(target_tNode, target_val, source_tNodes)
         return target_tNode
     
+    def edgeInLoop(self, t: tNode):
+        """Returns true if the edge is part of the loop manifest by the `target_tNode`."""
+        return self.label in [e.label for e in t.trace]
+    
     def solveSourceNodes(self, t: tNode)-> list:
         """Returns the solved tNodes for each source node in the edge."""
         source_tNodes = list()
 
         for source_node in self.source_nodes:
-            source_tNode = tNode(source_node.label, join_status='none')
-            source_tNode.trace = t.trace + [self]
-            source_tNode = source_node.solveValue(source_tNode)
+            source_tNode = self.solveSourceNode(t, source_node)
             if source_tNode.value is None:
                 return None
             source_tNodes.append(source_tNode)
 
         return source_tNodes
+    
+    def solveSourceNode(self, t: tNode, source_node: Node)-> tNode:
+        """Returns the tNode solved for the given value"""
+        source_tNode = tNode(source_node.label, join_status='none')
+        source_tNode.trace = t.trace + [self]
+        source_tNode = source_node.solveValue(source_tNode)
+        return source_tNode
     
     def prepareTNode(self, t: tNode, value, source_tNodes: list)-> tNode:
         """Preps the tree node recording the edge traversal."""
@@ -443,15 +456,20 @@ class Hypergraph:
             print(out)
         return out
 
-    def printPathsHelper(self, node: Node, join_status='none')-> tNode:
+    def printPathsHelper(self, node: Node, join_status='none', trace: list=None)-> tNode:
         """Recursive helper to print all paths to the target node."""
-        t = tNode(node.label, node.value, join_status=join_status)
+        t = tNode(node.label, node.value, join_status=join_status, trace=trace)
         branch_costs = list()
         for edge in node.generating_edges:
+            if edge.edgeInLoop(t):
+                t.label += '[LOOP]'
+                return t
+
             child_cost = 0
             for i, child in enumerate(edge.source_nodes):
                 c_join_status = self.getJoinStatus(i, len(edge.source_nodes))
-                c_tNode = self.printPathsHelper(child, c_join_status)
+                c_trace = t.trace + [edge]
+                c_tNode = self.printPathsHelper(child, c_join_status, c_trace)
                 child_cost += c_tNode.cost if c_tNode.cost is not None else 0.0
                 t.children.append(c_tNode)
             branch_costs.append(child_cost + edge.weight)

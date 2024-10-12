@@ -63,7 +63,7 @@ hg.addEdge([mu_pass_m, occ], pass_m, R.Rmultiply)
 hg.addEdge([pass_m, empty_m], mass, R.Rsum)
 hg.addEdge([g, mass], '/gm', R.Rmultiply)
 hg.addEdge([pid, '/gm'], F, R.Rsum)
-hg.addEdge([damping_coef, v_0], damping, R.Rmultiply)
+hg.addEdge([damping_coef, vel], damping, R.Rmultiply)
 #TODO: address labeling issues with adding edges
 hg.addEdge(['/fd', mass], acc, R.Rdivide)
 hg.addEdge([F, mass], acc, R.Rdivide)

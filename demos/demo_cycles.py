@@ -11,6 +11,8 @@ hg.addEdge('B', 'C', Rincrement)
 hg.addEdge('C', 'A', Rmean)
 hg.addEdge('A', 'T', Rmean, via=lambda a : a > 1)
 
+hg.printPaths('T')
+
 Tval = hg.solve('T', {'S': 0}, toPrint=True)
 
 print(f'T = {Tval}')
