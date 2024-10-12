@@ -1,5 +1,5 @@
-from src.constrainthg.hypergraph import Hypergraph
-import src.constrainthg.relations as R
+from constrainthg import Hypergraph
+from constrainthg import relations as R
 
 class TestCycles:
     hg = Hypergraph()

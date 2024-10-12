@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "constrainthg"
+version = "0.0.1"
+dependencies = [
+    "numpy"
+]
+requires-python = ">=3.1"
+authors = [
+  {name = "John Morris", email = "jhmrrs@clemson.edu"},
+]
+description = "Methods for building and simulating constraing hypergraphs."
+readme = "README.md"
+license = {text = "All rights reserved"}
+keywords = ["hypergraphs", "systems engineering"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Programming Language :: Python"
+]
+
+[project.urls]
+Homepage = "https://example.com"
+Documentation = "https://readthedocs.org"
+Repository = "https://github.com/jmorris335/ConstraintHg"
+"Bug Tracker" = "https://github.com/jmorris335/ConstraintHg/issues"
+
+[project.scripts]
+constrainthg-cli = "constrainthg:main_cli"
+
+[tool.pytest.ini_options]
+pythonpath = "src"
+addopts = [
+    "--import-mode=importlib",
+]
