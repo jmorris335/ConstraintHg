@@ -22,7 +22,7 @@ class TestSimple():
 
     def test_simple_void(self):
         hg = Hypergraph()
-        via_le10 = lambda *source : all([s < 10 for s in source])
+        via_le10 = lambda *args, **kwargs : all([s < 10 for s in R.extend(args, kwargs)])
         hg.addEdge(['A', 'B'], 'C', R.Rsum, via=via_le10)
         inputs = {'A': 100, 'B': 51}
         assert hg.solve('C', inputs) == None, "Should have invalid condition"

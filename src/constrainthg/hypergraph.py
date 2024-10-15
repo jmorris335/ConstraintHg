@@ -202,8 +202,7 @@ class Cycle:
             else:
                 source_tNodes.append(edge.solveSourceNode(target_tNode, s))
 
-        # source_values = [st.value for st in source_tNodes]
-        source_values = {key: st.value for (key, st) in zip(edge.source_nodes.keys(), source_tNodes)}
+        source_values = edge.identifySourceValues(source_tNodes)
         return source_tNodes, source_values   
     
     def addTrace(self, exit_tNode: tNode):
@@ -211,7 +210,27 @@ class Cycle:
         #TODO: Implement this and call after route has been discovered
 
 class Node:
+    """A value in the hypergraph, equivalent to a wired connection."""
     def __init__(self, label: str, value=None, generating_edges: list=None, description: str=None):
+        """Creates a new `Node` object.
+        
+        Parameters
+        ----------
+        label : str
+            A unique identifier for the node.
+        value : Any, Optional
+            The value of the node. 
+        generating_edges : list, Optional
+            A list of edges that have the node as their target.
+        description : str, Optional
+            A description of the node useful for debugging.
+
+        Properties
+        ----------
+        is_simulated : bool, default = False
+            Marker saying that the value was artificially generated from an edge 
+            (used for resetting the Node after a simulation).
+        """
         self.label = label
         self.value = value
         self.generating_edges = list() if generating_edges is None else generating_edges
@@ -321,11 +340,20 @@ class Edge:
             target_tNode.value = None
             return target_tNode
         
-        # source_values = [st.value for st in source_tNodes]
-        source_values = {key: st.value for (key, st) in zip(self.source_nodes.keys(), source_tNodes)}
-        target_val = self.process(source_values)
+        identified_source_values = self.identifySourceValues(source_tNodes)
+        target_val = self.process(identified_source_values)
         target_tNode = self.prepareTNode(target_tNode, target_val, source_tNodes)
         return target_tNode
+    
+    def identifySourceValues(self, source_tNodes: list):
+        """Returns a dictionary of source values with their relevant keys."""
+        labeled_values = dict()
+        for st in source_tNodes:
+            for key, sn in self.source_nodes.items():
+                if st.label == sn.label:
+                    labeled_values[key] = st.value
+                    break
+        return labeled_values
     
     def edgeInCycle(self, t: tNode):
         """Returns true if the edge is part of the cycle manifest by the `target_tNode`."""
