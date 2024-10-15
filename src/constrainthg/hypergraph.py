@@ -407,7 +407,7 @@ class Edge:
         return True
     
 class Hypergraph:
-    """Builder class for a hypergraph."""
+    """Builder class for a hypergraph. See demos for information on how to use."""
     def __init__(self):
         """Initialize a Hypergraph."""
         self.nodes = dict()
@@ -470,7 +470,30 @@ class Hypergraph:
         return node
 
     def addEdge(self, sources: list, targets: list, rel, via=None, weight: float=1.0, label: str=None, identify: dict=None):
-        """Adds an edge to the hypergraph."""
+        """Adds an edge to the hypergraph.
+        
+        Parameters
+        ----------
+        sources : list | str | Node
+            A list of nodes that are sources to the edge. Nodes may be references to 
+            actual `Node` objects or the labels of `Node` objects (passed as strings).
+            Sources may be passed as a list or a single object.
+        targets : list | str | Node
+            A list of nodes that are the target of the given edge, with the same type
+            as sources. Since each edge can only have one target, this makes a unique
+            edge for each target.
+        rel : Callable
+            A function taking in a value for each source node that returns a single 
+            value for the target.
+        weight : float, default=1.0
+            The cost of traversing the edge. Must be positive.
+        label : str, optional
+            A unique identifier for the edge.
+        identify : dict, optional
+            A dictionary of `str : str` items where the keys are labels of the source
+            nodes and the values are keywords for the arguments of `rel`, used to 
+            identify the values of the source nodes when called by `rel`.
+        """
         if not isinstance(sources, list):
             sources = [sources]
         if not isinstance(targets, list):
