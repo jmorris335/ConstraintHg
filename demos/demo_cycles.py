@@ -9,7 +9,7 @@ hg.addEdge('S', 'B', Rmean)
 hg.addEdge('A', 'B', Rmean)
 hg.addEdge('B', 'C', Rincrement)
 hg.addEdge('C', 'A', Rmean)
-hg.addEdge('A', 'T', Rmean, via=lambda a : a > 1)
+hg.addEdge('A', 'T', Rmean, via=lambda s1 : s1 > 1)
 
 hg.printPaths('T')
 

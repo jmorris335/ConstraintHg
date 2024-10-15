@@ -18,12 +18,29 @@ def extend(args: list, kwargs: dict)-> list:
     """Combines all arguments into a single list, with args leading."""
     return list(args) + list(kwargs.values())
 
-def extendWithExceptions(args: list, kwargs: dict, excluded_keys: list):
-    """Combines all arguments except those with a given key."""
+def getKeywordArguments(args: list, kwargs: dict, excluded_keys: list):
+    """Combines all arguments except those with a given key. Returns the arguments for the given keys as a dictionary
+    and the remaining arguments as a list.
+    
+    Note that keys not found in `kwargs` are taken from `args` in the order of the `excluded_keys` list."""
     if not isinstance(excluded_keys, list):
         excluded_keys = [excluded_keys]
-    args = list(args) + [kwargs[key] for key in kwargs if key in excluded_keys]
-    return args
+    exceptional_vals, to_combine = dict(), list()
+
+    for key, val in kwargs.items():
+        if key in excluded_keys:
+            exceptional_vals[key] = val
+        else:
+            to_combine.append(val)
+
+    i = 0
+    for key in excluded_keys:
+        if key not in exceptional_vals:
+            exceptional_vals[key] = args[i]
+            i += 1
+
+    to_combine += list(args[i:]) 
+    return exceptional_vals, to_combine
 
 # ALGEBRAIC RELATIONS
 def Rsum(*args, **kwargs):
@@ -41,20 +58,13 @@ def Rmultiply(*args, **kwargs):
 
 def Rsubtract(*args, **kwargs):
     """Subtracts from `s1` all other arguments."""
-    args = extendWithExceptions(args, kwargs, 's1')
-    if 's1' in kwargs:
-        return kwargs['s1'] - sum(args)
-    else:
-        return args[0] - sum(args[1:])
+    kwargs, args = getKeywordArguments(args, kwargs, 's1')
+    return kwargs['s1'] - sum(args)
     
 def Rdivide(*args, **kwargs):
     """Divides `s1` by all other arguments."""
-    args = extendWithExceptions(args, kwargs, 's1')
-    if 's1' in kwargs:
-        s1 = kwargs['s1']
-    else:
-        s1 = args[0]
-        args = args[1:]
+    kwargs, args = getKeywordArguments(args, kwargs, 's1')
+    s1 = kwargs['s1']
     for s in args:
         s1 /= s
     return s1
