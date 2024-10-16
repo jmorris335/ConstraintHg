@@ -124,6 +124,11 @@ class Node:
     def findOptimalEdge(self, t: tNode)-> tNode:
         """Returns the best possible edge found from an exhuastive search."""
         found_tNodes = [e.solveValue(t.copy()) for e in self.generating_edges]
+        return self.selectOptimalEdge(t, found_tNodes)
+    
+    def selectOptimalEdge(self, t: tNode, found_tNodes: list)-> tNode:
+        """Compares the found tNodes (representanting alternate paths to `t`) for the
+        best, valid path."""
         valid_tNodes = [v for v in found_tNodes if v is not None and v.cost is not None]
         valid_tNodes = self.removeSubCycles(valid_tNodes)
         if len(valid_tNodes) == 0:
@@ -278,8 +283,8 @@ class Cycle:
         return target_tNode
     
     def solveEdgeSources(self, edge, target_tNode: tNode, cycle_tNodes: list)-> tuple:
-        """Solves the sources for a cycle incremental solution, deferring to previous values for cycle nodes
-        and solving traditional nodes recursively."""
+        """Solves the sources for a cycle incremental solution, deferring to previous 
+        values for cycle nodes and solving traditional nodes recursively."""
         source_tNodes = list()
         for sn in edge.source_nodes.values():
             if sn.label in self.node_labels:
@@ -288,36 +293,31 @@ class Cycle:
                         source_tNodes.append(ct)
                         break
             else:
-                source_tNodes.append(self.solveExternalSourceNode(target_tNode, sn, edge, cycle_tNodes))
+                source_tNode = edge.makeNewTNode(target_tNode, sn)
+                source_tNodes.append(self.solveExternalSourceNode(sn, source_tNode, cycle_tNodes))
 
         source_tNodes = edge.processPseudoTNodes(source_tNodes)
         source_values = edge.identifySourceValues(source_tNodes)
         return source_tNodes, source_values
 
-    def solveExternalSourceNode(self, target_tNode: tNode, source_node: Node, edge, cycle_tNodes: list)-> tNode:
+    def solveExternalSourceNode(self, target_node: Node, target_tNode: tNode, cycle_tNodes: list)-> tNode:
         """Recursively solve for the value of source_node, using values from the cycle 
         nodes when encountered.
         """
-        source_tNode = tNode(source_node.label, join_status='none')
-        source_tNode.trace = target_tNode.trace + [(target_tNode, edge)]
-
-        if source_node.value is not None:
-            source_tNode.value = source_node.value
-            return source_tNode
+        if target_node.value is not None:
+            target_tNode.value = target_node.value
+            return target_tNode
+        
         found_tNodes = list()
-        for gen_edge in source_node.generating_edges:
-            source_tNodes, source_values = self.solveEdgeSources(gen_edge, source_tNode, cycle_tNodes)
-            target_tNode = self.solveForTarget(source_tNode, source_values, source_tNodes, gen_edge)
+        for edge in target_node.generating_edges:
+            source_tNodes, source_values = self.solveEdgeSources(edge, target_tNode, cycle_tNodes)
+            target_tNode = self.solveForTarget(target_tNode, source_values, source_tNodes, edge)
             found_tNodes.append(target_tNode)
 
-        valid_tNodes = [t for t in found_tNodes if t is not None and t.cost is not None]
-        valid_tNodes = source_node.removeSubCycles(valid_tNodes)
-        if len(valid_tNodes) == 0:
-            source_tNode.value = None
-        else:
-            source_tNode = min(valid_tNodes, key=lambda o : o.cost)
+        target_tNode = target_node.selectOptimalEdge(target_tNode, found_tNodes)
+        # target_node.setValue(target_tNode.value, is_simulated=True)
 
-        return source_tNode  
+        return target_tNode  
 
     def findGeneratingTNode(self, best_exit_t: tNode)-> list:
         """Prunes the cycle to the generating tNode (since one iteraction of the 
@@ -431,10 +431,15 @@ class Edge:
 
         return source_tNodes
     
+    def makeNewTNode(self, target_tNode: tNode, node: Node):
+        """Makes a new tNode as a child of the target_tNode."""
+        new_tNode = tNode(node.label, join_status='none')
+        new_tNode.trace = target_tNode.trace + [(target_tNode, self)]
+        return new_tNode
+    
     def solveSourceNode(self, t: tNode, source_node: Node)-> tNode:
         """Returns the tNode solved for the given value"""
-        source_tNode = tNode(source_node.label, join_status='none')
-        source_tNode.trace = t.trace + [(t, self)]
+        source_tNode = self.makeNewTNode(t, source_node)
         source_tNode = source_node.solveValue(source_tNode)
         return source_tNode
     
