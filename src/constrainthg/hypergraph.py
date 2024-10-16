@@ -139,31 +139,66 @@ class Node:
 
     def removeSubCycles(self, paths: list):
         """Nodes that enter a cycle should have at least 2 paths: the otpimal n-cycle
-           path, and the 0-cycle path, returned by the recursive solver. Because the 
-           cyclical solver returns the optimal n-cycle path, the 0-cycle path by the 
-           recursive solver is never the solution. This function returns all viable 
-           path without the recursive 0-cycle."""
-        viable_paths = list()
+        path, and the 0-cycle path, returned by the recursive solver. Because the 
+        cyclical solver returns the optimal n-cycle path, the 0-cycle path by the 
+        recursive solver is never the solution. This function returns all viable 
+        paths without the recursive 0-cycle."""
+        viable_paths = paths
         for p1 in paths:
             if p1 is None:
                 continue
             for p2 in paths:
                 if p2 is p1:
                     continue
-                if not self.isSubtree(p1, p2):
-                    viable_paths.append(p1)
+                if self.is0CycleSubtree(p1, p2):
+                    viable_paths.remove(p1)
+                    break
         
         if len(viable_paths) == 0:
             return paths[:1] #Duplicate paths
                     
         return viable_paths
     
-    def isSubtree(self, tree1: tNode, tree2: tNode):
-        """True if the chain of tree1 is a chain of tree2"""
+    def is0CycleSubtree(self, tree1: tNode, tree2: tNode):
+        """True if the chain of tree1 is the last chain of tree2."""
         c1 = [c.label for c in tree1.getDescendents()]
         c2 = [c.label for c in tree2.getDescendents()]
-        possible_starts = [i for i in range(len(c2)) if c2[i] == c1[0]]
-        return any(c2[i:i+len(c1)] == c1 for i in possible_starts)
+        i = len(c1)
+        return c2[-i:] == c1
+    
+    # def isSubtree(self, tree1: tNode, tree2: tNode):
+    #     """True if the chain of tree1 is a chain of tree2."""
+    #     c1 = [c.label for c in tree1.getDescendents()]
+    #     c2 = [c.label for c in tree2.getDescendents()]
+    #     temp = 1 + 1
+    #     possible_starts = [i for i in range(len(c2)) if c2[i] == c1[0]]
+    #     return any(c2[i:i+len(c1)] == c1 for i in possible_starts)
+    
+    # def findNodalCycles(self, tree: tNode):
+    #     """Returns the nodal cycles in the tree."""
+    #     cycles = set()
+    #     labels = [d.label for d in tree.getDescendents()]
+    #     found = dict() 
+
+    #     # Find indices for each unique label
+    #     for i, l in enumerate(labels):
+    #         if l in found:
+    #             found[l].append(i)
+    #         else:
+    #             found[l] = [i]
+
+    #     for l in found:
+    #         idxs = found[l]
+    #         if len(idxs) < 2:
+    #             continue
+    #         for n in range(len(idxs) - 1):
+    #             i, j = idxs[n:n+2]
+    #             if (i + j) > len(labels):
+    #                 continue
+    #             if labels[i:j] == labels[j:j+(j-i)]:
+    #                 cycles.add(tuple(labels[i:j]))
+
+    #     return cycles                   
         
     def __str__(self)-> str:
         out = self.label
@@ -175,15 +210,9 @@ class Cycle:
     """A cycle in a hypergraph."""
     def __init__(self, generating_tNode: tNode):
         self.gen_t = generating_tNode
-        # self.last_edge_label = self.gen_t.trace[-1][1].label
-
-        # start_index = [e.label for tt, e in self.gen_t.trace].index(self.last_edge_label)
-        # self.edges = [e for tt, e in self.gen_t.trace[start_index:]]
         self.edges = self.findCycleEdges()
         self.nodes = self.findCycleNodes()
         self.node_labels = [c.label for c in self.nodes]
-        self.exit_node, self.exit_edge = self.findCycleExitPoints()
-        self.enter_points = self.findCycleEnterPoints()
         self.counter = 0
         """The number of iterations in the cycle path."""
 
@@ -211,8 +240,12 @@ class Cycle:
     
     def findCycleExitPoints(self)-> tuple:
         """Returns the (source) node and edge from which the cycle exits."""
+        # if (len(self.edges)+1) >= len(self.gen_t.trace):
+        #     return None, None #Cycle has no exit condition
         index = -len(self.edges) - 1
         exit_node = self.gen_t.trace[index][0]
+        if len(self.edges) + 1 >= len(self.gen_t.trace):
+            return exit_node, None #Cycle terminates on exit_node, no exit_edge
         exit_edge = self.gen_t.trace[index-1][1]
         return exit_node, exit_edge
     
@@ -226,31 +259,38 @@ class Cycle:
         return enter_points
 
     def solveCycle(self)-> list:
-        """Returns the source tNodes for the generating Edge of the maximally preferential n-cycle path in a cycle."""
+        """Returns the source tNodes for the generating Edge of the maximally 
+        preferential n-cycle path in a cycle."""
+        self.exit_node, self.exit_edge = self.findCycleExitPoints()
+        if self.exit_edge is None:
+            return None
+        self.enter_points = self.findCycleEnterPoints()
         best_exit_t = self.findBestNpath()
-        return self.findGeneratingTNode(best_exit_t)
+        return self.findGeneratingTNodes(best_exit_t)
 
     def findBestNpath(self)-> tNode:
         """Finds the best n-cycle path between the enter and exit point by cost."""
         found_Npaths = [self.solveNPath(enter_point) for enter_point in self.enter_points]
-        if not all(found_Npaths):
+        if not any(found_Npaths):
             return None
 
         best_exit_t = None
-        for exit_t, cycle_count in found_Npaths:
+        for exit_t, cycle_count, enter_point in found_Npaths:
             if best_exit_t is None or (exit_t.cost is not None and exit_t.cost < best_exit_t.cost):
                 best_exit_t = exit_t
                 self.counter = cycle_count // len(self.nodes)
+                self.found_enter_point = enter_point
 
         return best_exit_t
     
-    def solveNPath(self, enter_point: tuple)-> Tuple[tNode, int]:
+    def solveNPath(self, enter_point: tuple)-> Tuple[tNode, int, tuple]:
         """Searches for a valid path through cycle from the enter to exit point."""
-        enter_node, enter_edge = enter_point
-        enter_tNode = enter_edge.solveValue(tNode(enter_node.label, join_status='none'))
+        enter_tNode = self.getEnterTNodes(enter_point)
+        if enter_tNode is None:
+            return None
         cycle_tNodes= [enter_tNode]
 
-        i = (self.node_labels.index(enter_node.label)) % len(self.nodes)
+        i = (self.node_labels.index(enter_tNode.label)) % len(self.nodes)
         while abs(i) < CYCLE_SEARCH_DEPTH:
             edge, target_tNode = self.getTargetEdgeAndNode(i := i + 1)
             source_tNodes, source_values = self.solveEdgeSources(edge, target_tNode, cycle_tNodes)
@@ -262,10 +302,18 @@ class Cycle:
 
             if target_tNode.label == self.exit_node.label:
                 source_tNodes, source_values = self.solveEdgeSources(self.exit_edge, target_tNode, cycle_tNodes)
-                if self.exit_edge.via(**source_values):
-                    return target_tNode, i
+                if self.exit_edge is None or self.exit_edge.via(**source_values):
+                    return target_tNode, i, enter_point
 
         return None
+    
+    def getEnterTNodes(self, enter_point: tuple)-> tNode:
+        """Solves and returns the tNode for the entry point."""
+        enter_node, enter_edge = enter_point
+        enter_tNode = enter_edge.solveValue(tNode(enter_node.label, join_status='none'))
+        if enter_tNode.value is None:
+            return None
+        return enter_tNode
     
     def getTargetEdgeAndNode(self, edge_index: int)-> Tuple[Any, tNode]:
         """Finds the cycle edge and creates a corresponding tNode for the target of a cycle step."""
@@ -315,23 +363,24 @@ class Cycle:
             found_tNodes.append(target_tNode)
 
         target_tNode = target_node.selectOptimalEdge(target_tNode, found_tNodes)
-        # target_node.setValue(target_tNode.value, is_simulated=True)
 
         return target_tNode  
 
-    def findGeneratingTNode(self, best_exit_t: tNode)-> list:
-        """Prunes the cycle to the generating tNode (since one iteraction of the 
+    def findGeneratingTNodes(self, best_exit_t: tNode)-> list:
+        """Prunes the cycle to the generating tNodes (since one iteraction of the 
         cycle will have already been recursively solved)."""
-        #TODO: This means that the cycle will be solved twice. Can we optimize this to avoid this?
         if best_exit_t is None:
             return None       
         source_tNodes = self.pruneFirstIteration(best_exit_t)
         return source_tNodes
     
-    def pruneFirstIteration(self, best_exit_t: tNode)-> list:
-        """Removes the first cycle of the iteration (n+1 nodes) from the solution tree."""
-        for child in best_exit_t.children:
+    def pruneFirstIteration(self, t: tNode)-> list:
+        """Removes the first cycle of the iteration (n+1 nodes) from the solution tree
+        and returns the generating source nodes."""
+        for child in t.children:
             if child.label == self.exit_node.label:
+                for source in child.children:
+                    self.addTrace(source, self.gen_t, self.exit_edge)
                 return child.children
             if child.label in self.node_labels:
                 return self.pruneFirstIteration(child)
@@ -344,11 +393,33 @@ class Cycle:
 
     def checkIfCycleStepCanExit(self, target_tNode: tNode, source_values: list)-> tNode:
         """True if the current cycle step is permitted to exit."""
-        return target_tNode.label == self.exit_node.label and self.exit_edge.via(*source_values)
+        can_exit = target_tNode.label == self.exit_node.label
+        if self.exit_edge is None:
+            return can_exit
+        return can_exit and self.exit_edge.via(*source_values) 
 
-    def addTrace(self, exit_tNode: tNode):
+    def addTrace(self, t: tNode, parent_tNode: tNode, edge):
         """Replaces the trace on the fully solved cycle tNodes."""
-        #TODO: Implement this and call after route has been discovered
+        t.trace = parent_tNode.trace + [(t, edge)]
+        if not any([c.label in self.node_labels for c in t.children]):
+            for child_t in t.children:
+                child_t.trace = t.trace + [(child_t, self.found_enter_point[1])]
+        else:
+            for child_t in t.children:
+                if child_t.label in self.node_labels:
+                    edge = self.findLinkingEdge(child_t, t)
+                    if edge is not None:
+                        self.addTrace(child_t, t, edge)
+
+    def findLinkingEdge(self, source_t: tNode, target_t: tNode):
+        """Returns the edge that connects the source_t to the target_t in the cycle path."""
+        for node, edge in zip(self.nodes, self.edges):
+            if source_t.label in [n.label for n in edge.source_nodes.values()]:
+                if node.label == target_t.label:
+                    return edge
+        return None
+            
+        
 
 class Edge:
     """A relationship along a set of nodes (the source) that produces a single value."""
