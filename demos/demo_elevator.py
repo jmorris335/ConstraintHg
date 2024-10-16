@@ -10,7 +10,7 @@ hg = Hypergraph()
 mu_pass_m = Node('average passenger mass', value=65., description='mean passenger mass')
 pass_m = Node('passenger mass', description='total passenger mass')
 empty_m = Node('empty mass', value=1000., description='mass of empty carriage')
-occ = Node('occupency', value=3, description='persons occupying carriage')
+occupency = Node('occupency', value=3, description='persons occupying carriage')
 g = Node('g', value=-9.8, description='gravitational acceleration')
 F = Node('net force', description='net vertical force on carriage')
 mass = Node('mass', description='total mass of carriage')
@@ -32,6 +32,7 @@ startB = Node('start B', value=1, description='start floor for passenger B')
 startC = Node('start C', value=0, description='start floor for passenger C')
 startD = Node('start D', value=2, description='start floor for passenger D')
 curr_floor = Node('current floor', value=0, description='current_floor')
+
 
 # Custom relationships
 def Rset_status(*args, **kwargs):
@@ -59,7 +60,7 @@ def Rset_status(*args, **kwargs):
     return is_on
 
 # Forces
-hg.addEdge([mu_pass_m, occ], pass_m, R.Rmultiply)
+hg.addEdge([mu_pass_m, occupency], pass_m, R.Rmultiply)
 hg.addEdge([pass_m, empty_m], mass, R.Rsum)
 hg.addEdge([g, mass], '/gm', R.Rmultiply)
 hg.addEdge([pid, '/gm'], F, R.Rsum)
@@ -68,11 +69,15 @@ hg.addEdge([damping_coef, vel], damping, R.Rmultiply)
 hg.addEdge(['/fd', mass], acc, R.Rdivide)
 hg.addEdge([F, mass], acc, R.Rdivide)
 hg.addEdge([F, damping], '/fd', R.Rsubtract)
-#TODO: replace v_0, y_0 with loop behavior
 hg.addEdge([acc, step], 'del_v', R.Rmultiply)
 hg.addEdge(['del_v', v_0], vel, R.Rsum)
+# hg.addEdge(['del_v', vel], vel, R.Rsum)
 hg.addEdge([vel, step], 'del_y', R.Rmultiply)
 hg.addEdge(['del_y', y_0], height, R.Rsum)
+# hg.addEdge(['del_y', height], height, R.Rsum)
+
+# DES
+# hg.addEdge()
 
 hg.printPaths(height)
 

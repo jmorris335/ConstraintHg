@@ -40,7 +40,7 @@ def getKeywordArguments(args: list, kwargs: dict, excluded_keys: list):
             i += 1
 
     to_combine += list(args[i:]) 
-    return exceptional_vals, to_combine
+    return to_combine, exceptional_vals
 
 # ALGEBRAIC RELATIONS
 def Rsum(*args, **kwargs):
@@ -58,12 +58,12 @@ def Rmultiply(*args, **kwargs):
 
 def Rsubtract(*args, **kwargs):
     """Subtracts from `s1` all other arguments."""
-    kwargs, args = getKeywordArguments(args, kwargs, 's1')
+    args, kwargs = getKeywordArguments(args, kwargs, 's1')
     return kwargs['s1'] - sum(args)
     
 def Rdivide(*args, **kwargs):
     """Divides `s1` by all other arguments."""
-    kwargs, args = getKeywordArguments(args, kwargs, 's1')
+    args, kwargs = getKeywordArguments(args, kwargs, 's1')
     s1 = kwargs['s1']
     for s in args:
         s1 /= s
@@ -84,11 +84,24 @@ def Rmean(*args, **kwargs):
     args = extend(args, kwargs)
     return np.mean(args)
 
+
 # OPERATIONS
 def Rincrement(*args, **kwargs):
     """Increments the maximum source by 1."""
     args = extend(args, kwargs)
     return max(args) + 1
+
+def Rfirst(*args, **kwargs):
+    """Returns `s1`."""
+    args, kwargs = getKeywordArguments(args, kwargs, 's1')
+    return kwargs['s1']
+
+# TRIGONOMETRY
+def Rsin(*args, **kwargs):
+    """Returns the sine of the mean of all arguments."""
+    args = extend(args, kwargs)
+    return np.sin(np.mean(args))
+
 
 if __name__ == '__main__':
     a = Rsubtract(4, s1=10)
