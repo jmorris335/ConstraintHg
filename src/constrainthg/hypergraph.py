@@ -75,6 +75,97 @@ class tNode:
             out += f', cost={self.cost:.4g}'
         return out
     
+class Node:
+    """A value in the hypergraph, equivalent to a wired connection."""
+    def __init__(self, label: str, value=None, generating_edges: list=None, description: str=None):
+        """Creates a new `Node` object.
+        
+        Parameters
+        ----------
+        label : str
+            A unique identifier for the node.
+        value : Any, Optional
+            The value of the node. 
+        generating_edges : list, Optional
+            A list of edges that have the node as their target.
+        description : str, Optional
+            A description of the node useful for debugging.
+
+        Properties
+        ----------
+        is_simulated : bool, default = False
+            Marker saying that the value was artificially generated from an edge 
+            (used for resetting the Node after a simulation).
+        """
+        self.label = label
+        self.value = value
+        self.generating_edges = list() if generating_edges is None else generating_edges
+        self.description = description
+        self.is_simulated = False
+        """Marker saying that the value was artificially generated (used for resetting the Node after a simulation)."""
+        self.counter = 1
+        """Counter keeping track of any cycles of the node (resets for nested cycles).
+        Only is changed by a cycle object."""
+
+    def setValue(self, value, is_simulated: bool=True):
+        """Sets the value for the node"""
+        self.value = value
+        self.is_simulated = is_simulated
+
+    def solveValue(self, t: tNode)-> tNode:
+        """Recursively solve for the value of the node."""
+        if self.value is not None:
+            t.value = self.value
+            return t
+        t = self.findOptimalEdge(t)
+        self.setValue(t.value, is_simulated=True)
+        return t
+    
+    def findOptimalEdge(self, t: tNode)-> tNode:
+        """Returns the best possible edge found from an exhuastive search."""
+        found_tNodes = [e.solveValue(t.copy()) for e in self.generating_edges]
+        valid_tNodes = [v for v in found_tNodes if v is not None and v.cost is not None]
+        valid_tNodes = self.removeSubCycles(valid_tNodes)
+        if len(valid_tNodes) == 0:
+            t.value = None
+        else:
+            t = min(valid_tNodes, key=lambda o : o.cost)
+        return t
+
+    def removeSubCycles(self, paths: list):
+        """Nodes that enter a cycle should have at least 2 paths: the otpimal n-cycle
+           path, and the 0-cycle path, returned by the recursive solver. Because the 
+           cyclical solver returns the optimal n-cycle path, the 0-cycle path by the 
+           recursive solver is never the solution. This function returns all viable 
+           path without the recursive 0-cycle."""
+        viable_paths = list()
+        for p1 in paths:
+            if p1 is None:
+                continue
+            for p2 in paths:
+                if p2 is p1:
+                    continue
+                if not self.isSubtree(p1, p2):
+                    viable_paths.append(p1)
+        
+        if len(viable_paths) == 0:
+            return paths[:1] #Duplicate paths
+                    
+        return viable_paths
+    
+    def isSubtree(self, tree1: tNode, tree2: tNode):
+        """True if the chain of tree1 is a chain of tree2"""
+        c1 = [c.label for c in tree1.getDescendents()]
+        c2 = [c.label for c in tree2.getDescendents()]
+        possible_starts = [i for i in range(len(c2)) if c2[i] == c1[0]]
+        return any(c2[i:i+len(c1)] == c1 for i in possible_starts)
+        
+    def __str__(self)-> str:
+        out = self.label
+        if self.description is not None:
+            out += ': ' + self.description
+        return out
+
 class Cycle:
     """A cycle in a hypergraph."""
     def __init__(self, generating_tNode: tNode):
@@ -157,7 +248,7 @@ class Cycle:
         i = (self.node_labels.index(enter_node.label)) % len(self.nodes)
         while abs(i) < CYCLE_SEARCH_DEPTH:
             edge, target_tNode = self.getTargetEdgeAndNode(i := i + 1)
-            source_tNodes, source_values = self.solveSources(edge, target_tNode, cycle_tNodes)
+            source_tNodes, source_values = self.solveEdgeSources(edge, target_tNode, cycle_tNodes)
             for sn in edge.source_nodes.values():
                 sn.counter += 1
 
@@ -165,7 +256,7 @@ class Cycle:
             cycle_tNodes.append(target_tNode)
 
             if target_tNode.label == self.exit_node.label:
-                source_tNodes, source_values = self.solveSources(self.exit_edge, target_tNode, cycle_tNodes)
+                source_tNodes, source_values = self.solveEdgeSources(self.exit_edge, target_tNode, cycle_tNodes)
                 if self.exit_edge.via(**source_values):
                     return target_tNode, i
 
@@ -177,7 +268,6 @@ class Cycle:
         target_node = self.nodes[(edge_index) % len(self.nodes)]
         target_tNode = tNode(label=target_node.label, join_status='none')
         return edge, target_tNode
-    
           
     def solveForTarget(self, target_tNode: tNode, source_values: list, source_tNodes: list, edge)-> tNode:
         """Solves for the value of the tNode and processes it."""
@@ -187,25 +277,51 @@ class Cycle:
         target_tNode = edge.prepareTNode(target_tNode, target_tNode.value, source_tNodes)
         return target_tNode
     
-    def solveSources(self, edge, target_tNode: tNode, cycle_tNodes: list)-> tuple:
+    def solveEdgeSources(self, edge, target_tNode: tNode, cycle_tNodes: list)-> tuple:
         """Solves the sources for a cycle incremental solution, deferring to previous values for cycle nodes
         and solving traditional nodes recursively."""
         source_tNodes = list()
-        for s in edge.source_nodes.values():
-            if s in self.nodes:
+        for sn in edge.source_nodes.values():
+            if sn.label in self.node_labels:
                 for ct in cycle_tNodes[::-1]:
-                    if ct.label == s.label:
+                    if ct.label == sn.label:
                         source_tNodes.append(ct)
                         break
             else:
-                source_tNodes.append(edge.solveSourceNode(target_tNode, s))
+                source_tNodes.append(self.solveExternalSourceNode(target_tNode, sn, edge, cycle_tNodes))
 
         source_tNodes = edge.processPseudoTNodes(source_tNodes)
         source_values = edge.identifySourceValues(source_tNodes)
-        return source_tNodes, source_values   
+        return source_tNodes, source_values
+
+    def solveExternalSourceNode(self, target_tNode: tNode, source_node: Node, edge, cycle_tNodes: list)-> tNode:
+        """Recursively solve for the value of source_node, using values from the cycle 
+        nodes when encountered.
+        """
+        source_tNode = tNode(source_node.label, join_status='none')
+        source_tNode.trace = target_tNode.trace + [(target_tNode, edge)]
+
+        if source_node.value is not None:
+            source_tNode.value = source_node.value
+            return source_tNode
+        found_tNodes = list()
+        for gen_edge in source_node.generating_edges:
+            source_tNodes, source_values = self.solveEdgeSources(gen_edge, source_tNode, cycle_tNodes)
+            target_tNode = self.solveForTarget(source_tNode, source_values, source_tNodes, gen_edge)
+            found_tNodes.append(target_tNode)
+
+        valid_tNodes = [t for t in found_tNodes if t is not None and t.cost is not None]
+        valid_tNodes = source_node.removeSubCycles(valid_tNodes)
+        if len(valid_tNodes) == 0:
+            source_tNode.value = None
+        else:
+            source_tNode = min(valid_tNodes, key=lambda o : o.cost)
+
+        return source_tNode  
 
     def findGeneratingTNode(self, best_exit_t: tNode)-> list:
-        """Prunes the cycle to the generating tNode (since one iteraction of the cycle will have already been recursively solved)."""
+        """Prunes the cycle to the generating tNode (since one iteraction of the 
+        cycle will have already been recursively solved)."""
         #TODO: This means that the cycle will be solved twice. Can we optimize this to avoid this?
         if best_exit_t is None:
             return None       
@@ -233,100 +349,6 @@ class Cycle:
     def addTrace(self, exit_tNode: tNode):
         """Replaces the trace on the fully solved cycle tNodes."""
         #TODO: Implement this and call after route has been discovered
-
-class Node:
-    """A value in the hypergraph, equivalent to a wired connection."""
-    def __init__(self, label: str, value=None, generating_edges: list=None, description: str=None):
-        """Creates a new `Node` object.
-        
-        Parameters
-        ----------
-        label : str
-            A unique identifier for the node.
-        value : Any, Optional
-            The value of the node. 
-        generating_edges : list, Optional
-            A list of edges that have the node as their target.
-        description : str, Optional
-            A description of the node useful for debugging.
-
-        Properties
-        ----------
-        is_simulated : bool, default = False
-            Marker saying that the value was artificially generated from an edge 
-            (used for resetting the Node after a simulation).
-        """
-        self.label = label
-        self.value = value
-        self.generating_edges = list() if generating_edges is None else generating_edges
-        self.description = description
-        self.is_simulated = False
-        """Marker saying that the value was artificially generated (used for resetting the Node after a simulation)."""
-        self.counter = 1
-        """Counter keeping track of any cycles of the node (resets for nested cycles).
-        Only is changed by a cycle object."""
-
-    def setValue(self, value, is_simulated: bool=True):
-        """Sets the value for the node"""
-        self.value = value
-        self.is_simulated = is_simulated
-
-    def solveValue(self, t: tNode)-> tNode:
-        """Recursively solve for the value of the node."""
-        if self.value is not None:
-            t.value = self.value
-            return t
-        t = self.findOptimalEdge(t)
-        self.setValue(t.value, is_simulated=True)
-        return t
-    
-    def findOptimalEdge(self, t: tNode)-> tNode:
-        """Returns the best possible edge found from an exhuastive search."""
-        found_tNodes = list()
-        for edge in self.generating_edges:
-            found_tNodes.append(edge.solveValue(t.copy()))
-
-        valid_tNodes = [v for v in found_tNodes if v is not None and v.cost is not None]
-        valid_tNodes = self.removeSubCycles(valid_tNodes)
-        if len(valid_tNodes) == 0:
-            t.value = None
-        else:
-            t = min(valid_tNodes, key=lambda o : o.cost)
-        return t
-
-    def removeSubCycles(self, paths: list):
-        """Nodes that enter a cycle should have at least 2 paths: the otpimal n-cycle
-           path, and the 0-cycle path, returned by the recursive solver. Because the 
-           cyclical solver returns the optimal n-cycle path, the 0-cycle path by the 
-           recursive solver is never the solution. This function returns all viable 
-           path without the recursive 0-cycle."""
-        viable_paths = list()
-        for p1 in paths:
-            if p1 is None:
-                continue
-            for p2 in paths:
-                if p2 is p1:
-                    continue
-                if not self.isSubtree(p1, p2):
-                    viable_paths.append(p1)
-        
-        if len(viable_paths) == 0:
-            return paths[:1] #Duplicate paths
-                    
-        return viable_paths
-    
-    def isSubtree(self, tree1: tNode, tree2: tNode):
-        """True if the chain of tree1 is a chain of tree2"""
-        c1 = [c.label for c in tree1.getDescendents()]
-        c2 = [c.label for c in tree2.getDescendents()]
-        possible_starts = [i for i in range(len(c2)) if c2[i] == c1[0]]
-        return any(c2[i:i+len(c1)] == c1 for i in possible_starts)
-        
-    def __str__(self)-> str:
-        out = self.label
-        if self.description is not None:
-            out += ': ' + self.description
-        return out
 
 class Edge:
     """A relationship along a set of nodes (the source) that produces a single value."""
@@ -446,7 +468,7 @@ class Edge:
         if self.pseudo is None:
             return source_tNodes
         for st in source_tNodes:
-            for sn in self.source_nodes:
+            for sn in self.source_nodes.values():
                 if sn.label == st.label:
                     st.value = getattr(sn, self.pseudo)
                     break
@@ -521,7 +543,7 @@ class Hypergraph:
         return node
 
     def addEdge(self, sources: list, targets: list, rel, via=None, weight: float=1.0, 
-                label: str=None, identify: dict=None):
+                label: str=None, identify: dict=None, pseudo: str=None):
         """Adds an edge to the hypergraph.
         
         Parameters
@@ -545,6 +567,9 @@ class Hypergraph:
             A dictionary of `str : str` items where the keys are labels of the source
             nodes and the values are keywords for the arguments of `rel`, used to 
             identify the values of the source nodes when called by `rel`.
+        pseudo : str, optional
+            A enumerated string to call a nodal property at runtime rather than a source
+            value. Recognized values are properties of `Node`.
         """
         if not isinstance(sources, list):
             sources = [sources]
@@ -555,7 +580,7 @@ class Hypergraph:
         target_nodes = [self.addNode(target) for target in targets]
         label = self.requestEdgeLabel(label, source_nodes + target_nodes)
         source_node_dict = self.assignSourceIdentities(source_nodes, identify)
-        edge = Edge(label, source_node_dict, rel, via, weight)
+        edge = Edge(label, source_node_dict, rel, via, weight, pseudo)
         self.edges[label] = edge
         for target in target_nodes:
             target.generating_edges.append(edge)
