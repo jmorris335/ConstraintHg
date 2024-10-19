@@ -1,5 +1,7 @@
 from typing import Callable
 
+from src.constrainthg.CONTROL import CYCLE_SEARCH_DEPTH
+
 class tNode:
     """A basic tree node for printing tree structures."""
     class conn:
@@ -226,14 +228,15 @@ class Bus:
         target_tNode = tNode(self.target.label, cost=0.)
         self.exploreNode(target_tNode)
 
-        while len(self.paths) > 0:
+        while len(self.paths) > 0 and self.label_index < CYCLE_SEARCH_DEPTH:
             t = self.selectPath()
 
+            self.exploreNode(t)
             if t.value is not None:
+                t.cost = 0
                 if self.solveLeaf(t):
                     return target_tNode
 
-            self.exploreNode(t)
             self.paths.remove(t)
 
         return None
@@ -269,8 +272,8 @@ class Bus:
         return self.tEdge(tEdge_label, edge)
 
     def solveLeaf(self, t: Node)-> bool:
-        """Solves for the system as far as possible given the leaf node. Returns true 
-        if the target value was successfully solved for."""
+        """Procedurally solves  the system as far as possible given the leaf node. 
+        Returns true if the target value was successfully solved for."""
         if t.label == self.target.label:
             return True
         
@@ -285,6 +288,7 @@ class Bus:
             
             parent_t.value = parent_val
             parent_t.children = et.source_tNodes
+            parent_t.cost = max([a.cost for a in et.source_tNodes]) + et.edge.weight
             return self.solveLeaf(parent_t)
 
         return False
@@ -436,7 +440,9 @@ class Hypergraph:
             self.setNodeValues(node_values)
         target_node = self.getNode(target)
         t = Bus(target_node, self.nodes).search()
-        if toPrint:
+        if t is None:
+            return None
+        elif toPrint:
             print(t.printTree())
         return t.value
     
