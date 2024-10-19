@@ -6,6 +6,7 @@ from src.constrainthg.relations import Rmean, Rincrement
 
 hg = Hypergraph()
 hg.addEdge('S', 'B', Rmean)
+hg.addEdge('S', 'C', Rmean)
 hg.addEdge('A', 'B', Rmean)
 hg.addEdge('B', 'C', Rincrement)
 hg.addEdge('C', 'A', Rmean)

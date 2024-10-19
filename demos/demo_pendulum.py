@@ -31,10 +31,10 @@ hg.addEdge([omega, 'delta omega'], omega, R.Rsum, label='(omega, d_omega)->omega
 hg.addEdge([omega, time_step], 'delta theta', R.Rmultiply, label='(omega, t)->d_theta')
 hg.addEdge([theta, 'delta theta'], theta, R.Rsum, label='(theta, d_theta)->theta')
 hg.addEdge(theta0, theta, R.Rmean, label='theta0->theta')
-hg.addEdge(omega0, omega, R.Rmean, label='omega0->omega')
-hg.addEdge(alpha0, alpha, R.Rmean, label='alpha0->alpha')
+# hg.addEdge(omega0, omega, R.Rmean, label='omega0->omega')
+# hg.addEdge(alpha0, alpha, R.Rmean, label='alpha0->alpha')
 hg.addEdge(theta, 'final_theta', R.Rmean, via=lambda *args, **kwargs : abs(R.Rmean(*args, **kwargs)) < 0.3)
 
 # hg.printPaths('omega')
 
-hg.solve('alpha', toPrint=True)
+hg.solve(omega, toPrint=True)
