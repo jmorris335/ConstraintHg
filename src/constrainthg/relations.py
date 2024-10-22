@@ -84,6 +84,16 @@ def Rmean(*args, **kwargs):
     args = extend(args, kwargs)
     return np.mean(args)
 
+def Rmax(*args, **kwargs):
+    """Returns the maximum of all arguments."""
+    args = extend(args, kwargs)
+    return max(args)
+
+def Rmin(*args, **kwargs):
+    """Returns the minimum of all arguments."""
+    args = extend(args, kwargs)
+    return min(args)
+
 
 # OPERATIONS
 def Rincrement(*args, **kwargs):

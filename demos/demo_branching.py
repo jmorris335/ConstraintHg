@@ -20,9 +20,7 @@ hg = Hg.addEdge('H', 'G', Rincrement)
 ht = Hg.addEdge('H', 'T', Rincrement)
 gt = Hg.addEdge('G', 'T', Rincrement)
 
-Hg.printPaths('T')
+# Hg.printPaths('T')
 
 inputs = {'A': 1}
-# Tval = Hg.solve('H', inputs, toPrint=True)
-
-# print(f'T = {Tval}')
+print(Hg.solve('T', inputs, toPrint=True))

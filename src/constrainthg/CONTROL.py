@@ -1,2 +1,7 @@
-CYCLE_SEARCH_DEPTH = 200
+import logging
+
+CYCLE_SEARCH_DEPTH = 15000
 """Maximum times to sequence a cycle before declaring it void."""
+
+lg = logging.getLogger('Hypergraph')
+lg.level = logging.DEBUG

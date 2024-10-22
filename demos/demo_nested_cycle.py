@@ -2,7 +2,7 @@ from config import runInPlace
 runInPlace()
 
 from src.constrainthg.hypergraph import Hypergraph
-from src.constrainthg.relations import Rmean, Rincrement
+from src.constrainthg.relations import Rmean, Rincrement, Rfirst, Rsum
 
 #Independent Cycles
 independent = Hypergraph()
@@ -31,7 +31,7 @@ overlapping.addEdge('A', 'T', Rmean, via=lambda s1 : s1 > 2)
 conjoined = Hypergraph()
 conjoined.addEdge('S', 'C', Rmean)
 conjoined.addEdge('A', 'B', Rmean)
-conjoined.addEdge('B', 'C', Rincrement)
+conjoined.addEdge('B', 'C', Rincrement, via=lambda s1 : s1 % 3 == 0)
 conjoined.addEdge('B', 'D', Rmean)
 conjoined.addEdge('D', 'E', Rmean)
 conjoined.addEdge('E', 'B', Rincrement)
@@ -45,6 +45,17 @@ hyperloop.addEdge(['A', 'B'], 'A', Rincrement)
 hyperloop.addEdge('A0', 'A', Rmean)
 hyperloop.addEdge('A', 'T', Rmean, via=lambda s1 : s1 > 2)
 
-hyperloop.printPaths('T')
+#Node Reuse
+reuse = Hypergraph()
+reuse.addEdge('S1', 'A', Rmean)
+reuse.addEdge('A', 'C', Rmean)
+reuse.addEdge('C', 'A', Rincrement, via=lambda s1 : s1 < 50)
+reuse.addEdge('S2', 'B', Rmean)
+reuse.addEdge('B', 'C', Rmean)
+reuse.addEdge('C', 'B', Rmean)
+reuse.addEdge(['A', 'B'], 'T', Rsum, via=lambda s1, s2 : min(s1, s2) > 11)
 
-Tval = hyperloop.solve('T', {'S': 0, 'A0': 0}, toPrint=True)
+
+reuse.printPaths('T')
+
+print(reuse.solve('T', {'S1': 11, 'S2': 11}, toPrint=True))
