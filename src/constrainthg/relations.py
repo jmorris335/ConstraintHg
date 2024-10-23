@@ -7,8 +7,10 @@ Versions:
 - 0.0, 7 Oct. 2024: initialized
 Notes:
 - Generally imported as import relations as R
-- All relationship functions begin with a capital R, so that they are normally called as `R.Rfunction`
-- Each relationships should have *args, and **kwargs as its arguments and only arguments. Specific keywords referenced in kwargs should be `s1`, `s2`, ... only.
+- All relationship functions begin with a capital R, so that they are normally called 
+as `R.Rfunction`
+- Each relationships should have *args, and **kwargs as its arguments and only 
+arguments. Specific keywords referenced in kwargs should be `s1`, `s2`, ... only.
 """
 
 import numpy as np
@@ -19,10 +21,12 @@ def extend(args: list, kwargs: dict)-> list:
     return list(args) + list(kwargs.values())
 
 def getKeywordArguments(args: list, kwargs: dict, excluded_keys: list):
-    """Combines all arguments except those with a given key. Returns the arguments for the given keys as a dictionary
+    """Combines all arguments except those with a given key. Returns the arguments 
+    for the given keys as a dictionary
     and the remaining arguments as a list.
     
-    Note that keys not found in `kwargs` are taken from `args` in the order of the `excluded_keys` list."""
+    Note that keys not found in `kwargs` are taken from `args` in the order of the 
+    `excluded_keys` list."""
     if not isinstance(excluded_keys, list):
         excluded_keys = [excluded_keys]
     exceptional_vals, to_combine = dict(), list()
@@ -102,9 +106,17 @@ def Rincrement(*args, **kwargs):
     return max(args) + 1
 
 def Rfirst(*args, **kwargs):
-    """Returns `s1`."""
+    """Returns the first argument."""
     args, kwargs = getKeywordArguments(args, kwargs, 's1')
     return kwargs['s1']
+
+def equal(identifier: str):
+    """Returns the a method that returns the argument with the same keyword as 
+    `identifier`."""
+    def Requal(*args, **kwargs):
+        args, kwargs = getKeywordArguments(args, kwargs, identifier)
+        return kwargs[identifier]
+    return Requal
 
 # TRIGONOMETRY
 def Rsin(*args, **kwargs):

@@ -1,4 +1,5 @@
-from typing import Callable
+from typing import Callable, List
+from inspect import signature, Parameter
 import logging as log
 
 import src.constrainthg.CONTROL as CONTROL
@@ -139,16 +140,21 @@ class Node:
 class Edge:
     """A relationship along a set of nodes (the source) that produces a single value."""
     def __init__(self, label: str, source_nodes: dict, rel: Callable, 
-                 via: Callable=None, weight: float=1.0, pseudo: str=None):
+                 via: Callable=None, weight: float=1.0):
         """Creates a new `Edge` object.
         
         Parameters
         ----------
         label : str
             A unique string identifier for the edge.
-        source_nodes : dict
+        source_nodes : dict{str : Node | Tuple(str, str)} | list[Node | 
+                       Tuple(str, str)] |  Tuple(str, str) | Node 
             A dictionary of `Node` objects forming the source nodes of the edge, 
             where the key is the identifiable label for each source used in rel processing.
+            The Node object may be a Node, or a length-2 Tuple (identifier : attribute) 
+            with the first element an identifier in the edge and the second element a 
+            string referencing an attribute of the identified Node to use as the value 
+            (a pseudo node).
         rel : Callable
             A function taking the values of the source nodes and returning a single 
             value (the target).
@@ -159,19 +165,60 @@ class Edge:
         weight : float > 0.0, default=1.0
             The quanitified cost of traversing the edge. Must be positive, akin to a 
             distance measurement.
-        pseudo : str, optional
-            A enumerated string to call a nodal property at runtime rather than a source
-            value. Recognized values are properties of `Node`.
         """
-        self.source_nodes = source_nodes
         self.rel = rel
         self.via = self.via_true if via is None else via
+        self.source_nodes = self.identifySouceNodes(source_nodes, self.rel, self.via)
         self.weight = abs(weight)
         self.label = label
-        self.pseudo = pseudo
 
-        self.source_tNodes = {sn.label : list() for sn in self.source_nodes.values()}
+    @staticmethod
+    def getNamedArguments(methods: List[Callable])-> set:
+        """Returns keywords for any keyed, required arguments (non-default)."""
+        out = set()
+        for method in methods:
+            for p in signature(method).parameters.values():
+                if p.kind == p.POSITIONAL_OR_KEYWORD and p.default is p.empty:
+                    out.add(p.name)
+        return out 
+
+    def identifySouceNodes(self, source_nodes, rel: Callable, via: Callable):
+        """Returns a {str: node} dictionary where each string is the keyword label used
+        in the rel and via methods."""
+        if isinstance(source_nodes, dict):
+            return self.identifyLabeledSourceNodes(source_nodes, rel, via)
+        elif not isinstance(source_nodes, list):
+            source_nodes = [source_nodes]
+        return self.identifyUnlabeledSourceNodes(source_nodes, rel, via)
     
+    def identifyUnlabeledSourceNodes(self, source_nodes: list, rel: Callable, via: Callable):
+        """Returns a {str: node} dictionary where each string is the keyword label used
+        in the rel and via methods."""
+        arg_keys = self.getNamedArguments([via, rel])
+        arg_keys = arg_keys.union({f's{i+1}' for i in range(len(source_nodes) - len(arg_keys))})
+
+        out = {key : sn for key, sn in zip(arg_keys, source_nodes)}
+        return out
+    
+    def identifyLabeledSourceNodes(self, source_nodes: dict, rel: Callable, via: Callable):
+        """Returns a {str: node} dictionary where each string is the keyword label used
+        in the rel and via methods."""
+        out = dict()
+        arg_keys = self.getNamedArguments([rel, via])
+        arg_keys = arg_keys.union({str(key) for key in source_nodes})
+
+        for arg_key in arg_keys:
+            if len(source_nodes) == 0:
+                return out
+            if arg_key in source_nodes:
+                sn_key = arg_key
+            else:
+                sn_key = list(source_nodes.keys())[0]
+            out[arg_key] = source_nodes[sn_key]
+            del(source_nodes[sn_key])
+
+        return out   
+
     def edgeInCycle(self, t: tNode):
         """Returns true if the edge is part of the cycle manifest by the `target_tNode`."""
         return self.label in [e.label for tt, e in t.trace]
@@ -184,16 +231,25 @@ class Edge:
 
     def getSourceValues(self, source_tNodes: list):
         """Returns a dictionary of source values with their relevant keys."""
-        labeled_values = dict()
+        source_values = dict()
+
+        tuple_keys = filter(lambda key : isinstance(self.source_nodes[key], tuple), self.source_nodes)
+        psuedo_nodes = {key : self.source_nodes[key] for key in tuple_keys}
+        for key in psuedo_nodes:
+            pseudo_identifier, pseduo_attribute = psuedo_nodes[key]
+            if pseudo_identifier in self.source_nodes:
+                sn_label = self.source_nodes[pseudo_identifier].label
+                for st in source_tNodes:
+                    if st.label == sn_label:
+                        source_values[key] = getattr(st, pseduo_attribute)
+                        break
+
         for st in source_tNodes:
             for key, sn in self.source_nodes.items():
-                if st.label == sn.label:
-                    if self.pseudo is not None:
-                        labeled_values[key] = getattr(st, self.pseudo)
-                    else:
-                        labeled_values[key] = st.value
+                if not isinstance(sn, tuple) and st.label == sn.label:
+                    source_values[key] = st.value
                     break
-        return labeled_values
+        return source_values
 
     def processValues(self, source_vals: dict)-> float:
         """Finds the target value based on the source values."""
@@ -243,6 +299,16 @@ class Pathfinder:
         """Int used to identify tEdges in a path (many of which are duplicated)."""
         self.best_path = None
         """The tNode root of the best path found by the solver."""
+        self.found_values = None
+        """Dictionary of found values for the catchall nodes."""
+
+    def recordValue(self, t: tNode, value):
+        """Adds the found value to the class log."""
+        label = t.label
+        if label in self.found_values:
+            self.found_values[label].append(value)
+        else:
+            self.found_values[label] = [value]
 
     def search(self):
         """Find the lowest-cost simulated value for the target node."""
@@ -260,16 +326,17 @@ class Pathfinder:
             self.exploreNode(t)
             if t.value is not None:
                 t.cost = 0
+                self.found_values = dict()
                 found_root = self.solveLeaf(t)
                 if self.best_path is None or found_root.cost > self.best_path.cost:
                     self.best_path = found_root
                 if self.best_path.label == target_tNode.label:
-                    return target_tNode
+                    return target_tNode, self.found_values
                 log.debug('Current path:\n' + t.printTree())
 
             self.paths.remove(t)
 
-        return None
+        return None, None
     
     def exploreNode(self, t: tNode):
         """Appends all possible paths leading from the tNode to the `paths` member."""
@@ -285,6 +352,8 @@ class Pathfinder:
             trace = t.trace + [(e_t.label, t)]
 
             for sn in e.source_nodes.values():
+                if isinstance(sn, tuple):
+                    continue
                 st = tNode(sn.label, sn.value, cost=cost, trace=trace, indices={})
                 e_t.source_tNodes.append(st)
                 self.paths.append(st)
@@ -311,6 +380,7 @@ class Pathfinder:
 
         if all(st.value is not None for st in et.source_tNodes):
             parent_val = et.edge.process(et.source_tNodes)
+            self.recordValue(parent_t, parent_val)
             if parent_val is None:
                 return t
             
@@ -383,6 +453,8 @@ class Hypergraph:
 
     def addNode(self, node: Node, value=None)-> Node:
         """Adds a node to the hypergraph via a union operation."""
+        if isinstance(node, tuple):
+            return None
         label = node.label if isinstance(node, Node) else node
         if label in self.nodes: 
             self.nodes[label].value = node.value if isinstance(node, Node) else value
@@ -396,16 +468,19 @@ class Hypergraph:
         self.nodes[label] = node
         return node
 
-    def addEdge(self, sources: list, targets: list, rel, via=None, weight: float=1.0, 
-                label: str=None, identify: dict=None, pseudo: str=None):
+    def addEdge(self, sources: dict, targets: list, rel, via=None, weight: float=1.0, 
+                label: str=None):
         """Adds an edge to the hypergraph.
         
         Parameters
         ----------
-        sources : list | str | Node
-            A list of nodes that are sources to the edge. Nodes may be references to 
-            actual `Node` objects or the labels of `Node` objects (passed as strings).
-            Sources may be passed as a list or a single object.
+        sources : dict{str : Node | Tuple(Node, str)} | list[Node | 
+                       Tuple(Node, str)] |  Tuple(Node, str) | Node 
+            A dictionary of `Node` objects forming the source nodes of the edge, 
+            where the key is the identifiable label for each source used in rel processing.
+            The Node object may be a Node, or a length-2 Tuple with the second element
+            a string referencing an attribute of the Node to use as the value (a pseudo
+            node).
         targets : list | str | Node
             A list of nodes that are the target of the given edge, with the same type
             as sources. Since each edge can only have one target, this makes a unique
@@ -417,46 +492,36 @@ class Hypergraph:
             The cost of traversing the edge. Must be positive.
         label : str, optional
             A unique identifier for the edge.
-        identify : dict, optional
-            A dictionary of `str : str` items where the keys are labels of the source
-            nodes and the values are keywords for the arguments of `rel`, used to 
-            identify the values of the source nodes when called by `rel`.
-        pseudo : str, optional
-            A enumerated string to call a nodal property at runtime rather than a source
-            value. Recognized values are properties of `Node`.
         """
-        if not isinstance(sources, list):
-            sources = [sources]
-        if not isinstance(targets, list):
-            targets = [targets]
-        source_nodes = [self.addNode(source) for source in sources]
-        target_nodes = [self.addNode(target) for target in targets]
+        source_nodes, source_inputs = self.getNodesAndIdentifiers(sources)
+        target_nodes, target_inputs = self.getNodesAndIdentifiers(targets)
         label = self.requestEdgeLabel(label, source_nodes + target_nodes)
-        source_node_dict = self.assignSourceIdentities(source_nodes, identify)
-        edge = Edge(label, source_node_dict, rel, via, weight, pseudo)
+        edge = Edge(label, source_inputs, rel, via, weight)
         self.edges[label] = edge
         for target in target_nodes:
             target.generating_edges.append(edge)
         return edge
     
-    def assignSourceIdentities(self, source_nodes: list, identify: dict):
-        """Assigns an identifier to each source node."""
-        if identify is None:
-            identify = dict()
-        else:
-            identify = {self.getNode(key) : identify[key] for key in identify}
-        identified = dict()
-        reserved = identify.values()
-        for sn in source_nodes:
-            if sn in identify:
-                identifier = identify[sn]
-            else:
-                for i in range(len(source_nodes) + len(reserved)):
-                    identifier = f's{len(identified) + i + 1}'
-                    if identifier not in reserved:
-                        break
-            identified[identifier] = sn
-        return identified
+    def getNodesAndIdentifiers(self, nodes):
+        """Helper function for getting a list of nodes and their identified argument 
+        format for various input types."""
+        if isinstance(nodes, dict):
+            node_list, inputs = list(), dict()
+            for key, node in nodes.items():
+                if isinstance(node, tuple):
+                    if node[0] not in nodes:
+                        raise(Exception(f"Pseudo node identifier '{node[0]}' not included in Edge."))
+                else:
+                    node = self.addNode(node)
+                    node_list.append(node)
+                inputs[key] = node
+            return node_list, inputs
+        
+        if not isinstance(nodes, list):
+            nodes = [nodes]
+        node_list = [self.addNode(n) for n in nodes]
+        inputs = [self.getNode(node) for node in nodes if not isinstance(node, tuple)]
+        return node_list, inputs
     
     def setNodeValues(self, node_values: dict):
         """Sets the values of the given nodes."""
@@ -470,12 +535,10 @@ class Hypergraph:
         if node_values is not None:
             self.setNodeValues(node_values)
         target_node = self.getNode(target)
-        t = Pathfinder(target_node, self.nodes).search()
-        if t is None:
-            return None
-        elif toPrint:
+        t, found_values = Pathfinder(target_node, self.nodes).search()
+        if toPrint and t is not None:
             print(t.printTree())
-        return t.value
+        return t, found_values
     
     def printPaths(self, target, toPrint: bool=True)-> str:
         """Prints the hypertree of all paths to the target node."""
