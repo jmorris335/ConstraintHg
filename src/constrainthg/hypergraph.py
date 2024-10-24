@@ -2,7 +2,7 @@ from typing import Callable, List
 from inspect import signature, Parameter
 import logging as log
 
-import src.constrainthg.CONTROL as CONTROL
+import constrainthg.CONTROL as CONTROL
 
 class tNode:
     """A basic tree node for printing tree structures."""
@@ -17,7 +17,7 @@ class tNode:
         tee_stop = "├●─"
     
     def __init__(self, label, value=None, children: list=None, join_status: str='None', 
-                 cost: float=None, trace: list=None, indices: dict=None):
+                 cost: float=None, trace: list=None, indices: dict=None, encountered: dict=None):
         self.label = label
         self.value = value
         self.children = list() if children is None else children
@@ -28,6 +28,10 @@ class tNode:
         leaf for."""
         self.indices = dict() if indices is None else indices
         """Counts of how many times each node has been visited in the tNode (label : int)."""
+        self.encountered = dict() if encountered is None else encountered
+        """tNodes for each node in the trace (parents only)."""
+        self.encounter(self)
+       
  
     def printConn(self, last=True)-> str:
         if last:
@@ -83,6 +87,13 @@ class tNode:
             return 0
         return max(self.indices.values())
 
+    def encounter(self, t):
+        """Updates `encountered` to include the passed tNode."""
+        label = t.label
+        if label in self.encountered:
+            self.encountered[label].append(t)
+        else:
+            self.encountered[label] = [t]
 
     def __str__(self)-> str:
         out = self.label
@@ -122,7 +133,7 @@ class Node:
         self.generating_edges = list() if generating_edges is None else generating_edges
         self.description = description
         self.values = list()
-        """List of tNodes with potential values."""
+        """List of tNodes with potential values, where the positin in the list is the index of the tNode."""
         self.is_simulated = False
         """Marker saying that the value was artificially generated (used for resetting the Node after a simulation)."""
         
@@ -321,6 +332,7 @@ class Pathfinder:
                     print("Best found path:")
                     print(self.best_path.printTree())
                 raise(Exception("Maximum search depth exceeded."))
+            
             t = self.selectPath()
 
             self.exploreNode(t)
@@ -350,11 +362,12 @@ class Pathfinder:
             self.tEdges[e_t.label] = e_t
             cost = t.cost + e.weight
             trace = t.trace + [(e_t.label, t)]
+            enc = t.encountered
 
             for sn in e.source_nodes.values():
                 if isinstance(sn, tuple):
                     continue
-                st = tNode(sn.label, sn.value, cost=cost, trace=trace, indices={})
+                st = tNode(sn.label, sn.value, cost=cost, trace=trace, indices={}, encountered=enc)
                 e_t.source_tNodes.append(st)
                 self.paths.append(st)
 
@@ -379,6 +392,7 @@ class Pathfinder:
         et = self.tEdges[tEdge_label]
 
         if all(st.value is not None for st in et.source_tNodes):
+            #TODO: We need to check all possible combinations of avlues here, instead we're just replacing valid found ones!
             parent_val = et.edge.process(et.source_tNodes)
             self.recordValue(parent_t, parent_val)
             if parent_val is None:
@@ -551,6 +565,8 @@ class Hypergraph:
 
     def printPathsHelper(self, node: Node, join_status='none', trace: list=None)-> tNode:
         """Recursive helper to print all paths to the target node."""
+        if isinstance(node, tuple):
+            return None
         t = tNode(node.label, node.value, join_status=join_status, trace=trace)
         branch_costs = list()
         for edge in node.generating_edges:
@@ -563,6 +579,8 @@ class Hypergraph:
                 c_join_status = self.getJoinStatus(i, len(edge.source_nodes))
                 c_trace = t.trace + [(t, edge)]
                 c_tNode = self.printPathsHelper(child, c_join_status, c_trace)
+                if c_tNode is None:
+                    continue
                 child_cost += c_tNode.cost if c_tNode.cost is not None else 0.0
                 t.children.append(c_tNode)
             branch_costs.append(child_cost + edge.weight)
