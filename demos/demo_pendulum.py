@@ -60,7 +60,7 @@ t, found_values = hg.solve('final theta', toPrint=True)
 
 # print(found_values[theta.label][-1])
 
-getTimes = lambda l : [time_step.value * i for i in range(len(l))]
+getTimes = lambda l : [time_step.static_value * i for i in range(len(l))]
 thetas = found_values[theta.label]
 omegas = found_values[omega.label]
 plt.plot(getTimes(thetas), thetas)
