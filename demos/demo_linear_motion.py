@@ -24,6 +24,6 @@ hg.addEdge([x, del_x], x, R.Rsum, label='x_i+delta_x -> x_i')
 hg.addEdge({'s1': x, 's2':('s1', 'index')}, xn, R.equal('s1'), via=cycleCounter, label='x_i, i -> x_n')
 hg.addEdge(x0, x, R.Rfirst, label='x0 -> x')
 
-# hg.printPaths(xn)
+hg.printPaths(xn)
 
 hg.solve(xn, toPrint=True)

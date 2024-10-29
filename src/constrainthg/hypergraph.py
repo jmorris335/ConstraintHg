@@ -25,8 +25,8 @@ class tNode:
         self.join_status = join_status
         self.cost = cost
         self.trace = list() if trace is None else trace
-        self.indices = dict() if indices is None else indices
-        """Counts of how many times each node has been visited in the tNode (label : int)."""
+        self.indices = {label : 0} if indices is None else indices
+        """Counts of how many times each node was uniquely solved for in the path (label : int)."""
  
     def printConn(self, last=True)-> str:
         if last:
@@ -66,12 +66,9 @@ class tNode:
     def mergeIndices(self, other: dict):
         """Updates the indices with those of another tNode."""
         #TODO: Each tNode holds the previous indices, and they're all adding up (not just the target tNode)
-
-        # print(self.printTree())
-        # a = 1 + 1
         for label in other:
             if label in self.indices:
-                self.indices[label] = sum((self.indices[label], other[label]))
+                self.indices[label] = max((self.indices[label], other[label]))
             else:
                 self.indices[label] = other[label]
 
@@ -95,8 +92,8 @@ class tNode:
     
 class Node:
     """A value in the hypergraph, equivalent to a wired connection."""
-    def __init__(self, label: str, value=None, generating_edges: list=None, 
-                 leading_edges: list=None, description: str=None, is_constant: bool=False):
+    def __init__(self, label: str, static_value=None, generating_edges: list=None, 
+                 leading_edges: list=None, description: str=None):
         """Creates a new `Node` object.
         
         Parameters
@@ -121,11 +118,11 @@ class Node:
             (used for resetting the Node after a simulation).
         """
         self.label = label
-        self.static_value = value
+        self.static_value = static_value
         self.generating_edges = list() if generating_edges is None else generating_edges
         self.leading_edges = list() if leading_edges is None else leading_edges
         self.description = description
-        self.is_constant = is_constant
+        self.is_constant = static_value is not None
 
     def __str__(self)-> str:
         out = self.label
@@ -165,6 +162,9 @@ class Edge:
         self.rel = rel
         self.via = self.via_true if via is None else via
         self.source_nodes = self.identifySouceNodes(source_nodes, self.rel, self.via)
+        self.found_tNodes = {sn.label : list() for sn in self.source_nodes.values() if not isinstance(sn, tuple)}
+        """A dict of lists of source_tNodes that are viable trees to a source node.
+        Format: {sn_label : [tNode, tNode, ...]}"""
         self.target = target
         self.weight = abs(weight)
         self.label = label
@@ -255,6 +255,24 @@ class Edge:
         if self.via(**source_vals):
             return self.rel(**source_vals)
         return None
+    
+    def getSourceTNodeCombinations(self, t: tNode):
+        """Returns all viable combinations of source nodes using the tNode `t`."""
+        self.found_tNodes[t.label].append(t)
+        st_candidates = list()
+
+        for st_label, sts in self.found_tNodes.items():
+            if st_label == t.label:
+                st_candidates.append([t])
+            elif len(sts) == 0:
+                return []
+            else:
+                # same_index = [st for st in sts if st.index == t.index]
+                # st_candidates.append(same_index)
+                st_candidates.append(sts)
+
+        st_combos = itertools.product(*st_candidates)
+        return st_combos
             
     @staticmethod
     def via_true(*args, **kwargs):
@@ -268,51 +286,60 @@ class Pathfinder:
         self.target_node = target
         self.search_roots = list()
         self.found_tNodes = {label : list() for label in nodes}
+        self.search_counter = 0
+        """Number of nodes explored"""
 
-    def search(self):
+    def search(self, toPrint: bool=False):
         for sn in self.source_nodes:
             st = tNode(sn.label, sn.static_value, cost=0.)
             self.search_roots.append(st)
             self.found_tNodes[st.label].append(st)
         
         while len(self.search_roots) > 0:
+            if self.search_counter > CONTROL.CYCLE_SEARCH_DEPTH:
+                raise(Exception("Maximum search depth exceeded."))
             root = self.selectRoot()
             if root.label is self.target_node.label:
                 found_values = self.getFoundValues(root)
                 return root, found_values
             
             self.explore(root)
-            self.search_roots.remove(root)
+            # print(f'############### {root.label} ###############\n')
+            # for i, s in enumerate(self.search_roots):
+            #     print(f'{i}: {s.printTree()}')
+            # a = 1 + 1
 
-        best_found = max(itertools.chain(*self.found_tNodes.values()), key=lambda fTn : fTn.cost)
-        return None, self.getFoundValues(best_found)
+        # best_found = max(itertools.chain(*self.found_tNodes.values()), key=lambda fTn : fTn.cost)
+        # return None, self.getFoundValues(best_found)
+        if toPrint:
+            print("No solutions found")
+        return None, None
     
     def explore(self, t: tNode):
+        """Discovers all possible routes from the tNode."""
         n = self.nodes[t.label]
         for edge in n.leading_edges:
             parent = edge.target
-            st_candidates = [self.found_tNodes[sn.label] for sn in edge.source_nodes.values()]
-            source_tNode_combos = itertools.product(*st_candidates)
+            source_tNode_combos = edge.getSourceTNodeCombinations(t)
             for combo in source_tNode_combos:
-                if any(st.value is None for st in combo):
-                    continue
                 self.makeParentTNode(combo, parent, edge)
-        self.found_tNodes[t.label].remove(t)
+        self.search_roots.remove(t)
 
     def makeParentTNode(self, source_tNodes: list, node: Node, edge: Edge):
+        """Creates a tNode for the next step along the edge."""
+        self.search_counter += 1
         parent_val = edge.process(source_tNodes)
         if parent_val is None:
             return None
-        indices = {node.label : 1}
         children = source_tNodes
         cost = sum([st.cost for st in source_tNodes]) + edge.weight
-        parent_t = tNode(node.label, parent_val, children, cost=cost, indices=indices)
+        parent_t = tNode(node.label, parent_val, children, cost=cost)
         for st in source_tNodes:
             parent_t.mergeIndices(st.indices)
+        parent_t.indices[node.label] += 1
         self.search_roots.append(parent_t)
         self.found_tNodes[parent_t.label].append(parent_t)
         return parent_t
-
                 
     def selectRoot(self)-> tNode:
         """Determines the most optimal path to explore."""
@@ -325,144 +352,13 @@ class Pathfinder:
         children_tNodes = root.getDescendents()
         found = {child_t.label : list() for child_t in children_tNodes}
         for child_t in children_tNodes:
-            found[child_t.label].append(child_t.value)
-        return found
-    
+            if any((st.index == child_t.index for st in found[child_t.label])):
+                continue
+            found[child_t.label].append(child_t)
+            found[child_t.label].sort(key=lambda st : st.index)
+        values = {label : [st.value for st in sts] for label, sts in found.items()}
+        return values
         
-
-class PathfinderOLD:
-    """Class for recursively searching a hypergraph using a best-first search approach."""
-    class tEdge:
-        """Container for duplicating edges in a tree."""
-        __slots__ = ('label', 'source_tNodes', 'edge')
-        def __init__(self, label: str, edge: Edge):
-            self.label = label
-            self.edge = edge
-            self.source_tNodes = list()
-
-        def getTNode(self, label: str):
-            """Returns the source tNode with the given label."""
-            tNode_labels = [st.label for st in self.source_tNodes]
-            return self.source_tNodes[tNode_labels.index(label)]
-             
-    def __init__(self, target: Node, nodes: dict):
-        """Creates the initial search structure for a best-first search strategy.
-        
-        Parameters
-        ----------
-        target : Node
-            The node for which the search is trying to evaluate.
-        nodes : dict
-            A dictionary of nodes as {node_label : Node}
-        """
-        self.target = target
-        self.nodes = nodes
-        self.paths = list()
-        """List of tNodes, each the leaf of a potential tree path to the target."""
-        self.tEdges = dict()
-        """Dictionary of found sources for an edge, with 'tEdge_label' : tEdge format"""
-        self.label_index = 0
-        """Int used to identify tEdges in a path (many of which are duplicated)."""
-        self.best_path = None
-        """The tNode root of the best path found by the solver."""
-        self.found_values = None
-        """Dictionary of found values for the catchall nodes."""
-
-    def recordValue(self, t: tNode, value):
-        """Adds the found value to the class log."""
-        label = t.label
-        if label in self.found_values:
-            self.found_values[label].append(value)
-        else:
-            self.found_values[label] = [value]
-
-    def search(self):
-        """Find the lowest-cost simulated value for the target node."""
-        target_tNode = tNode(self.target.label, cost=0.)
-        self.exploreNode(target_tNode)
-
-        while len(self.paths) > 0:
-            if self.label_index > CONTROL.CYCLE_SEARCH_DEPTH:
-                if self.best_path is not None:
-                    print("Best found path:")
-                    print(self.best_path.printTree())
-                raise(Exception("Maximum search depth exceeded."))
-            
-            t = self.selectPath()
-
-            self.exploreNode(t)
-            if t.value is not None:
-                t.cost = 0
-                self.found_values = dict()
-                found_root = self.solveLeaf(t)
-                if self.best_path is None or found_root.cost > self.best_path.cost:
-                    self.best_path = found_root
-                if self.best_path.label == target_tNode.label:
-                    return target_tNode, self.found_values
-                log.debug('Current path:\n' + t.printTree())
-
-            self.paths.remove(t)
-
-        return None, None
-    
-    def exploreNode(self, t: tNode):
-        """Appends all possible paths leading from the tNode to the `paths` member."""
-        if t.label in self.nodes:
-            n = self.nodes[t.label]
-        else:
-            return #Node not in hypergraph
-        
-        for e in n.generating_edges:
-            e_t = self.makeTEdge(e)
-            self.tEdges[e_t.label] = e_t
-            cost = t.cost + e.weight
-            trace = t.trace + [(e_t.label, t)]
-            enc = t.encountered
-
-            for sn in e.source_nodes.values():
-                if isinstance(sn, tuple):
-                    continue
-                st = tNode(sn.label, sn.value, cost=cost, trace=trace, indices={}, encountered=enc)
-                e_t.source_tNodes.append(st)
-                self.paths.append(st)
-
-    def selectPath(self)-> tNode:
-        """Determines the most optimal path to explore."""
-        if len(self.paths) == 0:
-            return None
-        return min(self.paths, key=lambda t : t.cost)
-
-    def makeTEdge(self, edge: Edge)-> tEdge:
-        """Returns a unique tEdge for the edge (including duplicate cycle edges)."""
-        self.label_index += 1
-        tEdge_label = edge.label + str(self.label_index)
-        return self.tEdge(tEdge_label, edge)
-
-    def solveLeaf(self, t: tNode)-> tNode:
-        """Procedurally solves  the system as far as possible given the leaf node."""
-        if t.label == self.target.label:
-            return t
-        
-        tEdge_label, parent_t = t.trace[-1]
-        et = self.tEdges[tEdge_label]
-
-        if all(st.value is not None for st in et.source_tNodes):
-            #TODO: We need to check all possible combinations of avlues here, instead we're just replacing valid found ones!
-            parent_val = et.edge.process(et.source_tNodes)
-            self.recordValue(parent_t, parent_val)
-            if parent_val is None:
-                return t
-            
-            parent_t.indices = {parent_t.label : 1}
-            parent_t.value = parent_val
-            parent_t.children = et.source_tNodes
-            parent_t.cost = sum([a.cost for a in et.source_tNodes]) + et.edge.weight
-            for st in et.source_tNodes:
-                parent_t.mergeIndices(st.indices)
-            return self.solveLeaf(parent_t)
-
-        return t
-
 class Hypergraph:
     """Builder class for a hypergraph. See demos for information on how to use."""
     def __init__(self):
@@ -532,6 +428,7 @@ class Hypergraph:
             node.label = label
         else:
             node = Node(label, value) 
+            node.is_constant == value is not None
         self.nodes[label] = node
         return node
 
@@ -603,9 +500,12 @@ class Hypergraph:
         self.reset()
         if node_values is not None:
             self.setNodeValues(node_values)
+            source_nodes = [self.getNode(label) for label in node_values]
+            source_nodes += [node for node in self.nodes.values() if node.is_constant and node.label not in node_values]
+        else:
+            source_nodes = [node for node in self.nodes.values() if node.is_constant]
         target_node = self.getNode(target)
-        source_nodes = [self.getNode(label) for label in node_values]
-        t, found_values = Pathfinder(target_node, source_nodes, self.nodes).search()
+        t, found_values = Pathfinder(target_node, source_nodes, self.nodes).search(toPrint)
         if toPrint and t is not None:
             print(t.printTree())
         return t, found_values

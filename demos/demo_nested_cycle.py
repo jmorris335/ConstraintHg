@@ -49,13 +49,13 @@ hyperloop.addEdge('A', 'T', Rmean, via=lambda s1 : s1 > 2)
 reuse = Hypergraph()
 reuse.addEdge('S1', 'A', Rmean)
 reuse.addEdge('A', 'C', Rmean)
-reuse.addEdge('C', 'A', Rincrement, via=lambda s1 : s1 < 50)
+reuse.addEdge('C', 'A', Rincrement)
 reuse.addEdge('S2', 'B', Rmean)
 reuse.addEdge('B', 'C', Rmean)
 reuse.addEdge('C', 'B', Rmean)
-reuse.addEdge(['A', 'B'], 'T', Rsum, via=lambda s1, s2 : min(s1, s2) > 11)
+reuse.addEdge(['A', 'B'], 'T', Rsum, via=lambda s1, s2 : min(s1, s2) > 5)
 
 
 reuse.printPaths('T')
 
-print(reuse.solve('T', {'S1': 11, 'S2': 11}, toPrint=True))
+reuse.solve('T', {'S1': 1, 'S2': 4}, toPrint=True)
