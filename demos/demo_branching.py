@@ -18,7 +18,7 @@ edh = Hg.addEdge(['E', 'D'], 'H', Rincrement)
 hj = Hg.addEdge('H', 'J', Rincrement)
 hg = Hg.addEdge('H', 'G', Rincrement)
 ht = Hg.addEdge('H', 'T', Rincrement)
-gt = Hg.addEdge('G', 'T', Rincrement)
+# gt = Hg.addEdge('G', 'T', Rincrement)
 
 # Hg.printPaths('T')
 

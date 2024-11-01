@@ -20,6 +20,8 @@ hg.addEdge({
     's4': ('s2', 'index')}, A,
     lambda s1, s2, **kwargs : sum((s1, s2)),
     via=lambda s3, s4, **kwargs : s3 == s4 + 0)
-hg.addEdge(A, T, R.Rfirst, via=lambda s1, **kwargs : s1 > 10)
+hg.addEdge(A, T, R.Rfirst, via=lambda s1, **kwargs : s1 >= 3)
 
-hg.solve(T, toPrint=True)
+tval, _ = hg.solve(T, toPrint=False)
+
+print(tval)

@@ -1,6 +1,8 @@
 from typing import Callable, List
-from inspect import signature, Parameter
-import logging as log
+from inspect import signature
+import logging
+logger = logging.getLogger(__name__)
+
 import itertools
 
 import constrainthg.CONTROL as CONTROL
@@ -18,15 +20,44 @@ class tNode:
         tee_stop = "├●─"
     
     def __init__(self, label, value=None, children: list=None, cost: float=None, 
-                 indices: dict=None, trace: list=None, join_status: str='None' ):
+                 indices: dict=None, trace: list=None, 
+                 gen_edge_label: str=None, gen_edge_cost: float=0.0,
+                 join_status: str='None' ):
+        """
+        Creates a node in a search tree.
+
+        Parameters
+        ----------
+        label : str
+            A string identifying the node represented by the tNode.
+        value : Any, optional
+            The value of the tree solved to the tNode.
+        children : list, optional
+            tNodes that form the source nodes of an edge leading to the tNode.
+        cost : float, optional
+            Value indicating the solving the tree rooted at the tNode.
+        indices: dict, optional
+            Counts of how many times each node was uniquely solved for in the 
+            path (label : int).
+        trace : list, optional
+            Top down trace of how the tNode could be resolved, used for path exploration.
+        gen_edge_label : str, optional
+            A unique label for the edge generating the tNode (of which `children` are source nodes).
+        gen_edge_cost : float, default=0.
+            Value for weight (cost) of the generating edge, default is 0.0.
+        join_status : str, optional
+            Indicates if the tNode is the last of a set of children, used for printing.
+        """
         self.label = label
         self.value = value
         self.children = list() if children is None else children
-        self.join_status = join_status
         self.cost = cost
         self.trace = list() if trace is None else trace
         self.indices = {label : 0} if indices is None else indices
-        """Counts of how many times each node was uniquely solved for in the path (label : int)."""
+        self.gen_edge_label = gen_edge_label
+        self.gen_edge_cost = gen_edge_cost
+        self.values = {label : [value,]}
+        self.join_status = join_status
  
     def printConn(self, last=True)-> str:
         if last:
@@ -42,18 +73,25 @@ class tNode:
             return self.conn.tee_stop
         return self.conn.tee
 
-    def printTree(self, last=True, header='')-> str:
+    def printTree(self, last=True, header='', checked_edges:list=None)-> str:
         """Prints the tree centered at the tNode
         
         Adapted from https://stackoverflow.com/a/76691030/15496939, PierreGtch, 
         under CC BY-SA 4.0.
         """
         out = str()
-        out += header + self.printConn(last) + self.__str__() + '\n'
+        out += header + self.printConn(last) + self.__str__()
+        if checked_edges is None:
+            checked_edges = list()
+        if self.gen_edge_label in checked_edges:
+            out += ' (derivative)\n' if len(self.children) != 0 else '\n'
+            return out
+        out += '\n'
+        checked_edges.append(self.gen_edge_label)
         for i, child in enumerate(self.children):
             c_header = header + (self.conn.blank if last else self.conn.pipe)
             c_last = i == len(self.children) - 1
-            out += child.printTree(header=c_header, last=c_last)
+            out += child.printTree(header=c_header, last=c_last, checked_edges=checked_edges)
         return out
     
     def getDescendents(self)-> list:
@@ -65,7 +103,6 @@ class tNode:
     
     def mergeIndices(self, other: dict):
         """Updates the indices with those of another tNode."""
-        #TODO: Each tNode holds the previous indices, and they're all adding up (not just the target tNode)
         for label in other:
             if label in self.indices:
                 self.indices[label] = max((self.indices[label], other[label]))
@@ -78,6 +115,20 @@ class tNode:
         if len(self.indices) == 0:
             return 0
         return max(self.indices.values())
+    
+    def getTreeCost(self, root=None, checked_edges: set=None):
+        """Returns the cost of solving to the root of the tree."""
+        if root is None:
+            root = self
+        if checked_edges is None:
+            checked_edges = set()
+        total_cost = 0
+        if root.gen_edge_label not in checked_edges:
+            total_cost += root.gen_edge_cost
+            checked_edges.add(root.gen_edge_label)
+            for st in root.children:
+                total_cost += self.getTreeCost(st)
+        return total_cost
 
     def __str__(self)-> str:
         out = self.label
@@ -215,10 +266,6 @@ class Edge:
             del(source_nodes[sn_key])
 
         return out   
-
-    def edgeInCycle(self, t: tNode):
-        """Returns true if the edge is part of the cycle manifest by the `target_tNode`."""
-        return self.label in [e.label for tt, e in t.trace]
     
     def process(self, source_tNodes: list):
         """Processes the tNodes to get the value of the target."""
@@ -267,8 +314,6 @@ class Edge:
             elif len(sts) == 0:
                 return []
             else:
-                # same_index = [st for st in sts if st.index == t.index]
-                # st_candidates.append(same_index)
                 st_candidates.append(sts)
 
         st_combos = itertools.product(*st_candidates)
@@ -285,32 +330,28 @@ class Pathfinder:
         self.source_nodes = sources
         self.target_node = target
         self.search_roots = list()
-        self.found_tNodes = {label : list() for label in nodes}
         self.search_counter = 0
         """Number of nodes explored"""
 
     def search(self, toPrint: bool=False):
+        logger.info(f'*****Begin search for {self.target_node.label}*****')
         for sn in self.source_nodes:
             st = tNode(sn.label, sn.static_value, cost=0.)
             self.search_roots.append(st)
-            self.found_tNodes[st.label].append(st)
         
         while len(self.search_roots) > 0:
             if self.search_counter > CONTROL.CYCLE_SEARCH_DEPTH:
                 raise(Exception("Maximum search depth exceeded."))
+            # logger.log(logging.DEBUG, f'Search trees: '
+            #     + ', '.join(f'{s.label}' for s in self.search_roots))
+
             root = self.selectRoot()
             if root.label is self.target_node.label:
-                found_values = self.getFoundValues(root)
-                return root, found_values
+                logger.debug(f'Final search counter: {self.search_counter}')
+                return root, root.values
             
             self.explore(root)
-            # print(f'############### {root.label} ###############\n')
-            # for i, s in enumerate(self.search_roots):
-            #     print(f'{i}: {s.printTree()}')
-            # a = 1 + 1
 
-        # best_found = max(itertools.chain(*self.found_tNodes.values()), key=lambda fTn : fTn.cost)
-        # return None, self.getFoundValues(best_found)
         if toPrint:
             print("No solutions found")
         return None, None
@@ -327,18 +368,21 @@ class Pathfinder:
 
     def makeParentTNode(self, source_tNodes: list, node: Node, edge: Edge):
         """Creates a tNode for the next step along the edge."""
-        self.search_counter += 1
         parent_val = edge.process(source_tNodes)
         if parent_val is None:
             return None
+        label = node.label
         children = source_tNodes
-        cost = sum([st.cost for st in source_tNodes]) + edge.weight
-        parent_t = tNode(node.label, parent_val, children, cost=cost)
+        gen_edge_label = edge.label + '_' + str(self.search_counter)
+        parent_t = tNode(label, parent_val, children, 
+                         gen_edge_label=gen_edge_label, gen_edge_cost=edge.weight)
         for st in source_tNodes:
             parent_t.mergeIndices(st.indices)
         parent_t.indices[node.label] += 1
+        parent_t.values = self.mergeFoundValues(parent_val, node.label, source_tNodes)
+        parent_t.cost = parent_t.getTreeCost()
         self.search_roots.append(parent_t)
-        self.found_tNodes[parent_t.label].append(parent_t)
+        self.search_counter += 1
         return parent_t
                 
     def selectRoot(self)-> tNode:
@@ -347,16 +391,18 @@ class Pathfinder:
             return None
         return min(self.search_roots, key=lambda t : t.cost)
     
-    def getFoundValues(self, root: tNode)-> dict:
-        """Returns the found values for the full search path."""
-        children_tNodes = root.getDescendents()
-        found = {child_t.label : list() for child_t in children_tNodes}
-        for child_t in children_tNodes:
-            if any((st.index == child_t.index for st in found[child_t.label])):
-                continue
-            found[child_t.label].append(child_t)
-            found[child_t.label].sort(key=lambda st : st.index)
-        values = {label : [st.value for st in sts] for label, sts in found.items()}
+    def mergeFoundValues(self, parent_val, parent_label, source_tNodes: list)-> dict:
+        if parent_label == 'theta':
+            a = 1 + 1
+        values = {parent_label: list()}
+        for st in source_tNodes:
+            for label, st_values in st.values.items():
+                if label not in values:
+                    values[label] = st_values
+                else:
+                    if len(st_values) > len(values[label]):
+                        values[label] = st_values
+        values[parent_label].append(parent_val)
         return values
         
 class Hypergraph:
@@ -526,7 +572,7 @@ class Hypergraph:
         t = tNode(node.label, node.static_value, join_status=join_status, trace=trace)
         branch_costs = list()
         for edge in node.generating_edges:
-            if edge.edgeInCycle(t):
+            if self.edgeInCycle(edge, t):
                 t.label += '[CYCLE]'
                 return t
 
@@ -543,6 +589,10 @@ class Hypergraph:
 
         t.cost = min(branch_costs) if len(branch_costs) > 0 else 0.
         return t
+    
+    def edgeInCycle(self, edge: Edge, t: tNode):
+        """Returns true if the edge is part of a cycle in the tree rooted at the tNode."""
+        return edge.label in [e.label for tt, e in t.trace]
     
     def getJoinStatus(self, index, num_children):
         """Returns whether or not the node at the given index is part of a hyperedge (`join`) or specifically the last node 
