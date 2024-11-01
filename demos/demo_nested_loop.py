@@ -12,16 +12,9 @@ T = Node('T')
 hg.addEdge(S, A, R.Rfirst)
 hg.addEdge(A, B, R.Rincrement)
 hg.addEdge(B, C, R.Rincrement)
-# hg.addEdge([A, C], A, R.Rsum)
-hg.addEdge({
-    's1': A,
-    's2': C,
-    's3': ('s1', 'index'), 
-    's4': ('s2', 'index')}, A,
-    lambda s1, s2, **kwargs : sum((s1, s2)),
-    via=lambda s3, s4, **kwargs : s3 == s4 + 0)
-hg.addEdge(A, T, R.Rfirst, via=lambda s1, **kwargs : s1 >= 3)
+hg.addEdge([A, C], A, R.Rsum, edge_props='LEVEL')
+hg.addEdge(A, T, R.Rfirst, via=R.geq('s1', 7))
 
-tval, _ = hg.solve(T, toPrint=False)
+tval, _ = hg.solve(T, toPrint=True)
 
 print(tval)

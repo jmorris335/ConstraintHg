@@ -111,12 +111,20 @@ def Rfirst(*args, **kwargs):
     return kwargs['s1']
 
 def equal(identifier: str):
-    """Returns the a method that returns the argument with the same keyword as 
+    """Returns a method that returns the argument with the same keyword as 
     `identifier`."""
     def Requal(*args, **kwargs):
         args, kwargs = getKeywordArguments(args, kwargs, identifier)
         return kwargs[identifier]
     return Requal
+
+def geq(identifier: str, val: int):
+    """Returns a method that returns True if the identifier is greater than or equal 
+    to `val`."""
+    def Rcyclecounter(*args, **kwargs):
+        args, kwargs = getKeywordArguments(args, kwargs, identifier)
+        return kwargs[identifier] > val
+    return Rcyclecounter
 
 # TRIGONOMETRY
 def Rsin(*args, **kwargs):

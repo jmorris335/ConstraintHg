@@ -2,8 +2,8 @@ from typing import Callable, List
 from inspect import signature
 import logging
 logger = logging.getLogger(__name__)
-
 import itertools
+from enum import Enum
 
 import constrainthg.CONTROL as CONTROL
 
@@ -112,9 +112,10 @@ class tNode:
     @property
     def index(self)-> int:
         """The current number of states cycled through along the tNode"""
-        if len(self.indices) == 0:
+        if self.label not in self.indices:
             return 0
-        return max(self.indices.values())
+        # return max(self.indices.values())
+        return self.indices[self.label]
     
     def getTreeCost(self, root=None, checked_edges: set=None):
         """Returns the cost of solving to the root of the tree."""
@@ -127,7 +128,7 @@ class tNode:
             total_cost += root.gen_edge_cost
             checked_edges.add(root.gen_edge_label)
             for st in root.children:
-                total_cost += self.getTreeCost(st)
+                total_cost += self.getTreeCost(st, checked_edges)
         return total_cost
 
     def __str__(self)-> str:
@@ -180,11 +181,15 @@ class Node:
         if self.description is not None:
             out += ': ' + self.description
         return out
+    
+class EdgeProperty(Enum):
+    LEVEL = 1
+    """Every source node in the edge must have the same index for the edge to be viable."""
 
 class Edge:
     """A relationship along a set of nodes (the source) that produces a single value."""
     def __init__(self, label: str, source_nodes: dict, target: Node, rel: Callable, 
-                 via: Callable=None, weight: float=1.0):
+                 via: Callable=None, weight: float=1.0, edge_props: EdgeProperty=None):
         """Creates a new `Edge` object.
         
         Parameters
@@ -209,6 +214,8 @@ class Edge:
         weight : float > 0.0, default=1.0
             The quanitified cost of traversing the edge. Must be positive, akin to a 
             distance measurement.
+        edge_props : List(EdgeProperty) | EdgeProperty | str | int, optional
+            A list of enumerated types that are used to configure the edge.
         """
         self.rel = rel
         self.via = self.via_true if via is None else via
@@ -219,6 +226,52 @@ class Edge:
         self.target = target
         self.weight = abs(weight)
         self.label = label
+        self.edge_props = self.setupEdgeProperties(edge_props)
+
+    def setupEdgeProperties(self, inputs)-> list:
+        """Parses the edge properties."""
+        eps = list()
+        if inputs is None:
+            return eps
+        if not isinstance(inputs, list):
+            inputs = [inputs]
+        for ep in inputs:
+            if isinstance(ep, EdgeProperty):
+                eps.append(ep)
+            elif ep in EdgeProperty.__members__:
+                eps.append(EdgeProperty[ep])
+            elif ep in [item.value for item in EdgeProperty]:
+                eps.append(EdgeProperty(ep))
+            else:
+                logger.warning(f"Unrecognized edge property: {ep}")
+        for ep in eps:
+            self.handleEdgeProperty(ep)
+        return eps
+
+    def handleEdgeProperty(self, edge_prop: EdgeProperty):
+        """Configures the edge based on the passed property."""
+        og_source_nodes = {key: val for key, val in self.source_nodes.items()}
+        og_rel = self.rel
+        og_via = self.via
+        if edge_prop is EdgeProperty.LEVEL:
+            ind_entries = dict()
+            for key, sn in og_source_nodes.items():
+                if isinstance(sn, tuple):
+                    continue #Need to handle if indices have been passed already as psuedos
+                next_key = f's{len(og_source_nodes) + len(ind_entries) + 1}'
+                ind_entries[next_key] = (key, 'index')
+            self.source_nodes = og_source_nodes | ind_entries
+
+            og_kwargs = lambda **kwargs : {key: val for key,val in kwargs.items() if key in og_source_nodes}
+            def levelCheck(*args, **kwargs):
+                """Returns true if all passed indices are equivalent."""
+                if not og_via(*args, **og_kwargs(**kwargs)):
+                    return False
+                idxs = {val for key, val in kwargs.items() if key in ind_entries}
+                return len(idxs) == 1
+
+            self.rel = lambda *args, **kwargs : og_rel(*args, **og_kwargs(**kwargs))
+            self.via = levelCheck
 
     @staticmethod
     def getNamedArguments(methods: List[Callable])-> set:
@@ -361,10 +414,26 @@ class Pathfinder:
         n = self.nodes[t.label]
         for edge in n.leading_edges:
             parent = edge.target
-            source_tNode_combos = edge.getSourceTNodeCombinations(t)
-            for combo in source_tNode_combos:
+
+
+            st_delete_me = edge.getSourceTNodeCombinations(t)
+            combos = [c for c in st_delete_me]
+            # if edge.label == '(omega, d_omega)->omega' or edge.label == '(theta, d_theta)->theta':
+            #     print("######## EDGE #############################")
+                
+            #     i = 1
+            #     for combo in combos:
+            #         print(f"------ COMBO {i} ------")
+            #         for n in enumerate(combo):
+            #             print(n[1].printTree())
+            #         i += 1
+            #     a = [[n.label for n in co] for co in combos]
+            #     z = 1
+
+            # source_tNode_combos = edge.getSourceTNodeCombinations(t)
+            # for combo in source_tNode_combos:
+            for combo in combos:
                 self.makeParentTNode(combo, parent, edge)
-        self.search_roots.remove(t)
 
     def makeParentTNode(self, source_tNodes: list, node: Node, edge: Edge):
         """Creates a tNode for the next step along the edge."""
@@ -373,7 +442,7 @@ class Pathfinder:
             return None
         label = node.label
         children = source_tNodes
-        gen_edge_label = edge.label + '_' + str(self.search_counter)
+        gen_edge_label = edge.label + '#' + str(self.search_counter)
         parent_t = tNode(label, parent_val, children, 
                          gen_edge_label=gen_edge_label, gen_edge_cost=edge.weight)
         for st in source_tNodes:
@@ -389,19 +458,21 @@ class Pathfinder:
         """Determines the most optimal path to explore."""
         if len(self.search_roots) == 0:
             return None
-        return min(self.search_roots, key=lambda t : t.cost)
+        root = min(self.search_roots, key=lambda t : t.cost)
+        self.search_roots.remove(root)
+        return root
     
     def mergeFoundValues(self, parent_val, parent_label, source_tNodes: list)-> dict:
         if parent_label == 'theta':
-            a = 1 + 1
+            z = 2 +2 
         values = {parent_label: list()}
         for st in source_tNodes:
             for label, st_values in st.values.items():
-                if label not in values:
+                if label not in values or len(st_values) > len(values[label]):
+                    if label == 'theta' and parent_label == 'theta':
+                        a = [float(v) for v in st_values]
+                        z = 1+1
                     values[label] = st_values
-                else:
-                    if len(st_values) > len(values[label]):
-                        values[label] = st_values
         values[parent_label].append(parent_val)
         return values
         
@@ -479,7 +550,7 @@ class Hypergraph:
         return node
 
     def addEdge(self, sources: dict, target, rel, via=None, weight: float=1.0, 
-                label: str=None):
+                label: str=None, edge_props=None):
         """Adds an edge to the hypergraph.
         
         Parameters
@@ -502,11 +573,13 @@ class Hypergraph:
             The cost of traversing the edge. Must be positive.
         label : str, optional
             A unique identifier for the edge.
+        edge_props : List(EdgeProperty) | EdgeProperty | str | int, optional
+            A list of enumerated types that are used to configure the edge.
         """
         source_nodes, source_inputs = self.getNodesAndIdentifiers(sources)
         target_nodes, target_inputs = self.getNodesAndIdentifiers([target])
         label = self.requestEdgeLabel(label, source_nodes + target_nodes)
-        edge = Edge(label, source_inputs, target_nodes[0], rel, via, weight)
+        edge = Edge(label, source_inputs, target_nodes[0], rel, via, weight, edge_props=edge_props)
         self.edges[label] = edge
         for sn in source_nodes:
             sn.leading_edges.append(edge)
