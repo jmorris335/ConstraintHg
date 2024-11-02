@@ -2,7 +2,6 @@ import logging
 
 # create logger
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 fh = logging.FileHandler("constrainthg.log")
 fh.setLevel(logging.DEBUG)

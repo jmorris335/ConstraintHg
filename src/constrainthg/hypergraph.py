@@ -21,8 +21,8 @@ class tNode:
     
     def __init__(self, label, value=None, children: list=None, cost: float=None, 
                  indices: dict=None, trace: list=None, 
-                 gen_edge_label: str=None, gen_edge_cost: float=0.0,
-                 join_status: str='None' ):
+                 gen_edge_label: str=None, gen_edge_cost: float=0.0, 
+                 index_offset: int=1.0, join_status: str='None' ):
         """
         Creates a node in a search tree.
 
@@ -45,6 +45,8 @@ class tNode:
             A unique label for the edge generating the tNode (of which `children` are source nodes).
         gen_edge_cost : float, default=0.
             Value for weight (cost) of the generating edge, default is 0.0.
+        index_offset : int, default=0
+            Offset for calculating the index (allowing for iterative presetting).
         join_status : str, optional
             Indicates if the tNode is the last of a set of children, used for printing.
         """
@@ -58,6 +60,7 @@ class tNode:
         self.gen_edge_cost = gen_edge_cost
         self.values = {label : [value,]}
         self.join_status = join_status
+        self.index_offset = index_offset
  
     def printConn(self, last=True)-> str:
         if last:
@@ -114,8 +117,8 @@ class tNode:
         """The current number of states cycled through along the tNode"""
         if self.label not in self.indices:
             return 0
-        # return max(self.indices.values())
-        return self.indices[self.label]
+        return max(self.indices.values()) + self.index_offset
+        # return self.indices[self.label] + self.index_offset
     
     def getTreeCost(self, root=None, checked_edges: set=None):
         """Returns the cost of solving to the root of the tree."""
@@ -145,7 +148,7 @@ class tNode:
 class Node:
     """A value in the hypergraph, equivalent to a wired connection."""
     def __init__(self, label: str, static_value=None, generating_edges: list=None, 
-                 leading_edges: list=None, description: str=None):
+                 leading_edges: list=None, description: str=None, starting_index: int=1):
         """Creates a new `Node` object.
         
         Parameters
@@ -162,6 +165,8 @@ class Node:
             A description of the node useful for debugging.
         is_constant : bool, default=False
             Describes whether the node should be reset in between simulations.
+        starting_index : int, default=1
+            The starting index of the node
 
         Properties
         ----------
@@ -175,6 +180,7 @@ class Node:
         self.leading_edges = list() if leading_edges is None else leading_edges
         self.description = description
         self.is_constant = static_value is not None
+        self.index_offset = starting_index - 1
 
     def __str__(self)-> str:
         out = self.label
@@ -389,14 +395,13 @@ class Pathfinder:
     def search(self, toPrint: bool=False):
         logger.info(f'*****Begin search for {self.target_node.label}*****')
         for sn in self.source_nodes:
-            st = tNode(sn.label, sn.static_value, cost=0.)
+            st = tNode(sn.label, sn.static_value, cost=0., index_offset=sn.index_offset)
             self.search_roots.append(st)
-        
+
         while len(self.search_roots) > 0:
             if self.search_counter > CONTROL.CYCLE_SEARCH_DEPTH:
-                raise(Exception("Maximum search depth exceeded."))
-            # logger.log(logging.DEBUG, f'Search trees: '
-            #     + ', '.join(f'{s.label}' for s in self.search_roots))
+                raise(Exception("Maximum search depth exceeded.")) 
+            # print('\nSearch trees: ' + ', '.join(f'{s.label}' for s in self.search_roots))
 
             root = self.selectRoot()
             if root.label is self.target_node.label:
@@ -418,17 +423,13 @@ class Pathfinder:
 
             st_delete_me = edge.getSourceTNodeCombinations(t)
             combos = [c for c in st_delete_me]
-            # if edge.label == '(omega, d_omega)->omega' or edge.label == '(theta, d_theta)->theta':
-            #     print("######## EDGE #############################")
-                
-            #     i = 1
-            #     for combo in combos:
-            #         print(f"------ COMBO {i} ------")
-            #         for n in enumerate(combo):
-            #             print(n[1].printTree())
-            #         i += 1
-            #     a = [[n.label for n in co] for co in combos]
-            #     z = 1
+
+            # print(f"{edge.label}:")
+            # i = 1
+            # for combo in combos:
+            #     print(f' - Combo {i}: ' + ', '.join(f'{n.label} ({n.index})' for n in combo))
+            #     i += 1
+                # a = [[n.label for n in co] for co in combos]
 
             # source_tNode_combos = edge.getSourceTNodeCombinations(t)
             # for combo in source_tNode_combos:
@@ -443,8 +444,8 @@ class Pathfinder:
         label = node.label
         children = source_tNodes
         gen_edge_label = edge.label + '#' + str(self.search_counter)
-        parent_t = tNode(label, parent_val, children, 
-                         gen_edge_label=gen_edge_label, gen_edge_cost=edge.weight)
+        parent_t = tNode(label, parent_val, children, gen_edge_label=gen_edge_label, 
+                         gen_edge_cost=edge.weight, index_offset=node.index_offset)
         for st in source_tNodes:
             parent_t.mergeIndices(st.indices)
         parent_t.indices[node.label] += 1
