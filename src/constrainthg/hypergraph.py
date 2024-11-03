@@ -409,7 +409,7 @@ class Pathfinder:
         self.search_counter = 0
         """Number of nodes explored"""
 
-    def search(self, toPrint: bool=False):
+    def search(self):
         """Searches the hypergraph for a path from the source nodes to the target 
         node. Returns the solved tNode for the target and a dictionary of found values
          {label : [Any,]}. """
@@ -427,14 +427,10 @@ class Pathfinder:
             if root.label is self.target_node.label:
                 logger.info(f'Finished search for {self.target_node.label} with value of {root.value}')
                 logger.info(f'Final search counter: {self.search_counter}')
-                if toPrint:
-                    print(root.printTree())
                 return root, root.values
             
             self.explore(root)
-
-        if toPrint:
-            print("No solutions found")
+            
         logger.info(f'Finished search, no solutions found')
         logger.info(f'Final search counter: {self.search_counter}')
         return None, None
@@ -644,9 +640,12 @@ class Hypergraph:
         else:
             source_nodes = [node for node in self.nodes.values() if node.is_constant]
         target_node = self.getNode(target)
-        t, found_values = Pathfinder(target_node, source_nodes, self.nodes).search(toPrint)
-        if toPrint and t is not None:
-            print(t.printTree())
+        t, found_values = Pathfinder(target_node, source_nodes, self.nodes).search()
+        if toPrint:
+            if t is not None:
+                print(t.printTree())
+            else:
+                print("No solutions found")
         return t, found_values
     
     def printPaths(self, target, toPrint: bool=True)-> str:
