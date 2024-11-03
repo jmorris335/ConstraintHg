@@ -1,6 +1,5 @@
 import logging
 
-# create logger
 logger = logging.getLogger(__name__)
 
 fh = logging.FileHandler("constrainthg.log")

@@ -413,7 +413,7 @@ class Pathfinder:
     def search(self):
         """Searches the hypergraph for a path from the source nodes to the target 
         node. Returns the solved tNode for the target and a dictionary of found values
-         {label : [Any,]}. """
+        {label : [Any,]}. """
         logger.info(f'Begin search for {self.target_node.label}')
         for sn in self.source_nodes:
             st = tNode(sn.label, sn.static_value, cost=0., index_offset=sn.index_offset)
