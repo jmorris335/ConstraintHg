@@ -158,3 +158,15 @@ class TestHypergraph():
         t, fv = hg.solve('T', {'S': 0})
         assert t.value == 14
         assert t.cost == 11
+
+    def test_indexing(self):
+        """Tests a cycle with basic indexing."""
+        hg = Hypergraph()
+        hg.addEdge('S', 'B', R.Rmean)
+        hg.addEdge({'s1':'B', 's2': ('s1', 'index')}, 'A', R.equal('s2'))
+        hg.addEdge('A', 'B', R.Rmean)
+        hg.addEdge('A', 'T', R.Rmean, via=R.geq('s1', 3))
+
+        t, fv = hg.solve('T', {'S': 10})
+        assert t.value == 4
+        assert t.cost == 9
