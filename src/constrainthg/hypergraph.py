@@ -393,7 +393,7 @@ class Pathfinder:
         """Number of nodes explored"""
 
     def search(self, toPrint: bool=False):
-        logger.info(f'*****Begin search for {self.target_node.label}*****')
+        logger.info(f'Begin search for {self.target_node.label}')
         for sn in self.source_nodes:
             st = tNode(sn.label, sn.static_value, cost=0., index_offset=sn.index_offset)
             self.search_roots.append(st)
@@ -401,17 +401,22 @@ class Pathfinder:
         while len(self.search_roots) > 0:
             if self.search_counter > CONTROL.CYCLE_SEARCH_DEPTH:
                 raise(Exception("Maximum search depth exceeded.")) 
-            # print('\nSearch trees: ' + ', '.join(f'{s.label}' for s in self.search_roots))
+            logger.debug('Search trees: ' + ', '.join(f'{s.label}' for s in self.search_roots))
 
             root = self.selectRoot()
             if root.label is self.target_node.label:
-                logger.debug(f'Final search counter: {self.search_counter}')
+                logger.info(f'Finished search for {self.target_node.label} with value of {root.value}')
+                logger.info(f'Final search counter: {self.search_counter}')
+                if toPrint:
+                    print(root.printTree())
                 return root, root.values
             
             self.explore(root)
 
         if toPrint:
             print("No solutions found")
+        logger.info(f'Finished search, no solutions found')
+        logger.info(f'Final search counter: {self.search_counter}')
         return None, None
     
     def explore(self, t: tNode):
@@ -424,16 +429,9 @@ class Pathfinder:
             st_delete_me = edge.getSourceTNodeCombinations(t)
             combos = [c for c in st_delete_me]
 
-            # print(f"{edge.label}:")
-            # i = 1
-            # for combo in combos:
-            #     print(f' - Combo {i}: ' + ', '.join(f'{n.label} ({n.index})' for n in combo))
-            #     i += 1
-                # a = [[n.label for n in co] for co in combos]
-
-            # source_tNode_combos = edge.getSourceTNodeCombinations(t)
-            # for combo in source_tNode_combos:
-            for combo in combos:
+            logger.debug(f"{edge.label}:")
+            for i, combo in enumerate(combos):
+                logger.debug(f' - Combo {i}: ' + ', '.join(f'{n.label} ({n.index})' for n in combo))
                 self.makeParentTNode(combo, parent, edge)
 
     def makeParentTNode(self, source_tNodes: list, node: Node, edge: Edge):

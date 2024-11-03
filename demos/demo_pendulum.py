@@ -32,9 +32,7 @@ hg.addEdge(theta, s_theta, R.Rsin, label='theta->sine')
 hg.addEdge([s_theta, 'g/r'], F, R.Rmultiply, label='(sine, b1)->F')
 hg.addEdge([omega, c], 'beta2', R.Rmultiply, label='(omega, c)->b2')
 # hg.addEdge(F, alpha, R.Rmean, label='F->alpha')
-hg.addEdge({'s1':F, 's2':'beta2'}, alpha, 
-           lambda **kwargs : R.Rsubtract(**kwargs), 
-           label='(F, b2)->alpha', edge_props='LEVEL')
+hg.addEdge({'s1':F, 's2':'beta2'}, alpha, R.Rsubtract, label='(F, b2)->alpha', edge_props='LEVEL')
 
 hg.addEdge({'s1': alpha, 's4': ('s1', 'index'),
             's2': omega, 's5': ('s2', 'index'),
@@ -57,8 +55,6 @@ hg.addEdge({'s1':theta, 's2':('s1', 'index'), 's3': omega}, 'final theta', R.equ
 t, found_values = hg.solve('final theta', toPrint=False)
 print(t)
 # print(t.printTree())
-
-# print([f'{float(a):.4f}' for a in found_values[theta.label]])
 
 getTimes = lambda l : [time_step.static_value * i for i in range(len(l))]
 thetas = found_values[theta.label]

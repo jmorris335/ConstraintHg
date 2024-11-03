@@ -4,7 +4,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 fh = logging.FileHandler("constrainthg.log")
-fh.setLevel(logging.DEBUG)
+fh.setLevel(logging.INFO)
 logger.info('Package begin execution')
 
 log_formatter = logging.Formatter(
@@ -15,4 +15,4 @@ log_formatter = logging.Formatter(
 fh.setFormatter(log_formatter)
 logger.addHandler(fh)
 
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
