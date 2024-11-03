@@ -1,37 +1,34 @@
-from config import runInPlace
-runInPlace()
-
-from src.constrainthg.hypergraph import Hypergraph, Node
-import src.constrainthg.relations as R
+from constrainthg.hypergraph import Hypergraph, Node
+import constrainthg.relations as R
 
 hg = Hypergraph()
 
 # Nodes
-mu_pass_m = Node('average passenger mass', value=65., description='mean passenger mass')
+mu_pass_m = Node('average passenger mass', 65., description='mean passenger mass')
 pass_m = Node('passenger mass', description='total passenger mass')
-empty_m = Node('empty mass', value=1000., description='mass of empty carriage')
-occupency = Node('occupency', value=3, description='persons occupying carriage')
-g = Node('g', value=-9.8, description='gravitational acceleration')
+empty_m = Node('empty mass', 1000., description='mass of empty carriage')
+occupency = Node('occupency', 3, description='persons occupying carriage')
+g = Node('g', -9.8, description='gravitational acceleration')
 F = Node('net force', description='net vertical force on carriage')
 mass = Node('mass', description='total mass of carriage')
-pid = Node('PID input', value=11800, description='PID force input on carriage')
-damping_coef = Node('c', value=0.2, description='damping coefficient')
+pid = Node('PID input', 11800, description='PID force input on carriage')
+damping_coef = Node('c', 0.2, description='damping coefficient')
 damping = Node('damping force', description='damping force')
 height = Node('height', description='vertical position')
-y_0 = Node('initial height', value=0., description='initial height')
+y_0 = Node('initial height', 0., description='initial height')
 vel = Node('velocity', description='vertical velocity')
-v_0 = Node('initial velocity', value=0., description='initial velocity')
+v_0 = Node('initial velocity', 0., description='initial velocity')
 acc = Node('acceleration', description='vertical acceleration')
-step = Node('step size', value=1., description='step size')
-goalA = Node('goal A', value=2, description='goal floor for passenger A')
-goalB = Node('goal B', value=2, description='goal floor for passenger B')
-goalC = Node('goal C', value=2, description='goal floor for passenger C')
-goalD = Node('goal D', value=0, description='goal floor for passenger D')
-startA = Node('start A', value=1, description='start floor for passenger A')
-startB = Node('start B', value=1, description='start floor for passenger B')
-startC = Node('start C', value=0, description='start floor for passenger C')
-startD = Node('start D', value=2, description='start floor for passenger D')
-curr_floor = Node('current floor', value=0, description='current_floor')
+step = Node('step size', 1., description='step size')
+goalA = Node('goal A', 2, description='goal floor for passenger A')
+goalB = Node('goal B', 2, description='goal floor for passenger B')
+goalC = Node('goal C', 2, description='goal floor for passenger C')
+goalD = Node('goal D', 0, description='goal floor for passenger D')
+startA = Node('start A', 1, description='start floor for passenger A')
+startB = Node('start B', 1, description='start floor for passenger B')
+startC = Node('start C', 0, description='start floor for passenger C')
+startD = Node('start D', 2, description='start floor for passenger D')
+curr_floor = Node('current floor', 0, description='current_floor')
 
 
 # Custom relationships
@@ -65,7 +62,6 @@ hg.addEdge([pass_m, empty_m], mass, R.Rsum)
 hg.addEdge([g, mass], '/gm', R.Rmultiply)
 hg.addEdge([pid, '/gm'], F, R.Rsum)
 hg.addEdge([damping_coef, vel], damping, R.Rmultiply)
-#TODO: address labeling issues with adding edges
 hg.addEdge(['/fd', mass], acc, R.Rdivide)
 hg.addEdge([F, mass], acc, R.Rdivide)
 hg.addEdge([F, damping], '/fd', R.Rsubtract)
@@ -81,4 +77,5 @@ hg.addEdge(['del_y', y_0], height, R.Rsum)
 
 hg.printPaths(height)
 
-hg.solve(height, toPrint=True)
+t, found_values = hg.solve(height, toPrint=True)
+print(t)

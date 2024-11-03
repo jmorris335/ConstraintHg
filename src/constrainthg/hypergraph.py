@@ -10,6 +10,7 @@ import constrainthg.CONTROL as CONTROL
 class tNode:
     """A basic tree node for printing tree structures."""
     class conn:
+        """A class of connectors used for indicating child nodes."""
         elbow = "└──"
         pipe = "│  "
         tee = "├──"
@@ -63,6 +64,7 @@ class tNode:
         self.index_offset = index_offset
  
     def printConn(self, last=True)-> str:
+        """Selecter function for the connector string on the tree print."""
         if last:
             if self.join_status == 'join':
                 return self.conn.elbow_join
@@ -121,7 +123,7 @@ class tNode:
         # return self.indices[self.label] + self.index_offset
     
     def getTreeCost(self, root=None, checked_edges: set=None):
-        """Returns the cost of solving to the root of the tree."""
+        """Returns the cost of solving to the leaves of the tree."""
         if root is None:
             root = self
         if checked_edges is None:
@@ -170,9 +172,8 @@ class Node:
 
         Properties
         ----------
-        is_simulated : bool, default = False
-            Marker saying that the value was artificially generated from an edge 
-            (used for resetting the Node after a simulation).
+        is_constant : bool, default = False
+            Boolean indicating if the value of the node should change.
         """
         self.label = label
         self.static_value = static_value
@@ -189,6 +190,8 @@ class Node:
         return out
     
 class EdgeProperty(Enum):
+    """Enumerated object describing various configurations of an Edge that can be 
+    passed during setup. Used as shorthand for common configurations."""
     LEVEL = 1
     """Every source node in the edge must have the same index for the edge to be viable."""
 
@@ -384,7 +387,21 @@ class Edge:
         return True
 
 class Pathfinder:
+    """Object for searching a path through the hypergraph from a collection of source
+    nodes to a single target node. If the hypergraph is fully constrained and viable,
+    then the result of the search is a singular value of the target node."""
     def __init__(self, target: Node, sources: list, nodes: dict):
+        """Creates a new Pathfinder object.
+        
+        Parameters
+        ----------
+        target : Node
+            The Node that the Pathfinder will attempt to solve for.
+        source_nodes : list
+            A list of Node objects that have static values for the simulation.
+        nodes : dict
+            A dictionary of nodes taken from the hypergraph as {label : Node}.
+        """
         self.nodes = nodes
         self.source_nodes = sources
         self.target_node = target
@@ -393,6 +410,9 @@ class Pathfinder:
         """Number of nodes explored"""
 
     def search(self, toPrint: bool=False):
+        """Searches the hypergraph for a path from the source nodes to the target 
+        node. Returns the solved tNode for the target and a dictionary of found values
+         {label : [Any,]}. """
         logger.info(f'Begin search for {self.target_node.label}')
         for sn in self.source_nodes:
             st = tNode(sn.label, sn.static_value, cost=0., index_offset=sn.index_offset)
@@ -400,7 +420,7 @@ class Pathfinder:
 
         while len(self.search_roots) > 0:
             if self.search_counter > CONTROL.CYCLE_SEARCH_DEPTH:
-                raise(Exception("Maximum search depth exceeded.")) 
+                raise(Exception("Maximum search limit exceeded.")) 
             logger.debug('Search trees: ' + ', '.join(f'{s.label}' for s in self.search_roots))
 
             root = self.selectRoot()
@@ -462,6 +482,7 @@ class Pathfinder:
         return root
     
     def mergeFoundValues(self, parent_val, parent_label, source_tNodes: list)-> dict:
+        """Merges the values found in the source nodes with the parent node."""
         if parent_label == 'theta':
             z = 2 +2 
         values = {parent_label: list()}
@@ -476,7 +497,7 @@ class Pathfinder:
         return values
         
 class Hypergraph:
-    """Builder class for a hypergraph. See demos for information on how to use."""
+    """Builder class for a hypergraph. See demos for examples on how to use."""
     def __init__(self):
         """Initialize a Hypergraph."""
         self.nodes = dict()

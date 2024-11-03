@@ -16,9 +16,9 @@ class TestHypergraph():
 
     def test_simple_subtract(self):
         hg = Hypergraph()
-        hg.addEdge(['A', 'B'], 'C', R.Rsubtract)
-        t, fv = hg.solve('C', {'A': 3, 'B': 2},)
-        assert t.value == 1, "Product should be 4.5"
+        hg.addEdge({'s1':'A', 's2':'B'}, 'C', R.Rsubtract)
+        t, fv = hg.solve('C', {'A': 3, 'B': 2})
+        assert t.value == 1, "Subtraction should be 1"
 
     def test_simple_void(self):
         hg = Hypergraph()

@@ -1,8 +1,5 @@
-from config import runInPlace
-runInPlace()
-
-from src.constrainthg.hypergraph import Hypergraph, Node
-import src.constrainthg.relations as R
+from constrainthg.hypergraph import Hypergraph, Node
+import constrainthg.relations as R
 
 hg = Hypergraph()
 
