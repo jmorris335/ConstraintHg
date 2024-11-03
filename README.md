@@ -9,7 +9,7 @@ An constraint hypergraph is a hypergraph where the relationships are constraints
 Processing a series of nodes and edges (a "route") is what constitutes a simulation, so one of the uses of an constraint hypergraph is enabling high-level simulation ability from any possible entry point in a system model.
 
 ## Getting started
-*Note that this demo is found in `demos.basic`*
+*Note that this demo is found in [`demos/demo_basic.py`](https://github.com/jmorris335/ConstraintHg/blob/main/demos/demo_basic.py)*
 Let's build a basic action hypergraph of the following equations:
 - $A + B = C$
 - $A = -D$
@@ -23,7 +23,7 @@ from constrainthg.hypergraph import Hypergraph
 import constrainthg.relations as R
 ```
 
-A hypergraph consists of edges that map between a set of nodes to a single node. We provide the mapping by defining a constraint function (many of which are already defined in the `relationships` module). The two relationships defined in the governing equations are addition and negation. Using the typical syntax, we refer to the functions defined in `relationships` with `R.`*name*, in this case `R.Rsum` and `R.Rnegate`. To make the hypergraph we'll need to compose the 5 edges (equations) given above. 
+A hypergraph consists of edges that map between a set of nodes to a single node. We provide the mapping by defining a constraint function (many of which are already defined in the `relationships` module). The two relationships defined in the governing equations are addition and negation. Using the typical syntax, we refer to the functions defined in `relationships` with `R.<name>', in this case `R.Rsum` and `R.Rnegate`. To make the hypergraph we'll need to compose the 5 edges (equations) given above. 
 ```[python]
 hg = Hypergraph()
 hg.addEdge(['A', 'B'], C, R.Rsum)
@@ -31,6 +31,23 @@ hg.addEdge('A', 'D', R.Rnegate)
 hg.addEdge('B', 'E', R.Rnegate)
 hg.addEdge(['D', 'E'], 'F', R.Rsum)
 hg.addEdge('F', 'C', R.Rnegate)
+```
+
+We can verify that the hypergraph was made correctly by tracing all possible paths for generating C using the `printPaths` function.
+```[python]
+print(hg.printPaths('C'))
+```
+
+This should give us the following output. Hyperedges are indicated with a `◯`, with the last source separated from other edges with a `●`.
+```
+└──C, cost=1
+   ├◯─A, cost=0
+   ├●─B, cost=0
+   └──F, cost=3
+      ├◯─D, cost=1
+      │  └──A, cost=0
+      └●─E, cost=1
+         └──B, cost=0
 ```
 
 Compute the value of $C$ by picking a set of source nodes (inputs), such as $A$ and $B$ or $A$ and $E$. Set values for the inputs and the solver will automatically calulate an optimized route to simulate $C$. 

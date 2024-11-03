@@ -92,7 +92,8 @@ class tNode:
             out += ' (derivative)\n' if len(self.children) != 0 else '\n'
             return out
         out += '\n'
-        checked_edges.append(self.gen_edge_label)
+        if self.gen_edge_label is not None:
+            checked_edges.append(self.gen_edge_label)
         for i, child in enumerate(self.children):
             c_header = header + (self.conn.blank if last else self.conn.pipe)
             c_last = i == len(self.children) - 1
@@ -648,7 +649,7 @@ class Hypergraph:
                 print("No solutions found")
         return t, found_values
     
-    def printPaths(self, target, toPrint: bool=True)-> str:
+    def printPaths(self, target, toPrint: bool=False)-> str:
         """Prints the hypertree of all paths to the target node."""
         target_node = self.getNode(target)
         target_tNode = self.printPathsHelper(target_node)

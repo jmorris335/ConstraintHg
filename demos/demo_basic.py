@@ -8,6 +8,8 @@ hg.addEdge('B', 'E', R.Rnegate)
 hg.addEdge(['D', 'E'], 'F', R.Rsum)
 hg.addEdge('F', 'C', R.Rnegate)
 
+print(hg.printPaths('C'))
+
 print("**Inputs A and E**")
 hg.solve('C', {'A':3, 'E':-7}, toPrint=True)
 print("**Inputs A and B**")
