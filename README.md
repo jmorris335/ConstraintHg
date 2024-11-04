@@ -1,4 +1,4 @@
-![Read the Docs](https://img.shields.io/readthedocs/constrainthg?style=flat)
+![Static Badge](https://img.shields.io/badge/homepage-blue?link=https%3A%2F%2Fgithub.com%2Fjmorris335%2FConstraintHg%2Fwiki%2FOverview) ![Read the Docs](https://img.shields.io/readthedocs/constrainthg?style=flat) ![Static Badge](https://img.shields.io/badge/tests-passing-brightgreen)
 
 # ConstraintHg
 This repository enables usage of hypergraphs to define and execute system models. **It is not a rigorous data storage solution. Do not use this as a database.** Note that this repo is under active development (no official release yet), therefore changes may occur rapidly. Fork the repository before using it.

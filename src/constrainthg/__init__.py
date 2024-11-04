@@ -1,3 +1,6 @@
+from constrainthg.hypergraph import Node, Edge, Hypergraph
+import constrainthg.relations as R
+
 import logging
 
 logger = logging.getLogger(__name__)
