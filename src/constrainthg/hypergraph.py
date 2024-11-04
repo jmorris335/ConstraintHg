@@ -449,16 +449,17 @@ class Pathfinder:
     def explore(self, t: tNode):
         """Discovers all possible routes from the tNode."""
         n = self.nodes[t.label]
-        for edge in n.leading_edges:
+        for i, edge in enumerate(n.leading_edges):
             parent = edge.target
 
 
             st_delete_me = edge.getSourceTNodeCombinations(t)
             combos = [c for c in st_delete_me]
 
-            logger.debug(f"{edge.label}:")
-            for i, combo in enumerate(combos):
-                logger.debug(f' - Combo {i}: ' + ', '.join(f'{n.label} ({n.index})' for n in combo))
+            if len(combos) > 0:
+                logger.debug(f"Edge {i}, <{edge.label}>:")
+            for j, combo in enumerate(combos):
+                logger.debug(f' - Combo {j}: ' + ', '.join(f'{n.label} ({n.index})' for n in combo))
                 self.makeParentTNode(combo, parent, edge)
 
     def makeParentTNode(self, source_tNodes: list, node: Node, edge: Edge):
@@ -484,6 +485,15 @@ class Pathfinder:
         """Determines the most optimal path to explore."""
         if len(self.search_roots) == 0:
             return None
+        # root = None
+        # for st in self.search_roots:
+        #     if st.label == self.target_node.label:
+        #         root = st
+        #         break
+        #     if root is None or root.cost > st.cost:
+        #         root = st
+        # self.search_roots.remove(root)
+        # return root
         root = min(self.search_roots, key=lambda t : t.cost)
         self.search_roots.remove(root)
         return root
@@ -651,7 +661,12 @@ class Hypergraph:
         else:
             source_nodes = [node for node in self.nodes.values() if node.is_constant]
         target_node = self.getNode(target)
-        t, found_values = Pathfinder(target_node, source_nodes, self.nodes).search()
+        pf = Pathfinder(target_node, source_nodes, self.nodes)
+        try:
+            t, found_values = pf.search()
+        except Exception as e:
+            logger.error(str(e))
+            return None, None        
         if toPrint:
             if t is not None:
                 print(t.printTree())

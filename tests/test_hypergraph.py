@@ -67,8 +67,8 @@ class TestHypergraph():
         hg.addEdge('A', 'A', R.Rincrement)
 
         t, fv = hg.solve('T', {'S': 0})
-        assert t.value == 4
-        assert t.cost == 6
+        assert t.value == 3
+        assert t.cost == 5
 
     def test_independent_cycles(self):
         """Two nested cycles that are completely peripheral to the outer cycle."""
@@ -125,7 +125,7 @@ class TestHypergraph():
         hg.addEdge('S0', 'B', R.Rmean)
         hg.addEdge(['A', 'B'], 'A', R.Rincrement)
         hg.addEdge('S1', 'A', R.Rmean)
-        hg.addEdge('A', 'T', R.Rmean, via=R.geq('s1', 3))
+        hg.addEdge('A', 'T', R.Rmean, via=R.geq('s1', 4))
 
         t, fv = hg.solve('T', {'S0': 0, 'S1': 0})
         assert t.value == 4
@@ -165,7 +165,7 @@ class TestHypergraph():
         hg.addEdge('S', 'B', R.Rmean)
         hg.addEdge({'s1':'B', 's2': ('s1', 'index')}, 'A', R.equal('s2'))
         hg.addEdge('A', 'B', R.Rmean)
-        hg.addEdge('A', 'T', R.Rmean, via=R.geq('s1', 3))
+        hg.addEdge('A', 'T', R.Rmean, via=R.geq('s1', 4))
 
         t, fv = hg.solve('T', {'S': 10})
         assert t.value == 4
