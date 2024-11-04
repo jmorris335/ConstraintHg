@@ -9,12 +9,7 @@
 import os, sys
 sys.path.insert(0, os.path.abspath('../../src/'))
 
-try:
-    import constrainthg
-    # from constrainthg.hypergraph import Hypergraph, Pathfinder, Edge, Node, tNode, EdgeProperty
-    # from constrainthg.relations import *
-except ModuleNotFoundError as e:
-    raise(Exception(str(sys.path) + '\n**' + e.msg))
+import constrainthg
 
 project = 'constrainthg'
 copyright = '2024, John Morris, All rights reserved'
