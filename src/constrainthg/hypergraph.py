@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 import itertools
 from enum import Enum
 
-import constrainthg.CONTROL as CONTROL
+CYCLE_SEARCH_DEPTH = 10000000
 
 class tNode:
     """A basic tree node for printing tree structures."""
@@ -420,7 +420,7 @@ class Pathfinder:
             self.search_roots.append(st)
 
         while len(self.search_roots) > 0:
-            if self.search_counter > CONTROL.CYCLE_SEARCH_DEPTH:
+            if self.search_counter > CYCLE_SEARCH_DEPTH:
                 raise(Exception("Maximum search limit exceeded.")) 
             logger.debug('Search trees: ' + ', '.join(f'{s.label}' for s in self.search_roots))
 

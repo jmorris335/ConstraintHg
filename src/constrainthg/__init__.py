@@ -1,5 +1,5 @@
-from constrainthg.hypergraph import Node, Edge, Hypergraph
-import constrainthg.relations as R
+from src.constrainthg.hypergraph import *
+import src.constrainthg.relations as R
 
 import logging
 
