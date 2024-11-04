@@ -31,7 +31,7 @@ from constrainthg.hypergraph import Hypergraph
 import constrainthg.relations as R
 ```
 
-A hypergraph consists of edges that map between a set of nodes to a single node. We provide the mapping by defining a constraint function (many of which are already defined in the `relationships` module). The two relationships defined in the governing equations are addition and negation. Using the typical syntax, we refer to the functions defined in `relationships` with `R.<name>', in this case `R.Rsum` and `R.Rnegate`. To make the hypergraph we'll need to compose the 5 edges (equations) given above. 
+A hypergraph consists of edges that map between a set of nodes to a single node. We provide the mapping by defining a constraint function (many of which are already defined in the `relationships` module). The two relationships defined in the governing equations are addition and negation. Using the typical syntax, we refer to the functions defined in `relationships` with `R.<name>`, in this case `R.Rsum` and `R.Rnegate`. To make the hypergraph we'll need to compose the 5 edges (equations) given above. 
 ```[python]
 hg = Hypergraph()
 hg.addEdge(['A', 'B'], C, R.Rsum)
