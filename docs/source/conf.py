@@ -6,8 +6,8 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-import sys
-sys.path.append(".")
+import os, sys
+sys.path.insert(0, os.path.abspath('../src/constrainthg'))
 
 from src.constrainthg.hypergraph import Hypergraph, Pathfinder, Edge, Node, tNode, EdgeProperty
 from src.constrainthg.relations import *
