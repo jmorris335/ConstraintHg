@@ -6,8 +6,8 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-from constrainthg.hypergraph import Hypergraph, Pathfinder, Edge, Node, tNode, EdgeProperty
-from constrainthg.relations import *
+# from constrainthg.hypergraph import Hypergraph, Pathfinder, Edge, Node, tNode, EdgeProperty
+# from constrainthg.relations import *
 
 project = 'constrainthg'
 copyright = '2024, John Morris, All rights reserved'
