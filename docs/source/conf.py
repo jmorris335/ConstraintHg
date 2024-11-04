@@ -10,8 +10,11 @@ import os, sys
 sys.path.insert(0, os.path.abspath('../../'))
 
 try:
-    from src.constrainthg.hypergraph import Hypergraph, Pathfinder, Edge, Node, tNode, EdgeProperty
-    from src.constrainthg.relations import *
+    from src import constrainthg
+    from constrainthg.hypergraph import Hypergraph, Pathfinder, Edge, Node, tNode, EdgeProperty
+    from constrainthg.relations import *
+    # from src.constrainthg.hypergraph import Hypergraph, Pathfinder, Edge, Node, tNode, EdgeProperty
+    # from src.constrainthg.relations import *
 except ModuleNotFoundError as e:
     raise(Exception(str(sys.path) + '\n**' + e.msg))
 
