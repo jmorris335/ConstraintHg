@@ -98,6 +98,23 @@ def Rmin(*args, **kwargs):
     args = extend(args, kwargs)
     return min(args)
 
+def multandsum(mult_identifiers: list, sum_identifiers: list):
+    """Convenient shorthand for multiplying the values identified in 
+    `mult_identifiers` and adding them to the values identified in `sum_identifiers`."""
+    if not isinstance(mult_identifiers, list):
+        mult_identifiers = [mult_identifiers]
+    if not isinstance(sum_identifiers, list):
+        sum_identifiers = [sum_identifiers]
+    ids = mult_identifiers + sum_identifiers
+    def Rmultandsum(*args, **kwargs):
+        out = 1.0
+        args, kwargs = getKeywordArguments(args, kwargs, ids)
+        for id in mult_identifiers:
+            out *= kwargs[id]
+        for id in sum_identifiers:
+            out += kwargs[id]
+        return out
+    return Rmultandsum
 
 # OPERATIONS
 def Rincrement(*args, **kwargs):
@@ -123,7 +140,7 @@ def geq(identifier: str, val: int):
     to `val`."""
     def Rcyclecounter(*args, **kwargs):
         args, kwargs = getKeywordArguments(args, kwargs, identifier)
-        return kwargs[identifier] > val
+        return kwargs[identifier] >= val
     return Rcyclecounter
 
 # TRIGONOMETRY
