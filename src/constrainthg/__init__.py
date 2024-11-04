@@ -1,5 +1,5 @@
-from src.constrainthg.hypergraph import *
-import src.constrainthg.relations as R
+from constrainthg.hypergraph import *
+import constrainthg.relations as R
 
 import logging
 

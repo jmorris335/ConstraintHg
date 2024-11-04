@@ -7,12 +7,12 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 import os, sys
-sys.path.insert(0, os.path.abspath('../../'))
+sys.path.insert(0, os.path.abspath('../../src/'))
 
 try:
-    from src import constrainthg
-    # from src.constrainthg.hypergraph import Hypergraph, Pathfinder, Edge, Node, tNode, EdgeProperty
-    # from src.constrainthg.relations import *
+    # import constrainthg
+    from constrainthg.hypergraph import Hypergraph, Pathfinder, Edge, Node, tNode, EdgeProperty
+    from constrainthg.relations import *
 except ModuleNotFoundError as e:
     raise(Exception(str(sys.path) + '\n**' + e.msg))
 
