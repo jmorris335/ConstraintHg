@@ -7,7 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 import os, sys
-sys.path.insert(0, os.path.abspath('../../src/constrainthg/'))
+sys.path.insert(0, os.path.abspath('./src/constrainthg/'))
 
 from constrainthg.hypergraph import Hypergraph, Pathfinder, Edge, Node, tNode, EdgeProperty
 from constrainthg.relations import *
