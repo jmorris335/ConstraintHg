@@ -1,4 +1,4 @@
 matplotlib==3.9.2
 numpy==2.1.2
 pytest==8.3.3
-
+furo==2024.8.6
