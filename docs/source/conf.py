@@ -9,8 +9,8 @@
 import os, sys
 sys.path.insert(0, os.path.abspath('../src/constrainthg'))
 
-from src.constrainthg.hypergraph import Hypergraph, Pathfinder, Edge, Node, tNode, EdgeProperty
-from src.constrainthg.relations import *
+from constrainthg.hypergraph import Hypergraph, Pathfinder, Edge, Node, tNode, EdgeProperty
+from constrainthg.relations import *
 
 project = 'constrainthg'
 copyright = '2024, John Morris, All rights reserved'
