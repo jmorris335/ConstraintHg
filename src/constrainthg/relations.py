@@ -73,6 +73,21 @@ def Rdivide(*args, **kwargs):
         s1 /= s
     return s1
 
+def Rceiling(*args, **kwargs):
+    """Returns the ceiling of the first argument"""
+    args = extend(args, kwargs)
+    return np.ceil(args[0])
+
+def Rfloor(*args, **kwargs):
+    """Returns the floor of the first argument"""
+    args = extend(args, kwargs)
+    return np.floor(args[0])
+
+def Rfloor_divide(*args, **kwargs):
+    """Returns the largest integer smaller or equal to the division of s1 and s2."""
+    args, kwargs = getKeywordArguments(args, kwargs, ['s1', 's2'])
+    return kwargs['s1'] // kwargs['s2']
+
 def Rnegate(*args, **kwargs):
     """Returns the negative of the first argument."""
     args = extend(args, kwargs)
