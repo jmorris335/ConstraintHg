@@ -17,6 +17,24 @@ from enum import Enum
 
 CYCLE_SEARCH_DEPTH = 10000000
 
+## Helper functions
+def appendToDictList(d: dict, key, val):
+    """Appends the value to a dictionary where the dict.values are lists."""
+    if key not in d:
+        d[key] = list()
+    d[key].append(val)
+
+def makeList(val)-> list:
+    """Ensures that the value is a list, or else list containing the value."""
+    if isinstance(val, list):
+        return val
+    elif isinstance(val, str):
+        return [val]
+    try: 
+        return list(val)
+    except TypeError:
+        return [val]
+    
 class tNode:
     """A basic tree node for printing tree structures."""
     class conn:
@@ -207,7 +225,7 @@ class Node:
         self.description = description
         self.is_constant = static_value is not None
         self.index_offset = starting_index - 1
-        self.super_nodes = list() if super_nodes is None else super_nodes
+        self.super_nodes = list() if super_nodes is None else makeList(super_nodes)
 
     def __str__(self)-> str:
         out = self.label
@@ -263,13 +281,22 @@ class Edge:
         self.label = label
         self.edge_props = self.setupEdgeProperties(edge_props)
 
-    def setupEdgeProperties(self, inputs)-> list:
+    def addSourceNode(self, sn: Node):
+        """Adds a source node to an initialized edge."""
+        if isinstance(sn, tuple):
+            source_nodes = [n for n in self.source_nodes.values].append(sn)
+        else:
+            source_nodes = self.source_nodes | {sn.label: sn}
+            self.found_tNodes[sn.label] = list()
+        self.source_nodes = self.identifySouceNodes(source_nodes)
+        self.edge_props = self.setupEdgeProperties(self.edge_props)
+
+    def setupEdgeProperties(self, inputs: None)-> list:
         """Parses the edge properties."""
         eps = list()
         if inputs is None:
             return eps
-        if not isinstance(inputs, list):
-            inputs = [inputs]
+        inputs = makeList(inputs)
         for ep in inputs:
             if isinstance(ep, EdgeProperty):
                 eps.append(ep)
@@ -318,13 +345,17 @@ class Edge:
                     out.add(p.name)
         return out 
 
-    def identifySouceNodes(self, source_nodes, rel: Callable, via: Callable):
+    def identifySouceNodes(self, source_nodes, rel: Callable=None, via: Callable=None):
         """Returns a {str: node} dictionary where each string is the keyword label used
         in the rel and via methods."""
+        if rel is None:
+            rel = self.rel
+        if via is None:
+            via = self.via
         if isinstance(source_nodes, dict):
             return self.identifyLabeledSourceNodes(source_nodes, rel, via)
-        elif not isinstance(source_nodes, list):
-            source_nodes = [source_nodes]
+        else:
+            source_nodes = makeList(source_nodes)
         return self.identifyUnlabeledSourceNodes(source_nodes, rel, via)
     
     def identifyUnlabeledSourceNodes(self, source_nodes: list, rel: Callable, via: Callable):
@@ -393,7 +424,7 @@ class Edge:
     
     def getSourceTNodeCombinations(self, t: tNode):
         """Returns all viable combinations of source nodes using the tNode `t`."""
-        self.found_tNodes[t.label].append(t)
+        appendToDictList(self.found_tNodes, t.label, t)
         st_candidates = list()
 
         for st_label, sts in self.found_tNodes.items():
@@ -651,8 +682,7 @@ class Hypergraph:
                 inputs[key] = node
             return node_list, inputs
         
-        if not isinstance(nodes, list):
-            nodes = [nodes]
+        nodes = makeList(nodes)
         node_list = [self.addNode(n) for n in nodes]
         inputs = [self.getNode(node) for node in nodes if not isinstance(node, tuple)]
         return node_list, inputs
@@ -678,7 +708,7 @@ class Hypergraph:
             t, found_values = pf.search()
         except Exception as e:
             logger.error(str(e))
-            return None, None        
+            raise(e)     
         if toPrint:
             if t is not None:
                 print(t.printTree())
