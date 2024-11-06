@@ -16,8 +16,8 @@ omega0 = Node("omega0", 0.0)
 omega = Node("omega")
 d_omega = Node("delta omega")
 c = Node("damping coeff", 1.5)
-alpha = Node("alpha", starting_index=2)
-time_step = Node("time_step", .01)
+alpha = Node("alpha", index_offset=1)
+time_step = Node("time_step", .03)
 
 ## Functions
 def integrate(s1, s2, s3, **kwargs):
@@ -48,7 +48,7 @@ hg.addEdge({'s1': omega, 's4': ('s1', 'index'),
 
 hg.addEdge({'s1':theta, 's2':('s1', 'index'), 's3': omega}, 'final theta', R.equal('s1'), 
         #    via=lambda s2, **kwargs : s2 >= 400, label='final theta')
-           via=lambda s1, s3, **kwargs : abs(s1) < .1 and abs(s3) < .1, edge_props='LEVEL')
+           via=lambda s1, s3, **kwargs : abs(s1) < .05 and abs(s3) < .05, edge_props='LEVEL')
 
 # hg.printPaths('final theta')
 

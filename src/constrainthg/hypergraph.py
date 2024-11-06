@@ -15,8 +15,6 @@ logger = logging.getLogger(__name__)
 import itertools
 from enum import Enum
 
-CYCLE_SEARCH_DEPTH = 10000000
-
 ## Helper functions
 def appendToDictList(d: dict, key, val):
     """Appends the value to a dictionary where the dict.values are lists."""
@@ -25,7 +23,7 @@ def appendToDictList(d: dict, key, val):
     d[key].append(val)
 
 def makeList(val)-> list:
-    """Ensures that the value is a list, or else list containing the value."""
+    """Ensures that the value is a list, or else a list containing the value."""
     if isinstance(val, list):
         return val
     elif isinstance(val, str):
@@ -34,6 +32,17 @@ def makeList(val)-> list:
         return list(val)
     except TypeError:
         return [val]
+    
+def makeSet(val)-> list:
+    """Ensures that the value is a set, or else a set containing the value."""
+    if isinstance(val, set):
+        return val
+    elif isinstance(val, str):
+        return {val}
+    try: 
+        return set(val)
+    except TypeError:
+        return {val}
     
 class tNode:
     """A basic tree node for printing tree structures."""
@@ -84,7 +93,7 @@ class tNode:
         self.children = list() if children is None else children
         self.cost = cost
         self.trace = list() if trace is None else trace
-        self.indices = {label : 0} if indices is None else indices
+        self.indices = {label : 1} if indices is None else indices
         self.gen_edge_label = gen_edge_label
         self.gen_edge_cost = gen_edge_cost
         self.values = {label : [value,]}
@@ -146,13 +155,18 @@ class tNode:
     @property
     def index(self)-> int:
         """The current number of states cycled through along the tNode"""
-        if self.label not in self.indices:
-            return 0
         return max(self.indices.values()) + self.index_offset
+        # if self.label not in self.indices:
+        #     return 1
         # return self.indices[self.label] + self.index_offset
     
     def getTreeCost(self, root=None, checked_edges: set=None):
         """Returns the cost of solving to the leaves of the tree."""
+        #FF0000
+        #DEBUG MODE
+        return 1.0
+        #DEBUG MODE
+        #FF0000
         if root is None:
             root = self
         if checked_edges is None:
@@ -169,18 +183,18 @@ class tNode:
         out = self.label
         if self.value is not None:
             if isinstance(self.value, float):
-                out += f'= {self.value:.4g}'
+                out += f'={self.value:.4g}'
             else:
-                out += f'= {self.value}'
+                out += f'={self.value}'
         if self.cost is not None:
             out += f', cost={self.cost:.4g}'
         return out
     
 class Node:
     """A value in the hypergraph, equivalent to a wired connection."""
-    def __init__(self, label: str, static_value=None, generating_edges: list=None, 
-                 leading_edges: list=None, super_nodes: list=None, 
-                 description: str=None, starting_index: int=1):
+    def __init__(self, label: str, static_value=None, generating_edges: set=None, 
+                 leading_edges: set=None, super_nodes: set=None, 
+                 description: str=None, index_offset: int=0):
         """Creates a new `Node` object.
         
         Parameters
@@ -189,12 +203,12 @@ class Node:
             A unique identifier for the node.
         static_value : Any, Optional
             The constant value of the node, set as an input.
-        generating_edges : list, Optional
-            A list of edges that have the node as their target.
-        leading_edges : list, Optional
-            A list of edges that have the node as one their sources.
-        super_nodes : List[Node], Optional
-            A list of nodes that have this node as a subset, see note [1] below.
+        generating_edges : set, Optional
+            A set of edges that have the node as their target.
+        leading_edges : set, Optional
+            A set of edges that have the node as one their sources.
+        super_nodes : Set[Node], Optional
+            A set of nodes that have this node as a subset, see note [1] below.
         description : str, Optional
             A description of the node useful for debugging.
         is_constant : bool, default=False
@@ -220,12 +234,12 @@ class Node:
         """
         self.label = label
         self.static_value = static_value
-        self.generating_edges = list() if generating_edges is None else generating_edges
-        self.leading_edges = list() if leading_edges is None else leading_edges
+        self.generating_edges = set() if generating_edges is None else generating_edges
+        self.leading_edges = set() if leading_edges is None else leading_edges
         self.description = description
         self.is_constant = static_value is not None
-        self.index_offset = starting_index - 1
-        self.super_nodes = list() if super_nodes is None else makeList(super_nodes)
+        self.index_offset = index_offset
+        self.super_nodes = set() if super_nodes is None else makeSet(super_nodes)
 
     def __str__(self)-> str:
         out = self.label
@@ -233,6 +247,30 @@ class Node:
             out += ': ' + self.description
         return out
     
+    def __iadd__(self, o):
+        return self.union(self, o)
+    
+    @staticmethod
+    def union(a, *args):
+        """Performs a deep union of the two nodes, replacing values of `a` with those 
+        of `b` where necessary."""
+        for b in args:
+            if not isinstance(a, Node) or not isinstance(b, Node):
+                raise TypeError("Inputs must be of type Node.")
+            if b.label is not None:
+                a.label = b.label
+            if b.static_value is not None:
+                a.static_value = b.static_value
+                a.is_constant = b.is_constant
+            if b.description is not None:
+                a.description = b.description
+            if b.index_offset != 0:
+                a.index_offset = b.index_offset
+            a.generating_edges = a.generating_edges.union(b.generating_edges)
+            a.leading_edges = a.leading_edges.union(b.leading_edges)
+            a.super_nodes = a.super_nodes.union(b.super_nodes)
+        return a
+
 class EdgeProperty(Enum):
     """Enumerated object describing various configurations of an Edge that can be 
     passed during setup. Used as shorthand for common configurations."""
@@ -281,16 +319,28 @@ class Edge:
         self.label = label
         self.edge_props = self.setupEdgeProperties(edge_props)
 
-    def addSourceNode(self, sn: Node):
-        """Adds a source node to an initialized edge."""
-        if isinstance(sn, tuple):
-            source_nodes = [n for n in self.source_nodes.values].append(sn)
+    def addSourceNode(self, sn):
+        """Adds a source node to an initialized edge.
+        
+        Parameters
+        ----------
+        sn : dict | Node | Tuple(str, str)
+            The source node to be added to the edge.
+        """
+        if isinstance(sn, dict):
+            key, sn = list(sn.items())[0]
         else:
-            source_nodes = self.source_nodes | {sn.label: sn}
+            key = self.getSourceNodeIdentifier()
+        if not isinstance(sn, tuple):
+            sn.leading_edges.add(self)
             self.found_tNodes[sn.label] = list()
+
+        source_nodes = self.source_nodes | {key: sn}
+        if hasattr(self, 'og_source_nodes'):
+            self.og_source_nodes[key] = sn
         self.source_nodes = self.identifySouceNodes(source_nodes)
         self.edge_props = self.setupEdgeProperties(self.edge_props)
-
+        
     def setupEdgeProperties(self, inputs: None)-> list:
         """Parses the edge properties."""
         eps = list()
@@ -309,31 +359,66 @@ class Edge:
         for ep in eps:
             self.handleEdgeProperty(ep)
         return eps
-
+    
+    def getSourceNodeIdentifier(self, offset: int=0):
+        """Returns a generic label for a source node."""
+        return f's{len(self.source_nodes) + offset + 1}'
+    
     def handleEdgeProperty(self, edge_prop: EdgeProperty):
-        """Configures the edge based on the passed property."""
-        og_source_nodes = {key: val for key, val in self.source_nodes.items()}
-        og_rel = self.rel
-        og_via = self.via
         if edge_prop is EdgeProperty.LEVEL:
-            ind_entries = dict()
-            for key, sn in og_source_nodes.items():
-                if isinstance(sn, tuple):
-                    continue #Need to handle if indices have been passed already as psuedos
-                next_key = f's{len(og_source_nodes) + len(ind_entries) + 1}'
-                ind_entries[next_key] = (key, 'index')
-            self.source_nodes = og_source_nodes | ind_entries
+            if not hasattr(self, 'og_source_nodes'):
+                self.og_source_nodes = {key: val for key, val in self.source_nodes.items()}
+                self.og_rel = self.rel
+                self.og_via = self.via
+            tuple_idxs = {id:el[0] for id, el in self.source_nodes.items() if isinstance(el, tuple)}
+            sns = {key: val for key, val in self.source_nodes.items()}
+            for id, sn in sns.items():
+                if isinstance(sn, tuple) or id in tuple_idxs.values():
+                    continue
+                next_id = self.getSourceNodeIdentifier()
+                self.source_nodes[next_id] = (id, 'index')
+                tuple_idxs[next_id] = id
 
-            og_kwargs = lambda **kwargs : {key: val for key,val in kwargs.items() if key in og_source_nodes}
+            og_kwargs = lambda **kwargs : {key: val for key,val in kwargs.items() if key in self.og_source_nodes}
             def levelCheck(*args, **kwargs):
                 """Returns true if all passed indices are equivalent."""
-                if not og_via(*args, **og_kwargs(**kwargs)):
+                if not self.og_via(*args, **kwargs):
                     return False
-                idxs = {val for key, val in kwargs.items() if key in ind_entries}
+                idxs = {val for key, val in kwargs.items() if key in tuple_idxs}
                 return len(idxs) == 1
-
-            self.rel = lambda *args, **kwargs : og_rel(*args, **og_kwargs(**kwargs))
+            
             self.via = levelCheck
+            self.rel = lambda *args, **kwargs : self.og_rel(*args, **og_kwargs(**kwargs))
+            return
+
+
+    # def handleEdgeProperty1(self, edge_prop: EdgeProperty):
+    #     """Configures the edge based on the passed property."""
+    #     if not hasattr(self, 'og_source_nodes'):
+    #         self.og_source_nodes = {key: val for key, val in self.source_nodes.items()}
+    #         self.og_rel = self.rel
+    #         self.og_via = self.via
+    #     if edge_prop is EdgeProperty.LEVEL:
+    #         idx_entries  = dict()
+    #         provided_idxs = {id:el[0] for id, el in self.og_source_nodes.items() if isinstance(el, tuple)}
+    #         for key, sn in self.og_source_nodes.items():
+    #             if isinstance(sn, tuple):
+    #                 continue
+    #             if key not in provided_idxs.values():
+    #                 next_key = self.getSourceNodeIdentifier(len(idx_entries))
+    #                 idx_entries[next_key] = (key, 'index')
+    #         self.source_nodes = self.og_source_nodes | idx_entries
+
+    #         og_kwargs = lambda **kwargs : {key: val for key,val in kwargs.items() if key in self.og_source_nodes}
+    #         def levelCheck(*args, **kwargs):
+    #             """Returns true if all passed indices are equivalent."""
+    #             if not self.og_via(*args, **og_kwargs(**kwargs)):
+    #                 return False
+    #             idxs = {val for key, val in kwargs.items() if key in idx_entries or key in provided_idxs}
+    #             return len(idxs) == 1
+
+    #         self.rel = lambda *args, **kwargs : self.og_rel(*args, **og_kwargs(**kwargs))
+    #         self.via = levelCheck
 
     @staticmethod
     def getNamedArguments(methods: List[Callable])-> set:
@@ -422,10 +507,15 @@ class Edge:
             return self.rel(**source_vals)
         return None
     
-    def getSourceTNodeCombinations(self, t: tNode):
+    def getSourceTNodeCombinations(self, t: tNode, DEBUG: bool=False):
         """Returns all viable combinations of source nodes using the tNode `t`."""
         appendToDictList(self.found_tNodes, t.label, t)
         st_candidates = list()
+
+        if DEBUG:
+            for st_label, sts in self.found_tNodes.items():
+                msg = f' - {st_label}: ' + ', '.join(f'{str(st.value)[:4]}({st.index})' for st in sts)
+                logger.log(logging.DEBUG + 1, msg)
 
         for st_label, sts in self.found_tNodes.items():
             if st_label == t.label:
@@ -442,6 +532,9 @@ class Edge:
     def via_true(*args, **kwargs):
         """Returns true for all inputs (unconditional edge)."""
         return True
+    
+    def __str__(self):
+        return self.label
 
 class Pathfinder:
     """Object for searching a path through the hypergraph from a collection of source
@@ -466,17 +559,20 @@ class Pathfinder:
         self.search_counter = 0
         """Number of nodes explored"""
 
-    def search(self):
+    def search(self, debug_nodes: list=None, debug_edges: list=None, search_depth: int=10000):
         """Searches the hypergraph for a path from the source nodes to the target 
         node. Returns the solved tNode for the target and a dictionary of found values
         {label : [Any,]}. """
+        debug_nodes = list() if debug_nodes is None else debug_nodes
+        debug_edges = list() if debug_edges is None else debug_edges
         logger.info(f'Begin search for {self.target_node.label}')
+
         for sn in self.source_nodes:
             st = tNode(sn.label, sn.static_value, cost=0., index_offset=sn.index_offset)
             self.search_roots.append(st)
 
         while len(self.search_roots) > 0:
-            if self.search_counter > CYCLE_SEARCH_DEPTH:
+            if self.search_counter > search_depth:
                 raise(Exception("Maximum search limit exceeded.")) 
             logger.debug('Search trees: ' + ', '.join(f'{s.label}' for s in self.search_roots))
 
@@ -486,21 +582,27 @@ class Pathfinder:
                 logger.info(f'Final search counter: {self.search_counter}')
                 return root, root.values
             
-            self.explore(root)
+            self.explore(root, debug_nodes, debug_edges)
             
         logger.info(f'Finished search, no solutions found')
         logger.info(f'Final search counter: {self.search_counter}')
         return None, None
     
-    def explore(self, t: tNode):
+    def explore(self, t: tNode, debug_nodes: list=None, debug_edges: list=None):
         """Discovers all possible routes from the tNode."""
         n = self.nodes[t.label]
-        super_node_leading_edges = [sup_n.leading_edges for sup_n in n.super_nodes]
-        leading_edges = itertools.chain(*[n.leading_edges, *super_node_leading_edges])
-        for i, edge in enumerate(leading_edges ):
-            combos = list(edge.getSourceTNodeCombinations(t))
-            if len(combos) > 0:
-                logger.debug(f"Edge {i}, <{edge.label}>:")
+        super_node_leading_edges = (sup_n.leading_edges for sup_n in n.super_nodes)
+        leading_edges = n.leading_edges.union(*super_node_leading_edges)
+        if n.label in debug_nodes:
+            logger.log(logging.DEBUG + 1, f'Exploring {n.label}, leading edges: ' + 
+                         ', '.join(str(le) for le in leading_edges) + f'\n{t.printTree()}')
+            
+        for i, edge in enumerate(leading_edges):
+            DEBUG = edge.label in debug_edges
+            level = logging.DEBUG + (1 if DEBUG else 0)
+            logger.log(level, f"Edge {i}, <{edge.label}>:")
+
+            combos = edge.getSourceTNodeCombinations(t, DEBUG)
             for j, combo in enumerate(combos):
                 logger.debug(f' - Combo {j}: ' + ', '.join(f'{n.label} ({n.index})' for n in combo))
                 self.makeParentTNode(combo, edge.target, edge)
@@ -526,6 +628,7 @@ class Pathfinder:
                 
     def selectRoot(self)-> tNode:
         """Determines the most optimal path to explore."""
+        #TODO: Check all leading edges to find the node with the lowest cost path
         if len(self.search_roots) == 0:
             return None
         # root = None
@@ -610,24 +713,31 @@ class Hypergraph:
         while check_label in self.edges:
             check_label = label + str(i := i + 1)
         return check_label
+    
+    def addNode(self, *args, **kwargs)-> Node:
+        """Wraps Node.__init__() and also inserts the Node into the hypergraph."""
+        node = Node(*args, **kwargs)
+        self.insertNode(node)
 
-    def addNode(self, node: Node, value=None)-> Node:
+    def insertNode(self, node: Node, value=None)-> Node:
         """Adds a node to the hypergraph via a union operation."""
         if isinstance(node, tuple):
             return None
-        label = node.label if isinstance(node, Node) else node
-        if label in self.nodes: 
-            self.nodes[label].value = node.static_value if isinstance(node, Node) else value
-            return self.nodes[label]
-
-        label = self.requestNodeLabel(label)
         if isinstance(node, Node):
-            node.label = label
+            if node.label in self.nodes:
+                label = node.label
+                self.nodes[label] += node
+            else:
+                label = self.requestNodeLabel(node.label)
+                self.nodes[label] = node
         else:
-            node = Node(label, value) 
-            node.is_constant == value is not None
-        self.nodes[label] = node
-        return node
+            if node in self.nodes: 
+                label = node
+                self.nodes[label].static_value = value
+            else:
+                label = self.requestNodeLabel(node)
+                self.nodes[label] = Node(label, value) 
+        return self.nodes[label]
 
     def addEdge(self, sources: dict, target, rel, via=None, weight: float=1.0, 
                 label: str=None, edge_props=None):
@@ -662,11 +772,19 @@ class Hypergraph:
         edge = Edge(label, source_inputs, target_nodes[0], rel, via, weight, edge_props=edge_props)
         self.edges[label] = edge
         for sn in source_nodes:
-            sn.leading_edges.append(edge)
+            sn.leading_edges.add(edge)
         for tn in target_nodes:
-            tn.generating_edges.append(edge)
+            tn.generating_edges.add(edge)
         return edge
     
+    def insertEdge(self, edge: Edge):
+        """Inserts a fully formed edge into the hypergraph."""
+        if not isinstance(edge, Edge):
+            raise TypeError('edge must be of type `Edge`')
+        self.edges[edge.label] = edge
+        tn = self.insertNode(edge.target)
+        tn.generating_edges.add(edge)
+        
     def getNodesAndIdentifiers(self, nodes):
         """Helper function for getting a list of nodes and their identified argument 
         format for various input types."""
@@ -677,13 +795,13 @@ class Hypergraph:
                     if node[0] not in nodes:
                         raise(Exception(f"Pseudo node identifier '{node[0]}' not included in Edge."))
                 else:
-                    node = self.addNode(node)
+                    node = self.insertNode(node)
                     node_list.append(node)
                 inputs[key] = node
             return node_list, inputs
         
         nodes = makeList(nodes)
-        node_list = [self.addNode(n) for n in nodes]
+        node_list = [self.insertNode(n) for n in nodes]
         inputs = [self.getNode(node) for node in nodes if not isinstance(node, tuple)]
         return node_list, inputs
     
@@ -693,8 +811,32 @@ class Hypergraph:
             node = self.getNode(key)
             node.static_value = value
     
-    def solve(self, target, node_values: dict=None, toPrint: bool=False):
-        """Runs a DFS search to identify the first valid solution for `target`."""
+    def solve(self, target, node_values: dict=None, toPrint: bool=False, 
+              debug_nodes: list=None, debug_edges: list=None, search_depth: int=100000):
+        """Runs a DFS search to identify the first valid solution for `target`.
+        
+        Parameters
+        ----------
+        target : Node | str
+            The node or label of the node to solve for.
+        node_values : dict, optional
+            A dictionary {label : value} of input values.
+        toPrint : bool, default=False
+            Prints the search tree if set to true.
+        debug_nodes : List[label,], optional
+            A list of node labels to log debugging information for
+        debug_edges : List[label,], optional
+            A list of edge labels to log debugging information for
+        search_depth : int, default=100000
+            Number of nodes to explore before concluding no valid path.
+
+        Returns
+        -------
+        tNode | None
+            the tNode for the minimum-cost path found
+        dict | None
+            a dictionary of values found for each node in the search path, as {label : List[value,]}
+        """
         self.reset()
         if node_values is not None:
             self.setNodeValues(node_values)
@@ -705,7 +847,7 @@ class Hypergraph:
         target_node = self.getNode(target)
         pf = Pathfinder(target_node, source_nodes, self.nodes)
         try:
-            t, found_values = pf.search()
+            t, found_values = pf.search(debug_nodes, debug_edges, search_depth)
         except Exception as e:
             logger.error(str(e))
             raise(e)     

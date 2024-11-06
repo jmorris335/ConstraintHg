@@ -2,11 +2,12 @@ from constrainthg.hypergraph import *
 import constrainthg.relations as R
 
 import logging
+LOG_LEVEL = logging.DEBUG + 1
 
 logger = logging.getLogger(__name__)
 
 fh = logging.FileHandler("constrainthg.log")
-fh.setLevel(logging.INFO)
+fh.setLevel(LOG_LEVEL)
 logger.info('Package begin execution')
 
 log_formatter = logging.Formatter(
@@ -17,4 +18,4 @@ log_formatter = logging.Formatter(
 fh.setFormatter(log_formatter)
 logger.addHandler(fh)
 
-logger.setLevel(logging.INFO)
+logger.setLevel(LOG_LEVEL)
