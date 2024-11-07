@@ -18,7 +18,7 @@ Processing a series of nodes and edges (a "route") is what constitutes a simulat
 
 ## Getting started
 *Note that this demo is found in [`demos/demo_basic.py`](https://github.com/jmorris335/ConstraintHg/blob/main/demos/demo_basic.py)*
-Let's build a basic action hypergraph of the following equations:
+Let's build a basic constraint hypergraph of the following equations:
 - $A + B = C$
 - $A = -D$
 - $B = -E$
