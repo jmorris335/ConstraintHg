@@ -1,5 +1,5 @@
 ![Static Badge](https://img.shields.io/badge/homepage-blue?link=https%3A%2F%2Fgithub.com%2Fjmorris335%2FConstraintHg%2Fwiki)
- ![Read the Docs](https://img.shields.io/readthedocs/constrainthg?link=https%3A%2F%2Fconstrainthg.readthedocs.io%2Fen%2Flatest%2Findex.html) ![Static Badge](https://img.shields.io/badge/tests-failing-brightred) ![GitHub Release](https://img.shields.io/github/v/release/jmorris335/ConstraintHg?include_prereleases&display_name=tag) ![GitHub last commit](https://img.shields.io/github/last-commit/jmorris335/ConstraintHg)
+ ![Read the Docs](https://img.shields.io/readthedocs/constrainthg?link=https%3A%2F%2Fconstrainthg.readthedocs.io%2Fen%2Flatest%2Findex.html) ![Static Badge](https://img.shields.io/badge/tests-failing-red) ![GitHub Release](https://img.shields.io/github/v/release/jmorris335/ConstraintHg?include_prereleases&display_name=tag) ![GitHub last commit](https://img.shields.io/github/last-commit/jmorris335/ConstraintHg)
 
 
 
