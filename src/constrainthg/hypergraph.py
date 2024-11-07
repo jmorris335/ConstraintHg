@@ -62,7 +62,7 @@ class tNode:
                  gen_edge_label: str=None, gen_edge_cost: float=0.0, 
                  index_offset: int=1.0, join_status: str='None' ):
         """
-        Creates a node in a search tree.
+        Creates the root of a search tree.
 
         Parameters
         ----------
@@ -74,9 +74,6 @@ class tNode:
             tNodes that form the source nodes of an edge leading to the tNode.
         cost : float, optional
             Value indicating the solving the tree rooted at the tNode.
-        indices: dict, optional
-            Counts of how many times each node was uniquely solved for in the 
-            path (label : int).
         trace : list, optional
             Top down trace of how the tNode could be resolved, used for path exploration.
         gen_edge_label : str, optional
@@ -87,18 +84,23 @@ class tNode:
             Offset for calculating the index (allowing for iterative presetting).
         join_status : str, optional
             Indicates if the tNode is the last of a set of children, used for printing.
+
+        Properties
+        ----------
+        index : int
+            The maximum times the tNode or any child tNodes are repeated in the tree.
         """
         self.label = label
         self.value = value
         self.children = list() if children is None else children
         self.cost = cost
         self.trace = list() if trace is None else trace
-        self.indices = {label : 1} if indices is None else indices
         self.gen_edge_label = gen_edge_label
         self.gen_edge_cost = gen_edge_cost
         self.values = {label : [value,]}
         self.join_status = join_status
         self.index_offset = index_offset
+        self.index = max([1] + [c.index for c in self.children]) + self.index_offset
  
     def printConn(self, last=True)-> str:
         """Selecter function for the connector string on the tree print."""
@@ -144,22 +146,6 @@ class tNode:
             out += c.getDescendents()
         return out
     
-    def mergeIndices(self, other: dict):
-        """Updates the indices with those of another tNode."""
-        for label in other:
-            if label in self.indices:
-                self.indices[label] = max((self.indices[label], other[label]))
-            else:
-                self.indices[label] = other[label]
-
-    @property
-    def index(self)-> int:
-        """The current number of states cycled through along the tNode"""
-        return max(self.indices.values()) + self.index_offset
-        # if self.label not in self.indices:
-        #     return 1
-        # return self.indices[self.label] + self.index_offset
-    
     def getTreeCost(self, root=None, checked_edges: set=None):
         """Returns the cost of solving to the leaves of the tree."""
         #FF0000
@@ -186,6 +172,7 @@ class tNode:
                 out += f'={self.value:.4g}'
             else:
                 out += f'={self.value}'
+        out += f', index={self.index}'
         if self.cost is not None:
             out += f', cost={self.cost:.4g}'
         return out
@@ -391,35 +378,6 @@ class Edge:
             self.rel = lambda *args, **kwargs : self.og_rel(*args, **og_kwargs(**kwargs))
             return
 
-
-    # def handleEdgeProperty1(self, edge_prop: EdgeProperty):
-    #     """Configures the edge based on the passed property."""
-    #     if not hasattr(self, 'og_source_nodes'):
-    #         self.og_source_nodes = {key: val for key, val in self.source_nodes.items()}
-    #         self.og_rel = self.rel
-    #         self.og_via = self.via
-    #     if edge_prop is EdgeProperty.LEVEL:
-    #         idx_entries  = dict()
-    #         provided_idxs = {id:el[0] for id, el in self.og_source_nodes.items() if isinstance(el, tuple)}
-    #         for key, sn in self.og_source_nodes.items():
-    #             if isinstance(sn, tuple):
-    #                 continue
-    #             if key not in provided_idxs.values():
-    #                 next_key = self.getSourceNodeIdentifier(len(idx_entries))
-    #                 idx_entries[next_key] = (key, 'index')
-    #         self.source_nodes = self.og_source_nodes | idx_entries
-
-    #         og_kwargs = lambda **kwargs : {key: val for key,val in kwargs.items() if key in self.og_source_nodes}
-    #         def levelCheck(*args, **kwargs):
-    #             """Returns true if all passed indices are equivalent."""
-    #             if not self.og_via(*args, **og_kwargs(**kwargs)):
-    #                 return False
-    #             idxs = {val for key, val in kwargs.items() if key in idx_entries or key in provided_idxs}
-    #             return len(idxs) == 1
-
-    #         self.rel = lambda *args, **kwargs : self.og_rel(*args, **og_kwargs(**kwargs))
-    #         self.via = levelCheck
-
     @staticmethod
     def getNamedArguments(methods: List[Callable])-> set:
         """Returns keywords for any keyed, required arguments (non-default)."""
@@ -515,7 +473,7 @@ class Edge:
         if DEBUG:
             for st_label, sts in self.found_tNodes.items():
                 msg = f' - {st_label}: ' + ', '.join(f'{str(st.value)[:4]}({st.index})' for st in sts)
-                logger.log(logging.DEBUG + 1, msg)
+                logger.log(logging.DEBUG + 2, msg)
 
         for st_label, sts in self.found_tNodes.items():
             if st_label == t.label:
@@ -558,6 +516,8 @@ class Pathfinder:
         self.search_roots = list()
         self.search_counter = 0
         """Number of nodes explored"""
+        self.explored_edges = dict()
+        """Dictionary of explored edges, counting the number of times they were processed {label : int}"""
 
     def search(self, debug_nodes: list=None, debug_edges: list=None, search_depth: int=10000):
         """Searches the hypergraph for a path from the source nodes to the target 
@@ -573,19 +533,20 @@ class Pathfinder:
 
         while len(self.search_roots) > 0:
             if self.search_counter > search_depth:
+                self.logDebuggingReport()
                 raise(Exception("Maximum search limit exceeded.")) 
             logger.debug('Search trees: ' + ', '.join(f'{s.label}' for s in self.search_roots))
 
             root = self.selectRoot()
             if root.label is self.target_node.label:
                 logger.info(f'Finished search for {self.target_node.label} with value of {root.value}')
-                logger.info(f'Final search counter: {self.search_counter}')
+                self.logDebuggingReport()
                 return root, root.values
             
             self.explore(root, debug_nodes, debug_edges)
             
         logger.info(f'Finished search, no solutions found')
-        logger.info(f'Final search counter: {self.search_counter}')
+        self.logDebuggingReport()
         return None, None
     
     def explore(self, t: tNode, debug_nodes: list=None, debug_edges: list=None):
@@ -594,18 +555,25 @@ class Pathfinder:
         super_node_leading_edges = (sup_n.leading_edges for sup_n in n.super_nodes)
         leading_edges = n.leading_edges.union(*super_node_leading_edges)
         if n.label in debug_nodes:
-            logger.log(logging.DEBUG + 1, f'Exploring {n.label}, leading edges: ' + 
-                         ', '.join(str(le) for le in leading_edges) + f'\n{t.printTree()}')
+            logger.log(logging.DEBUG + 2, f'Exploring {n.label}, index: {t.index}, ' +
+                       'leading edges: ' + ', '.join(str(le) for le in leading_edges) + 
+                       f'\n{t.printTree()}')
             
         for i, edge in enumerate(leading_edges):
+            if edge.label not in self.explored_edges:
+                self.explored_edges[edge.label] = [0, 0, 0]
+            self.explored_edges[edge.label][0] += 1
             DEBUG = edge.label in debug_edges
-            level = logging.DEBUG + (1 if DEBUG else 0)
+            level = logging.DEBUG + (2 if DEBUG else 0)
             logger.log(level, f"Edge {i}, <{edge.label}>:")
 
             combos = edge.getSourceTNodeCombinations(t, DEBUG)
             for j, combo in enumerate(combos):
                 logger.debug(f' - Combo {j}: ' + ', '.join(f'{n.label} ({n.index})' for n in combo))
-                self.makeParentTNode(combo, edge.target, edge)
+                pt = self.makeParentTNode(combo, edge.target, edge)
+                self.explored_edges[edge.label][1] += 1
+                if pt is not None:
+                    self.explored_edges[edge.label][2] += 1
 
     def makeParentTNode(self, source_tNodes: list, node: Node, edge: Edge):
         """Creates a tNode for the next step along the edge."""
@@ -615,11 +583,9 @@ class Pathfinder:
         label = node.label
         children = source_tNodes
         gen_edge_label = edge.label + '#' + str(self.search_counter)
-        parent_t = tNode(label, parent_val, children, gen_edge_label=gen_edge_label, 
-                         gen_edge_cost=edge.weight, index_offset=node.index_offset)
-        for st in source_tNodes:
-            parent_t.mergeIndices(st.indices)
-        parent_t.indices[node.label] += 1
+        parent_t = tNode(label, parent_val, children, 
+                         gen_edge_label=gen_edge_label, gen_edge_cost=edge.weight, 
+                         index_offset=node.index_offset)
         parent_t.values = self.mergeFoundValues(parent_val, node.label, source_tNodes)
         parent_t.cost = parent_t.getTreeCost()
         self.search_roots.append(parent_t)
@@ -658,6 +624,17 @@ class Pathfinder:
                     values[label] = st_values
         values[parent_label].append(parent_val)
         return values
+    
+    def logDebuggingReport(self):
+        """Prints a debugging report of the search."""
+        out = f'\nDebugging Report for {self.target_node.label}:\n'
+        out += f'\tFinal search counter: {self.search_counter}\n'
+        out += f'\tExplored edges (# explored | # processed | # valid solution):\n'
+        sorted_edges = [(e, vals) for e, vals in self.explored_edges.items()]
+        sorted_edges.sort(key=lambda a:max(a[1]), reverse=True)
+        for e, vals in sorted_edges:
+            out += f'\t\t<{e}>: ' + ' | '.join([str(v) for v in vals]) + '\n'
+        logger.log(logging.DEBUG + 1, out)
         
 class Hypergraph:
     """Builder class for a hypergraph. See demos for examples on how to use."""
@@ -707,7 +684,8 @@ class Hypergraph:
         if requested_label is not None:
             label = requested_label
         elif source_nodes is not None:
-            label = ''.join(s.label[0].lower() for s in source_nodes[:4])
+            label = '('+ ','.join(s.label[:4] for s in source_nodes[:-1]) + ')'
+            label += '->' + source_nodes[-1].label[:8]
         i = 0
         check_label = label
         while check_label in self.edges:
