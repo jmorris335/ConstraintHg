@@ -19,4 +19,4 @@ hg.add_edge(x0, x, R.Rfirst, label='x0 -> x')
 
 hg.print_paths(xn)
 
-hg.solve(xn, toPrint=True)
+hg.solve(xn, to_print=True)

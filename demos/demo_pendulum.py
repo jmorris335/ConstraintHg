@@ -53,7 +53,7 @@ hg.add_edge({'s1':theta, 's2':('s1', 'index'), 's3': omega}, 'final theta', R.eq
 
 # hg.printPaths('final theta')
 
-t, found_values = hg.solve('final theta', toPrint=False)
+t, found_values = hg.solve('final theta', to_print=False)
 print(t)
 # print(t.printTree())
 

@@ -34,16 +34,16 @@ import constrainthg.relations as R
 A hypergraph consists of edges that map between a set of nodes to a single node. We provide the mapping by defining a constraint function (many of which are already defined in the `relationships` module). The two relationships defined in the governing equations are addition and negation. Using the typical syntax, we refer to the functions defined in `relationships` with `R.<name>`, in this case `R.Rsum` and `R.Rnegate`. To make the hypergraph we'll need to compose the 5 edges (equations) given above. 
 ```[python]
 hg = Hypergraph()
-hg.addEdge(['A', 'B'], C, R.Rsum)
-hg.addEdge('A', 'D', R.Rnegate)
-hg.addEdge('B', 'E', R.Rnegate)
-hg.addEdge(['D', 'E'], 'F', R.Rsum)
-hg.addEdge('F', 'C', R.Rnegate)
+hg.add_edge(['A', 'B'], 'C', R.Rsum)
+hg.add_edge('A', 'D', R.Rnegate)
+hg.add_edge('B', 'E', R.Rnegate)
+hg.add_edge(['D', 'E'], 'F', R.Rsum)
+hg.add_edge('F', 'C', R.Rnegate)
 ```
 
 We can verify that the hypergraph was made correctly by tracing all possible paths for generating C using the `printPaths` function.
 ```[python]
-print(hg.printPaths('C'))
+print(hg.print_paths('C'))
 ```
 
 This should give us the following output. Hyperedges are indicated with a `◯`, with the last source separated from other edges with a `●`.
@@ -61,9 +61,9 @@ This should give us the following output. Hyperedges are indicated with a `◯`,
 Compute the value of $C$ by picking a set of source nodes (inputs), such as $A$ and $B$ or $A$ and $E$. Set values for the inputs and the solver will automatically calulate an optimized route to simulate $C$. 
 ```[python]
 print("**Inputs A and E**")
-hg.solve('C', {'A':3, 'E':-7}, toPrint=True)
+hg.solve('C', {'A':3, 'E':-7}, to_print=True)
 print("**Inputs A and B**")
-hg.solve('C', {'A':3, 'B':7}, toPrint=True)
+hg.solve('C', {'A':3, 'B':7}, to_print=True)
 ```
 
 The output of the above should be:

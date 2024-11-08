@@ -824,7 +824,7 @@ class Hypergraph:
             node = self.get_node(key)
             node.static_value = value
 
-    def solve(self, target, node_values: dict=None, toPrint: bool=False,
+    def solve(self, target, node_values: dict=None, to_print: bool=False,
               debug_nodes: list=None, debug_edges: list=None, search_depth: int=100000):
         """Runs a DFS search to identify the first valid solution for `target`.
         
@@ -834,7 +834,7 @@ class Hypergraph:
             The node or label of the node to solve for.
         node_values : dict, optional
             A dictionary {label : value} of input values.
-        toPrint : bool, default=False
+        to_print : bool, default=False
             Prints the search tree if set to true.
         debug_nodes : List[label,], optional
             A list of node labels to log debugging information for
@@ -864,7 +864,7 @@ class Hypergraph:
         except Exception as e:
             logger.error(str(e))
             raise e
-        if toPrint:
+        if to_print:
             if t is not None:
                 print(t.print_tree())
             else:

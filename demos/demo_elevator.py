@@ -184,6 +184,6 @@ hg.add_edge({'s1':height, 's2':('s1', 'index')}, 'final value', R.Rfirst,
 # hg.printPaths('final value', toPrint=True)
 debug_nodes = {vel.label} if False else None
 debug_edges = {'(acc,vel,step)->vel'} if False else None
-t, found_values = hg.solve('final value', inputs, toPrint=False, search_depth=1000,
+t, found_values = hg.solve('final value', inputs, to_print=False, search_depth=1000,
                            debug_nodes=debug_nodes, debug_edges=debug_edges)
 print(t)
