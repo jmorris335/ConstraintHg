@@ -6,13 +6,13 @@ hg = Hypergraph()
 # Nodes
 floor = Node('floor', description='the number of a floor')
 destination = Node('destination floor', super_nodes=[floor], description='floor number of destination')
-curr_floor = Node('current floor', super_nodes=[floor], description='current_floor', index_offset=1)
+curr_floor = Node('current floor', super_nodes=[floor], description='current_floor')
 gap = Node('interfloor height', 10., description='height of a single floor')
 floor_height = Node('height of floor', description='the height of a given floor')
 dest_height = Node('destination height', super_nodes=[floor_height], description='the height of the destination floor')
 height_tolerance = Node('height tolerance', 10, description='tolerance on measuring height')
 
-error = Node('error', description='difference beetween destination and current position', index_offset=1)
+error = Node('error', description='difference beetween destination and current position')
 KP = Node('K_P', 1.0, description='proportional gain for PID')
 KI = Node('K_I', 1.0, description='integral gain for PID')
 KD = Node('K_D', 1.0, description='derivative gain for PID')
@@ -30,7 +30,7 @@ u = Node('controller input', description='input provided by controller')
 mu_pass_m = Node('avg passenger mass', 65., description='mean passenger mass')
 pass_m = Node('passenger mass', description='total passenger mass')
 empty_m = Node('empty mass', 1000., description='mass of empty carriage')
-occupancy = Node('occupancy', 0, description='persons occupying carriage', index_offset=1)
+occupancy = Node('occupancy', 0, description='persons occupying carriage')
 g = Node('g', -9.8, description='gravitational acceleration')
 F = Node('net force', description='net vertical force on carriage')
 mass = Node('mass', description='total mass of carriage')
@@ -40,14 +40,14 @@ height = Node('height', description='vertical position')
 height_0 = Node('initial height', 0., description='initial height')
 vel = Node('velocity', description='vertical velocity')
 v_0 = Node('initial velocity', 0., description='initial velocity')
-acc = Node('acceleration', description='vertical acceleration', index_offset=0)
+acc = Node('acceleration', description='vertical acceleration')
 step = Node('step size', 1., description='step size')
 
 goal = Node('goal', description='goal floor for passenger')
 start = Node('start', description='start floor for passenger')
 is_on = Node('is_on', description='true if passenger is on carriage')
-boarding = Node('num boarding', description='number of persons boarding the carriage', index_offset=1)
-exiting = Node('num exiting', description='number of persons exiting the carriage', index_offset=1)
+boarding = Node('num boarding', description='number of persons boarding the carriage')
+exiting = Node('num exiting', description='number of persons exiting the carriage')
 
 # Custom relationships
 def Rlowpassfilter(s1, s2, s3, **kwargs):
@@ -83,10 +83,11 @@ def Ris_exiting(*args, **kwargs):
 # Connections
 hg.addEdge({'s1': height, 's2': gap, 's3': height_tolerance}, curr_floor, 
            R.Rfloor_divide, label='(height,gap,height_tol)->current floor',
-           via=lambda s1, s2, s3, **kwargs : abs(s1 % s2) < s3)
+           via=lambda s1, s2, s3, **kwargs : abs(s1 % s2) < s3, index_offset=1)
 hg.addEdge([gap, floor], floor_height, R.Rmultiply)
 hg.addEdge([gap, destination], dest_height, R.Rmultiply)
-hg.addEdge({'s1':dest_height, 's2':height}, error, R.Rsubtract, label='(dest,height)->error')
+hg.addEdge({'s1':dest_height, 's2':height}, error, R.Rsubtract, 
+            index_offset=1, label='(dest,height)->error')
 
 # PID
 hg.addEdge([KP, error], P, R.Rmultiply)
@@ -133,8 +134,8 @@ hg.addEdge({'s1': vel, 's4': ('s1', 'index'),
             via=lambda s4, s5, **kwargs: s4 == s5 + 1)
 
 # DES
-boarding_edge = Edge('boarding edge', {}, boarding, R.Rsum, edge_props='LEVEL')
-exiting_edge = Edge('exiting edge', {}, exiting, R.Rsum, edge_props='LEVEL')
+boarding_edge = Edge('boarding edge', {}, boarding, R.Rsum, edge_props='LEVEL', index_offset=1)
+exiting_edge = Edge('exiting edge', {}, exiting, R.Rsum, edge_props='LEVEL', index_offset=1)
 
 def addPerson(label: str, goal_floor: int, start_floor: int, person_is_on: bool=False):
     """Adds a person to the model."""
@@ -168,7 +169,7 @@ hg.insertEdge(exiting_edge)
 
 hg.addEdge({'s1':occupancy, 's2':boarding, 's3':exiting, 's4': ('s1', 'index'), 
             's5': ('s2', 'index'), 's6': ('s3', 'index')}, occupancy, 
-            lambda s1, s2, s3, **kwargs : s1 + s2 - s3,
+            lambda s1, s2, s3, **kwargs : s1 + s2 - s3, index_offset=1,
             label='(occ, boarding, exiting)->occupancy',
             via=lambda s4, s5, s6, **kwargs : s5 == s6 and s5 == s4 + 1)
 

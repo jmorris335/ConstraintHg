@@ -16,7 +16,7 @@ omega0 = Node("omega0", 0.0)
 omega = Node("omega")
 d_omega = Node("delta omega")
 c = Node("damping coeff", 1.5)
-alpha = Node("alpha", index_offset=1)
+alpha = Node("alpha")
 time_step = Node("time_step", .03)
 
 ## Functions
@@ -31,8 +31,9 @@ hg.addEdge({'s1': g, 's2': r}, 'g/r', R.Rdivide, label='(g,r)->b1')
 hg.addEdge(theta, s_theta, R.Rsin, label='theta->sine')
 hg.addEdge([s_theta, 'g/r'], F, R.Rmultiply, label='(sine, b1)->F')
 hg.addEdge([omega, c], 'beta2', R.Rmultiply, label='(omega, c)->b2')
-# hg.addEdge(F, alpha, R.Rmean, label='F->alpha')
-hg.addEdge({'s1':F, 's2':'beta2'}, alpha, R.Rsubtract, label='(F, b2)->alpha', edge_props='LEVEL')
+# hg.addEdge(F, alpha, R.Rmean, label='F->alpha', index_offset=1)
+hg.addEdge({'s1':F, 's2':'beta2'}, alpha, R.Rsubtract, 
+           label='(F, b2)->alpha', edge_props='LEVEL', index_offset=1)
 
 hg.addEdge({'s1': alpha, 's4': ('s1', 'index'),
             's2': omega, 's5': ('s2', 'index'),

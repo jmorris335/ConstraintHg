@@ -58,9 +58,8 @@ class tNode:
         tee_stop = "├●─"
 
     def __init__(self, label: str, node_label: str, value=None, children: list=None,
-                 cost: float=None, trace: list=None, index_offset: int=1.0,
-                 gen_edge_label: str=None, gen_edge_cost: float=0.0,
-                join_status: str='None'):
+                 cost: float=None, trace: list=None, gen_edge_label: str=None,
+                 gen_edge_cost: float=0.0, join_status: str='None'):
         """
         Creates the root of a search tree.
 
@@ -82,8 +81,6 @@ class tNode:
             A unique label for the edge generating the tNode (of which `children` are source nodes).
         gen_edge_cost : float, default=0.
             Value for weight (cost) of the generating edge, default is 0.0.
-        index_offset : int, default=0
-            Offset for calculating the index (allowing for iterative presetting).
         join_status : str, optional
             Indicates if the tNode is the last of a set of children, used for printing.
 
@@ -102,8 +99,7 @@ class tNode:
         self.gen_edge_cost = gen_edge_cost
         self.values = {node_label : [value,]}
         self.join_status = join_status
-        self.index_offset = index_offset
-        self.index = max([1] + [c.index for c in self.children]) + self.index_offset
+        self.index = max([1] + [c.index for c in self.children])
 
     def printConn(self, last=True)-> str:
         """Selecter function for the connector string on the tree print."""
@@ -181,7 +177,7 @@ class Node:
     """A value in the hypergraph, equivalent to a wired connection."""
     def __init__(self, label: str, static_value=None, generating_edges: set=None,
                  leading_edges: set=None, super_nodes: set=None, sub_nodes: set=None,
-                 description: str=None, index_offset: int=0):
+                 description: str=None):
         """Creates a new `Node` object.
         
         Parameters
@@ -227,7 +223,6 @@ class Node:
         self.leading_edges = set() if leading_edges is None else leading_edges
         self.description = description
         self.is_constant = static_value is not None
-        self.index_offset = index_offset
         self.super_nodes = set() if super_nodes is None else makeSet(super_nodes)
         self.sub_nodes = set() if sub_nodes is None else makeSet(sub_nodes)
         for sup_node in self.super_nodes:
@@ -260,8 +255,6 @@ class Node:
                 a.is_constant = b.is_constant
             if b.description is not None:
                 a.description = b.description
-            if b.index_offset != 0:
-                a.index_offset = b.index_offset
             a.generating_edges = a.generating_edges.union(b.generating_edges)
             a.leading_edges = a.leading_edges.union(b.leading_edges)
             a.super_nodes = a.super_nodes.union(b.super_nodes)
@@ -277,7 +270,8 @@ class EdgeProperty(Enum):
 class Edge:
     """A relationship along a set of nodes (the source) that produces a single value."""
     def __init__(self, label: str, source_nodes: dict, target: Node, rel: Callable,
-                 via: Callable=None, weight: float=1.0, edge_props: EdgeProperty=None):
+                 via: Callable=None, weight: float=1.0, index_offset: int=0,
+                 edge_props: EdgeProperty=None):
         """Creates a new `Edge` object. This should generally be called from a Hypergraph
         object using the Hypergraph.addEdge method.
         
@@ -303,6 +297,9 @@ class Edge:
         weight : float > 0.0, default=1.0
             The quanitified cost of traversing the edge. Must be positive, akin to a 
             distance measurement.
+        index_offset : int, default=0
+            Offset to apply to the target once solved for. Akin to iterating to the 
+            next level of a cycle.
         edge_props : List(EdgeProperty) | EdgeProperty | str | int, optional
             A list of enumerated types that are used to configure the edge.
 
@@ -322,6 +319,7 @@ class Edge:
         self.target = target
         self.weight = abs(weight)
         self.label = label
+        self.index_offset = index_offset
         self.edge_props = self.setupEdgeProperties(edge_props)
 
     def createFoundTNodesDict(self):
@@ -568,8 +566,7 @@ class Pathfinder:
         logger.info(f'Begin search for {self.target_node.label}')
 
         for sn in self.source_nodes:
-            st = tNode(f'{sn.label}#0', sn.label, sn.static_value, cost=0.,
-                       index_offset=sn.index_offset)
+            st = tNode(f'{sn.label}#0', sn.label, sn.static_value, cost=0.)
             self.search_roots.append(st)
 
         while len(self.search_roots) > 0:
@@ -627,10 +624,10 @@ class Pathfinder:
         gen_edge_label = edge.label + '#' + str(self.search_counter)
         label = f'{node_label}#{self.search_counter}'
         parent_t = tNode(label, node_label, parent_val, children,
-                         gen_edge_label=gen_edge_label, gen_edge_cost=edge.weight,
-                         index_offset=node.index_offset)
+                         gen_edge_label=gen_edge_label, gen_edge_cost=edge.weight)
         parent_t.values = self.mergeFoundValues(parent_val, node.label, source_tNodes)
         parent_t.cost = parent_t.getTreeCost()
+        parent_t.index += edge.index_offset
         self.search_roots.append(parent_t)
         self.search_counter += 1
         return parent_t
@@ -755,7 +752,7 @@ class Hypergraph:
         return self.nodes[label]
 
     def addEdge(self, sources: dict, target, rel, via=None, weight: float=1.0,
-                label: str=None, edge_props=None):
+                label: str=None, index_offset: int=0, edge_props=None):
         """Adds an edge to the hypergraph.
         
         Parameters
@@ -778,13 +775,17 @@ class Hypergraph:
             The cost of traversing the edge. Must be positive.
         label : str, optional
             A unique identifier for the edge.
+        index_offset : int, default=0
+            Offset to apply to the target once solved for. Akin to iterating to the 
+            next level of a cycle.
         edge_props : List(EdgeProperty) | EdgeProperty | str | int, optional
             A list of enumerated types that are used to configure the edge.
         """
         source_nodes, source_inputs = self.getNodesAndIdentifiers(sources)
         target_nodes, target_inputs = self.getNodesAndIdentifiers([target])
         label = self.requestEdgeLabel(label, source_nodes + target_nodes)
-        edge = Edge(label, source_inputs, target_nodes[0], rel, via, weight, edge_props=edge_props)
+        edge = Edge(label, source_inputs, target_nodes[0], rel, via, weight, 
+                    index_offset=index_offset, edge_props=edge_props)
         self.edges[label] = edge
         for sn in source_nodes:
             sn.leading_edges.add(edge)
