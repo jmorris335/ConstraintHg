@@ -6,7 +6,7 @@ Hypergraph Module
 
 Tree Node Class
 ***********************************
-.. autoclass:: constrainthg.hypergraph.tNode
+.. autoclass:: constrainthg.hypergraph.TNode
    :members:
    :undoc-members:
    :show-inheritance:
