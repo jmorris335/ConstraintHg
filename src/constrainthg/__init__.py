@@ -1,7 +1,10 @@
+"""Initialization file for ConstraintHg."""
+
+import logging
+
 from constrainthg.hypergraph import *
 import constrainthg.relations as R
 
-import logging
 LOG_LEVEL = logging.DEBUG + 1
 
 logger = logging.getLogger(__name__)

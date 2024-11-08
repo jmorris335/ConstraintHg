@@ -47,7 +47,7 @@ hg.addEdge({'s1': omega, 's4': ('s1', 'index'),
             via=lambda s4, s5, **kwargs: s4 - 1 == s5)
 
 hg.addEdge({'s1':theta, 's2':('s1', 'index'), 's3': omega}, 'final theta', R.equal('s1'), 
-        #    via=lambda s2, **kwargs : s2 >= 400, label='final theta')
+        #    via=lambda s2, **kwargs : s2 >= 5, label='final theta')
            via=lambda s1, s3, **kwargs : abs(s1) < .05 and abs(s3) < .05, edge_props='LEVEL')
 
 # hg.printPaths('final theta')

@@ -29,7 +29,7 @@ def getKeywordArguments(args: list, kwargs: dict, excluded_keys: list):
     `excluded_keys` list."""
     if not isinstance(excluded_keys, list):
         excluded_keys = [excluded_keys]
-    exceptional_vals, to_combine = dict(), list()
+    exceptional_vals, to_combine = {}, []
 
     for key, val in kwargs.items():
         if key in excluded_keys:
@@ -43,7 +43,7 @@ def getKeywordArguments(args: list, kwargs: dict, excluded_keys: list):
             exceptional_vals[key] = args[i]
             i += 1
 
-    to_combine += list(args[i:]) 
+    to_combine += list(args[i:])
     return to_combine, exceptional_vals
 
 # ALGEBRAIC RELATIONS
@@ -64,7 +64,7 @@ def Rsubtract(*args, **kwargs):
     """Subtracts from `s1` all other arguments."""
     args, kwargs = getKeywordArguments(args, kwargs, 's1')
     return kwargs['s1'] - sum(args)
-    
+
 def Rdivide(*args, **kwargs):
     """Divides `s1` by all other arguments."""
     args, kwargs = getKeywordArguments(args, kwargs, 's1')
@@ -120,14 +120,14 @@ def multandsum(mult_identifiers: list, sum_identifiers: list):
         mult_identifiers = [mult_identifiers]
     if not isinstance(sum_identifiers, list):
         sum_identifiers = [sum_identifiers]
-    ids = mult_identifiers + sum_identifiers
+    labels = mult_identifiers + sum_identifiers
     def Rmultandsum(*args, **kwargs):
         out = 1.0
-        args, kwargs = getKeywordArguments(args, kwargs, ids)
-        for id in mult_identifiers:
-            out *= kwargs[id]
-        for id in sum_identifiers:
-            out += kwargs[id]
+        args, kwargs = getKeywordArguments(args, kwargs, labels)
+        for label in mult_identifiers:
+            out *= kwargs[label]
+        for label in sum_identifiers:
+            out += kwargs[label]
         return out
     return Rmultandsum
 

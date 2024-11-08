@@ -6,7 +6,7 @@ hg = Hypergraph()
 # Nodes
 floor = Node('floor', description='the number of a floor')
 destination = Node('destination floor', super_nodes=[floor], description='floor number of destination')
-curr_floor = Node('current floor', super_nodes=[floor], description='current_floor')
+curr_floor = Node('current floor', super_nodes=[floor], description='current_floor', index_offset=1)
 gap = Node('interfloor height', 10., description='height of a single floor')
 floor_height = Node('height of floor', description='the height of a given floor')
 dest_height = Node('destination height', super_nodes=[floor_height], description='the height of the destination floor')
@@ -21,7 +21,7 @@ I = Node('I', 0.0, description='integrative controller input')
 D = Node('D', description='derivative controller input')
 alpha = Node('alpha', 0.1, description='filter constant for low-pass filter')
 error_f = Node('filtered error', 0.0, description='error filtered by low-pass filter')
-error_f_prev = Node('prev filtered error', 0.0, description='filtered error from the previous iteration')
+error_f_prev = Node('prev filtered error', description='filtered error from the previous iteration')
 max_pid = Node('max input', 10000, description='maximum controller input')
 min_pid = Node('min input', -1000, description='minimum controller input')
 pid_input = Node('PID input', description='input goverend by PID controller')
@@ -37,10 +37,10 @@ mass = Node('mass', description='total mass of carriage')
 damping_coef = Node('c', 0.2, description='damping coefficient')
 damping = Node('damping force', description='damping force')
 height = Node('height', description='vertical position')
-y_0 = Node('initial height', 0., description='initial height')
+height_0 = Node('initial height', 0., description='initial height')
 vel = Node('velocity', description='vertical velocity')
 v_0 = Node('initial velocity', 0., description='initial velocity')
-acc = Node('acceleration', description='vertical acceleration', index_offset=1)
+acc = Node('acceleration', description='vertical acceleration', index_offset=0)
 step = Node('step size', 1., description='step size')
 
 goal = Node('goal', description='goal floor for passenger')
@@ -82,16 +82,17 @@ def Ris_exiting(*args, **kwargs):
 
 # Connections
 hg.addEdge({'s1': height, 's2': gap, 's3': height_tolerance}, curr_floor, 
-           R.Rfloor_divide, via=lambda s1, s2, s3, **kwargs : abs(s1 % s2) < s3)
+           R.Rfloor_divide, label='(height,gap,height_tol)->current floor',
+           via=lambda s1, s2, s3, **kwargs : abs(s1 % s2) < s3)
 hg.addEdge([gap, floor], floor_height, R.Rmultiply)
 hg.addEdge([gap, destination], dest_height, R.Rmultiply)
-hg.addEdge({'s1':dest_height, 's2':height}, error, R.Rsubtract)
+hg.addEdge({'s1':dest_height, 's2':height}, error, R.Rsubtract, label='(dest,height)->error')
 
 # PID
 hg.addEdge([KP, error], P, R.Rmultiply)
 hg.addEdge({'s1': KI,
             's2': error, 's5': ('s2', 'index'),
-            's3': I, 's6': ('s4', 'index'),
+            's3': I, 's6': ('s3', 'index'),
             's4': step}, I, R.multandsum(['s1', 's2', 's3'], 's4'),
             via=lambda s5, s6, **kwargs : s5 == s6 + 1)
 hg.addEdge({'s1': error, 's5': ('s1', 'index'),
@@ -100,7 +101,7 @@ hg.addEdge({'s1': error, 's5': ('s1', 'index'),
             's4': step}, error_f, Rlowpassfilter, 
             label='low_pass_filter->error_f',
             via=lambda s5, s6, **kwargs : s5 == s6 + 1)
-hg.addEdge({'s1': error_f, 's2': ('s1', 'index')}, error_f_prev, R.equal('s1'))
+hg.addEdge(error_f, error_f_prev, R.Rmean)
 hg.addEdge({'s1': KD,
             's2': error_f, 's3': ('s2', 'index'),
             's4': error_f_prev, 's5': ('s4', 'index')}, D, R.Rmultiply,
@@ -110,26 +111,26 @@ hg.addEdge([P, I, D], pid_input, R.Rsum, label='PID', edge_props='LEVEL')
 hg.addEdge([pid_input, min_pid], 'const_min_input', R.Rmax)
 hg.addEdge(['const_min_input', max_pid], u, R.Rmin)
 
-# # Forces
+# Forces
 hg.addEdge(v_0, vel, R.Rmean)
-hg.addEdge(y_0, height, R.Rmean)
+hg.addEdge(height_0, height, R.Rmean)
 hg.addEdge([mu_pass_m, occupancy], pass_m, R.Rmultiply)
 hg.addEdge([pass_m, empty_m], mass, R.Rsum)
-hg.addEdge([g, mass], '/gm', R.Rmultiply)
-hg.addEdge([u, '/gm'], F, R.Rsum)
-hg.addEdge([damping_coef, vel], damping, R.Rmultiply)
-hg.addEdge(['/fd', mass], acc, R.Rdivide)
-hg.addEdge([F, mass], acc, R.Rdivide)
-hg.addEdge([F, damping], '/fd', R.Rsubtract)
+hg.addEdge([g, mass], '/gm', R.Rmultiply, label='(g,mass)->/gm')
+hg.addEdge({'s1': damping_coef, 's2':vel}, damping, R.Rmultiply, label='(c,vel,F)->damping')
+hg.addEdge(damping, 'neg damping', R.Rnegate)
+hg.addEdge([u, '/gm', 'neg damping'], F, R.Rsum, label='(u,/gm,-damping)->F')
+hg.addEdge([F, mass], acc, R.Rdivide, label='(F,mass)->acc', edge_props='LEVEL')
 hg.addEdge({'s1': acc, 's4': ('s1', 'index'),
             's2': vel, 's5': ('s2', 'index'),
             's3': step,}, vel, R.multandsum(['s1', 's3'], 's2'),
-            via=lambda s4, s5, **kwargs: s4 - 1 == s5)
-hg.addEdge([vel, step], 'del_y', R.Rmultiply)
+            label='(acc,vel,step)->vel',
+            via=lambda s4, s5, **kwargs: s4 == s5 + 1)
 hg.addEdge({'s1': vel, 's4': ('s1', 'index'),
             's2': height, 's5': ('s2', 'index'),
             's3': step,}, height, R.multandsum(['s1', 's3'], 's2'),
-            via=lambda s4, s5, **kwargs: s4 - 1 == s5)
+            label='(vel,height,step)->height',
+            via=lambda s4, s5, **kwargs: s4 == s5 + 1)
 
 # DES
 boarding_edge = Edge('boarding edge', {}, boarding, R.Rsum, edge_props='LEVEL')
@@ -158,7 +159,8 @@ def addPerson(label: str, goal_floor: int, start_floor: int, person_is_on: bool=
     boarding_edge.addSourceNode(is_boarding)
     exiting_edge.addSourceNode(is_exiting)
 
-people = [('A', 2, 0, False), ('B', 2, 0, False), ('C', 1, 3, False), ('D', 1, 0, True)]
+# people = [('A', 2, 0, False), ('B', 2, 0, False), ('C', 1, 3, False), ('D', 1, 0, True)]
+people = [('A', 0, 3, False)]
 for person in people:
     addPerson(*person)
 hg.insertEdge(boarding_edge)
@@ -176,12 +178,17 @@ inputs = {
     error: 0,
     destination: 1,
 }
-hg.addEdge({'s1':curr_floor, 's2':('s1', 'index')}, 'final value', R.Rfirst, 
+hg.addEdge({'s1':occupancy, 's2':('s1', 'index')}, 'final value', R.Rfirst, 
            via=R.geq('s2', 3))
 
 # hg.printPaths('final value', toPrint=True)
-debug_nodes = {curr_floor.label} if False else None
-debug_edges = {'(curr_floor,C:is_on,start,goal)->C is on'} if False else None
-t, found_values = hg.solve('final value', inputs, toPrint=True, search_depth=10000,
+debug_nodes = {'A is on'} if False else None
+debug_edges = {'(curr_floor,A:is_on,start,goal)->A is on'} if False else None
+t, found_values = hg.solve('final value', inputs, toPrint=True, search_depth=1000,
                            debug_nodes=debug_nodes, debug_edges=debug_edges)
-print(str(t) + f', Index: {t.children[0].index}')
+print(str(t) + (f', Index: {t.children[0].index}' if t is not None else ''))
+
+# print("Generating:")
+# print([str(e) for e in vel.generating_edges])
+# print("Leading:")
+# print([str(e) for e in vel.leading_edges])
