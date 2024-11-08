@@ -54,11 +54,3 @@ Relations Module
    :undoc-members:
    :show-inheritance:
 
-constrainthg.CONTROL module
----------------------------
-
-.. automodule:: constrainthg.CONTROL
-   :members:
-   :undoc-members:
-   :show-inheritance:
-

@@ -11,10 +11,10 @@ sys.path.insert(0, os.path.abspath('../../src/'))
 
 import constrainthg
 
-project = 'constrainthg'
+project = 'ConstraintHg'
 copyright = '2024, John Morris, All rights reserved'
 author = 'John Morris'
-release = '0.1'
+release = '0.1.1'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
