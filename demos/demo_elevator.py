@@ -24,7 +24,7 @@ error_f = Node('filtered error', 0.0, description='error filtered by low-pass fi
 error_f_prev = Node('prev filtered error', description='filtered error from the previous iteration')
 max_pid = Node('max input', 10000, description='maximum controller input')
 min_pid = Node('min input', -1000, description='minimum controller input')
-pid_input = Node('PID input', description='input goverend by PID controller')
+pid_input = Node('PID input', 0., description='input goverend by PID controller')
 u = Node('controller input', description='input provided by controller')
 
 mu_pass_m = Node('avg passenger mass', 65., description='mean passenger mass')
@@ -120,8 +120,8 @@ hg.add_edge([pass_m, empty_m], mass, R.Rsum)
 hg.add_edge([g, mass], '/gm', R.Rmultiply, label='(g,mass)->/gm')
 hg.add_edge({'s1': damping_coef, 's2':vel}, damping, R.Rmultiply, label='(c,vel,F)->damping')
 hg.add_edge(damping, 'neg damping', R.Rnegate)
-hg.add_edge([u, '/gm', 'neg damping'], F, R.Rsum, label='(u,/gm,-damping)->F')
-hg.add_edge([F, mass], acc, R.Rdivide, label='(F,mass)->acc', edge_props='LEVEL')
+hg.add_edge([u, '/gm', 'neg damping'], F, R.Rsum, label='(u,/gm,-damping)->F', edge_props='LEVEL')
+hg.add_edge([F, mass], acc, R.Rdivide, label='(F,mass)->acc', edge_props='LEVEL', index_offset=1)
 hg.add_edge({'s1': acc, 's4': ('s1', 'index'),
             's2': vel, 's5': ('s2', 'index'),
             's3': step,}, vel, R.mult_and_sum(['s1', 's3'], 's2'),
@@ -134,8 +134,8 @@ hg.add_edge({'s1': vel, 's4': ('s1', 'index'),
             via=lambda s4, s5, **kwargs: s4 == s5 + 1)
 
 # DES
-boarding_edge = Edge('boarding edge', {}, boarding, R.Rsum, edge_props='LEVEL', index_offset=1)
-exiting_edge = Edge('exiting edge', {}, exiting, R.Rsum, edge_props='LEVEL', index_offset=1)
+boarding_edge = Edge('boarding edge', {}, boarding, R.Rsum, edge_props='LEVEL')
+exiting_edge = Edge('exiting edge', {}, exiting, R.Rsum, edge_props='LEVEL')
 
 def addPerson(label: str, goal_floor: int, start_floor: int, person_is_on: bool=False):
     """Adds a person to the model."""
@@ -161,7 +161,7 @@ def addPerson(label: str, goal_floor: int, start_floor: int, person_is_on: bool=
     exiting_edge.add_source_node(is_exiting)
 
 # people = [('A', 2, 0, False), ('B', 2, 0, False), ('C', 1, 3, False), ('D', 1, 0, True)]
-people = [('A', 0, 3, False)]
+people = [('A', 3, 0, False)]
 for person in people:
     addPerson(*person)
 hg.insert_edge(boarding_edge)
@@ -169,7 +169,7 @@ hg.insert_edge(exiting_edge)
 
 hg.add_edge({'s1':occupancy, 's2':boarding, 's3':exiting, 's4': ('s1', 'index'), 
             's5': ('s2', 'index'), 's6': ('s3', 'index')}, occupancy, 
-            lambda s1, s2, s3, **kwargs : s1 + s2 - s3, index_offset=1,
+            lambda s1, s2, s3, **kwargs : s1 + s2 - s3,
             label='(occ, boarding, exiting)->occupancy',
             via=lambda s4, s5, s6, **kwargs : s5 == s6 and s5 == s4 + 1)
 
@@ -179,15 +179,15 @@ inputs = {
     error: 0,
     destination: 1,
 }
-hg.add_edge({'s1':occupancy, 's2':('s1', 'index')}, 'final value', R.Rfirst, 
-           via=R.geq('s2', 3))
+hg.add_edge({'s1':height, 's2':('s1', 'index')}, 'final value', R.Rfirst, 
+           via=R.geq('s2', 10))
 
 # hg.printPaths('final value', toPrint=True)
-debug_nodes = {'A is on'} if False else None
-debug_edges = {'(curr_floor,A:is_on,start,goal)->A is on'} if False else None
-t, found_values = hg.solve('final value', inputs, toPrint=True, search_depth=1000,
+debug_nodes = {vel.label} if False else None
+debug_edges = {'(acc,vel,step)->vel'} if False else None
+t, found_values = hg.solve('final value', inputs, toPrint=False, search_depth=1000,
                            debug_nodes=debug_nodes, debug_edges=debug_edges)
-print(str(t) + (f', Index: {t.children[0].index}' if t is not None else ''))
+print(t)
 
 # print("Generating:")
 # print([str(e) for e in vel.generating_edges])
