@@ -146,9 +146,6 @@ class TNode:
 
     def get_tree_cost(self, root=None, checked_edges: set=None):
         """Returns the cost of solving to the leaves of the tree."""
-        #FF0000  #DEBUG MODE (simplifies calculations)
-        return 1.0
-        #FF0000
         if root is None:
             root = self
         if checked_edges is None:
@@ -386,7 +383,7 @@ class Edge:
                 self.og_rel = self.rel
                 self.og_via = self.via
             sns = dict(self.source_nodes.items())
-            tuple_idxs = {label:el[0] for label, el in sns if isinstance(el, tuple)}
+            tuple_idxs = {label:el[0] for label, el in sns.items() if isinstance(el, tuple)}
             for label, sn in sns.items():
                 if isinstance(sn, tuple) or label in tuple_idxs.values():
                     continue

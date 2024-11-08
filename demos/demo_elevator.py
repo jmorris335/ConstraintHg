@@ -160,8 +160,7 @@ def addPerson(label: str, goal_floor: int, start_floor: int, person_is_on: bool=
     boarding_edge.add_source_node(is_boarding)
     exiting_edge.add_source_node(is_exiting)
 
-# people = [('A', 2, 0, False), ('B', 2, 0, False), ('C', 1, 3, False), ('D', 1, 0, True)]
-people = [('A', 3, 0, False)]
+people = [('A', 2, 0, False), ('B', 2, 0, False), ('C', 1, 3, False), ('D', 1, 0, True)]
 for person in people:
     addPerson(*person)
 hg.insert_edge(boarding_edge)
@@ -188,8 +187,3 @@ debug_edges = {'(acc,vel,step)->vel'} if False else None
 t, found_values = hg.solve('final value', inputs, toPrint=False, search_depth=1000,
                            debug_nodes=debug_nodes, debug_edges=debug_edges)
 print(t)
-
-# print("Generating:")
-# print([str(e) for e in vel.generating_edges])
-# print("Leading:")
-# print([str(e) for e in vel.leading_edges])

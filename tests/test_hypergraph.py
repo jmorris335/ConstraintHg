@@ -152,7 +152,7 @@ class TestHypergraph():
         hg.add_edge('S', 'A', R.Rfirst)
         hg.add_edge('A', 'B', R.Rincrement)
         hg.add_edge('B', 'C', R.Rincrement)
-        hg.add_edge(['A', 'C'], 'A', R.Rsum, edge_props='LEVEL')
+        hg.add_edge(['A', 'C'], 'A', R.Rsum, edge_props='LEVEL', index_offset=1)
         hg.add_edge('A', 'T', R.Rfirst, via=R.geq('s1', 7))
 
         t, fv = hg.solve('T', {'S': 0})
@@ -164,7 +164,7 @@ class TestHypergraph():
         hg = Hypergraph()
         hg.add_edge('S', 'B', R.Rmean)
         hg.add_edge({'s1':'B', 's2': ('s1', 'index')}, 'A', R.equal('s2'))
-        hg.add_edge('A', 'B', R.Rmean)
+        hg.add_edge('A', 'B', R.Rmean, index_offset=1)
         hg.add_edge('A', 'T', R.Rmean, via=R.geq('s1', 4))
 
         t, fv = hg.solve('T', {'S': 10})
