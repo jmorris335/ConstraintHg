@@ -2,13 +2,13 @@ from constrainthg.hypergraph import Hypergraph
 import constrainthg.relations as R
 
 hg = Hypergraph()
-hg.addEdge(['A', 'B'], 'C', R.Rsum)
-hg.addEdge('A', 'D', R.Rnegate)
-hg.addEdge('B', 'E', R.Rnegate)
-hg.addEdge(['D', 'E'], 'F', R.Rsum)
-hg.addEdge('F', 'C', R.Rnegate)
+hg.add_edge(['A', 'B'], 'C', R.Rsum)
+hg.add_edge('A', 'D', R.Rnegate)
+hg.add_edge('B', 'E', R.Rnegate)
+hg.add_edge(['D', 'E'], 'F', R.Rsum)
+hg.add_edge('F', 'C', R.Rnegate)
 
-print(hg.printPaths('C'))
+print(hg.print_paths('C'))
 
 print("**Inputs A and E**")
 hg.solve('C', {'A':3, 'E':-7}, toPrint=True)

@@ -12,11 +12,11 @@ x0 = Node('x_0', 0.0)
 i = Node('i')
 xn = Node('x_n')
 
-hg.addEdge([v, del_t], del_x, R.Rmultiply, label='vel*delta_t -> delta_x')
-hg.addEdge([x, del_x], x, R.Rsum, label='x_i+delta_x -> x_i')
-hg.addEdge({'s1': x, 's2':('s1', 'index')}, xn, R.equal('s1'), via=R.geq('s2', 4), label='x_i, i -> x_n')
-hg.addEdge(x0, x, R.Rfirst, label='x0 -> x')
+hg.add_edge([v, del_t], del_x, R.Rmultiply, label='vel*delta_t -> delta_x')
+hg.add_edge([x, del_x], x, R.Rsum, label='x_i+delta_x -> x_i')
+hg.add_edge({'s1': x, 's2':('s1', 'index')}, xn, R.equal('s1'), via=R.geq('s2', 4), label='x_i, i -> x_n')
+hg.add_edge(x0, x, R.Rfirst, label='x0 -> x')
 
-hg.printPaths(xn)
+hg.print_paths(xn)
 
 hg.solve(xn, toPrint=True)

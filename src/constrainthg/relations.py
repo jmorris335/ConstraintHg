@@ -20,7 +20,7 @@ def extend(args: list, kwargs: dict)-> list:
     """Combines all arguments into a single list, with args leading."""
     return list(args) + list(kwargs.values())
 
-def getKeywordArguments(args: list, kwargs: dict, excluded_keys: list):
+def get_keyword_arguments(args: list, kwargs: dict, excluded_keys: list):
     """Combines all arguments except those with a given key. Returns the arguments 
     for the given keys as a dictionary
     and the remaining arguments as a list.
@@ -62,12 +62,12 @@ def Rmultiply(*args, **kwargs):
 
 def Rsubtract(*args, **kwargs):
     """Subtracts from `s1` all other arguments."""
-    args, kwargs = getKeywordArguments(args, kwargs, 's1')
+    args, kwargs = get_keyword_arguments(args, kwargs, 's1')
     return kwargs['s1'] - sum(args)
 
 def Rdivide(*args, **kwargs):
     """Divides `s1` by all other arguments."""
-    args, kwargs = getKeywordArguments(args, kwargs, 's1')
+    args, kwargs = get_keyword_arguments(args, kwargs, 's1')
     s1 = kwargs['s1']
     for s in args:
         s1 /= s
@@ -85,7 +85,7 @@ def Rfloor(*args, **kwargs):
 
 def Rfloor_divide(*args, **kwargs):
     """Returns the largest integer smaller or equal to the division of s1 and s2."""
-    args, kwargs = getKeywordArguments(args, kwargs, ['s1', 's2'])
+    args, kwargs = get_keyword_arguments(args, kwargs, ['s1', 's2'])
     return kwargs['s1'] // kwargs['s2']
 
 def Rnegate(*args, **kwargs):
@@ -113,7 +113,7 @@ def Rmin(*args, **kwargs):
     args = extend(args, kwargs)
     return min(args)
 
-def multandsum(mult_identifiers: list, sum_identifiers: list):
+def mult_and_sum(mult_identifiers: list, sum_identifiers: list):
     """Convenient shorthand for multiplying the values identified in 
     `mult_identifiers` and adding them to the values identified in `sum_identifiers`."""
     if not isinstance(mult_identifiers, list):
@@ -123,7 +123,7 @@ def multandsum(mult_identifiers: list, sum_identifiers: list):
     labels = mult_identifiers + sum_identifiers
     def Rmultandsum(*args, **kwargs):
         out = 1.0
-        args, kwargs = getKeywordArguments(args, kwargs, labels)
+        args, kwargs = get_keyword_arguments(args, kwargs, labels)
         for label in mult_identifiers:
             out *= kwargs[label]
         for label in sum_identifiers:
@@ -139,14 +139,14 @@ def Rincrement(*args, **kwargs):
 
 def Rfirst(*args, **kwargs):
     """Returns the first argument."""
-    args, kwargs = getKeywordArguments(args, kwargs, 's1')
+    args, kwargs = get_keyword_arguments(args, kwargs, 's1')
     return kwargs['s1']
 
 def equal(identifier: str):
     """Returns a method that returns the argument with the same keyword as 
     `identifier`."""
     def Requal(*args, **kwargs):
-        args, kwargs = getKeywordArguments(args, kwargs, identifier)
+        args, kwargs = get_keyword_arguments(args, kwargs, identifier)
         return kwargs[identifier]
     return Requal
 
@@ -154,7 +154,7 @@ def geq(identifier: str, val: int):
     """Returns a method that returns True if the identifier is greater than or equal 
     to `val`."""
     def Rcyclecounter(*args, **kwargs):
-        args, kwargs = getKeywordArguments(args, kwargs, identifier)
+        args, kwargs = get_keyword_arguments(args, kwargs, identifier)
         return kwargs[identifier] >= val
     return Rcyclecounter
 
@@ -163,8 +163,3 @@ def Rsin(*args, **kwargs):
     """Returns the sine of the mean of all arguments."""
     args = extend(args, kwargs)
     return np.sin(np.mean(args))
-
-
-if __name__ == '__main__':
-    a = Rsubtract(4, s1=10)
-    print(a)

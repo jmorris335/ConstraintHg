@@ -25,29 +25,29 @@ def integrate(s1, s2, s3, **kwargs):
     return s1 * s3 + s2
 
 ## Edges
-hg.addEdge(theta0, theta, R.Rmean, label='theta0->theta')
-hg.addEdge(omega0, omega, R.Rmean, label='omega0->omega')
-hg.addEdge({'s1': g, 's2': r}, 'g/r', R.Rdivide, label='(g,r)->b1')
-hg.addEdge(theta, s_theta, R.Rsin, label='theta->sine')
-hg.addEdge([s_theta, 'g/r'], F, R.Rmultiply, label='(sine, b1)->F')
-hg.addEdge([omega, c], 'beta2', R.Rmultiply, label='(omega, c)->b2')
+hg.add_edge(theta0, theta, R.Rmean, label='theta0->theta')
+hg.add_edge(omega0, omega, R.Rmean, label='omega0->omega')
+hg.add_edge({'s1': g, 's2': r}, 'g/r', R.Rdivide, label='(g,r)->b1')
+hg.add_edge(theta, s_theta, R.Rsin, label='theta->sine')
+hg.add_edge([s_theta, 'g/r'], F, R.Rmultiply, label='(sine, b1)->F')
+hg.add_edge([omega, c], 'beta2', R.Rmultiply, label='(omega, c)->b2')
 # hg.addEdge(F, alpha, R.Rmean, label='F->alpha', index_offset=1)
-hg.addEdge({'s1':F, 's2':'beta2'}, alpha, R.Rsubtract, 
+hg.add_edge({'s1':F, 's2':'beta2'}, alpha, R.Rsubtract, 
            label='(F, b2)->alpha', edge_props='LEVEL', index_offset=1)
 
-hg.addEdge({'s1': alpha, 's4': ('s1', 'index'),
+hg.add_edge({'s1': alpha, 's4': ('s1', 'index'),
             's2': omega, 's5': ('s2', 'index'),
             's3': time_step,}, omega, integrate, 
             label='(alpha, omega, t)->omega',
             via=lambda s4, s5, **kwargs: s4 - 1 == s5)
 
-hg.addEdge({'s1': omega, 's4': ('s1', 'index'),
+hg.add_edge({'s1': omega, 's4': ('s1', 'index'),
             's2': theta, 's5': ('s2', 'index'),
             's3': time_step,}, theta, integrate, 
             label='(omega, theta, t)->theta',
             via=lambda s4, s5, **kwargs: s4 - 1 == s5)
 
-hg.addEdge({'s1':theta, 's2':('s1', 'index'), 's3': omega}, 'final theta', R.equal('s1'), 
+hg.add_edge({'s1':theta, 's2':('s1', 'index'), 's3': omega}, 'final theta', R.equal('s1'), 
         #    via=lambda s2, **kwargs : s2 >= 5, label='final theta')
            via=lambda s1, s3, **kwargs : abs(s1) < .05 and abs(s3) < .05, edge_props='LEVEL')
 
