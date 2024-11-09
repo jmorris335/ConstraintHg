@@ -174,7 +174,7 @@ class Node:
     """A value in the hypergraph, equivalent to a wired connection."""
     def __init__(self, label: str, static_value=None, generating_edges: set=None,
                  leading_edges: set=None, super_nodes: set=None, sub_nodes: set=None,
-                 description: str=None):
+                 description: str=None, units: str=None):
         """Creates a new `Node` object.
         
         Parameters
@@ -191,12 +191,14 @@ class Node:
             A set of nodes that have this node as a subset, see note [1].
         sub_nodes : Set[Node], optional
             A set of nodes that that have this node as a super node, see note [1].
-        description : str, Optional
+        description : str, optional
             A description of the node useful for debugging.
+        units : str, optional
+            Units of value.
         is_constant : bool, default=False
             Describes whether the node should be reset in between simulations.
         starting_index : int, default=1
-            The starting index of the node
+            The starting index of the node.
 
         Properties
         ----------
@@ -219,6 +221,7 @@ class Node:
         self.generating_edges = set() if generating_edges is None else generating_edges
         self.leading_edges = set() if leading_edges is None else leading_edges
         self.description = description
+        self.units = units
         self.is_constant = static_value is not None
         self.super_nodes = set() if super_nodes is None else make_set(super_nodes)
         self.sub_nodes = set() if sub_nodes is None else make_set(sub_nodes)

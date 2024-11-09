@@ -1,6 +1,7 @@
+import matplotlib.pyplot as plt #For visualization, not necessary for simulation
+
 from constrainthg.hypergraph import Hypergraph, Node
 import constrainthg.relations as R
-import matplotlib.pyplot as plt
 
 hg = Hypergraph()
 

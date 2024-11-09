@@ -5,7 +5,7 @@ import logging
 from constrainthg.hypergraph import *
 import constrainthg.relations as R
 
-LOG_LEVEL = logging.INFO
+LOG_LEVEL = logging.DEBUG + 1
 
 logger = logging.getLogger(__name__)
 

@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt  #For visualization, not necessary for simulation
+
 from constrainthg.hypergraph import Hypergraph, Node, Edge
 import constrainthg.relations as R
 
@@ -13,16 +15,16 @@ dest_height = Node('destination height', super_nodes=[floor_height], description
 height_tolerance = Node('height tolerance', 10, description='tolerance on measuring height')
 
 error = Node('error', description='difference beetween destination and current position')
-KP = Node('K_P', 1.0, description='proportional gain for PID')
-KI = Node('K_I', 1.0, description='integral gain for PID')
-KD = Node('K_D', 1.0, description='derivative gain for PID')
+KP = Node('K_P', 1200.0, description='proportional gain for PID')
+KI = Node('K_I', 0.0, description='integral gain for PID')
+KD = Node('K_D', 0.0, description='derivative gain for PID')
 P = Node('P', description='proportional controller input')
 I = Node('I', 0.0, description='integrative controller input')
 D = Node('D', description='derivative controller input')
 alpha = Node('alpha', 0.1, description='filter constant for low-pass filter')
 error_f = Node('filtered error', 0.0, description='error filtered by low-pass filter')
 error_f_prev = Node('prev filtered error', description='filtered error from the previous iteration')
-max_pid = Node('max input', 10000, description='maximum controller input')
+max_pid = Node('max input', 20000, description='maximum controller input')
 min_pid = Node('min input', -1000, description='minimum controller input')
 pid_input = Node('PID input', 0., description='input goverend by PID controller')
 u = Node('controller input', description='input provided by controller')
@@ -30,18 +32,18 @@ u = Node('controller input', description='input provided by controller')
 mu_pass_m = Node('avg passenger mass', 65., description='mean passenger mass')
 pass_m = Node('passenger mass', description='total passenger mass')
 empty_m = Node('empty mass', 1000., description='mass of empty carriage')
-occupancy = Node('occupancy', 0, description='persons occupying carriage')
+occupancy = Node('occupancy', 0, description='persons occupying carriage', units='persons')
 g = Node('g', -9.8, description='gravitational acceleration')
 F = Node('net force', description='net vertical force on carriage')
 mass = Node('mass', description='total mass of carriage')
 damping_coef = Node('c', 0.2, description='damping coefficient')
 damping = Node('damping force', description='damping force')
-height = Node('height', description='vertical position')
+height = Node('height', description='vertical position', units='m')
 height_0 = Node('initial height', 0., description='initial height')
 vel = Node('velocity', description='vertical velocity')
 v_0 = Node('initial velocity', 0., description='initial velocity')
 acc = Node('acceleration', description='vertical acceleration')
-step = Node('step size', 1., description='step size')
+step = Node('step size', 1.0, description='step size')
 
 goal = Node('goal', description='goal floor for passenger')
 start = Node('start', description='start floor for passenger')
@@ -179,11 +181,33 @@ inputs = {
     destination: 1,
 }
 hg.add_edge({'s1':height, 's2':('s1', 'index')}, 'final value', R.Rfirst, 
-           via=R.geq('s2', 10))
+           via=R.geq('s2', 20))
 
 # hg.printPaths('final value', toPrint=True)
 debug_nodes = {vel.label} if False else None
 debug_edges = {'(acc,vel,step)->vel'} if False else None
-t, found_values = hg.solve('final value', inputs, to_print=False, search_depth=1000,
+t, found_values = hg.solve('final value', inputs, to_print=False, search_depth=10000,
                            debug_nodes=debug_nodes, debug_edges=debug_edges)
 print(t)
+
+
+def plotValues(labels: list, found_values: dict, time_step: float):
+    legend = []
+    ylabel = []
+    for label in labels:
+        if isinstance(label, Node):
+            if label.units is not None:
+                ylabel.append(label.units)
+            label = label.label
+        values = found_values[label]
+        times = [time_step * i for i in range(len(values))]
+        plt.plot(times, values)
+        legend.append(label)
+    plt.legend(legend)
+    if len(ylabel) > 0:
+        plt.ylabel(', '.join(ylabel))
+    plt.xlabel('Time (s)')
+    plt.title('Hybrid Elevator Simulation')
+    plt.show()  
+
+plotValues([height, occupancy], found_values, step.static_value)
