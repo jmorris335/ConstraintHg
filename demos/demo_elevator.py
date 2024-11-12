@@ -1,7 +1,7 @@
-import matplotlib.pyplot as plt  #For visualization, not necessary for simulation
-
 from constrainthg.hypergraph import Hypergraph, Node, Edge
 import constrainthg.relations as R
+
+from helper import plotTimeValues  #For visualization, not necessary for simulation
 
 hg = Hypergraph()
 
@@ -13,7 +13,7 @@ curr_floor = Node('current floor', super_nodes=[floor], description='current_flo
 gap = Node('interfloor height', 10., description='height of a single floor', units='m')
 floor_height = Node('height of floor', description='the height of a given floor', units='m')
 dest_height = Node('destination height', super_nodes=[floor_height], description='the height of the destination floor', units='m')
-height_tolerance = Node('height tolerance', 1, description='tolerance on measuring height', units='m')
+height_tolerance = Node('height tolerance', 10, description='tolerance on measuring height', units='m')
 
 ## Nodes for motor controller
 error = Node('error', description='difference beetween destination and current position', units='m')
@@ -199,23 +199,6 @@ t, found_values = hg.solve('final value', inputs, to_print=False, search_depth=1
                            debug_nodes=debug_nodes, debug_edges=debug_edges)
 print(t)
 
-def plotValues(labels: list, found_values: dict, time_step: float):
-    legend = []
-    ylabel = []
-    for label in labels:
-        if isinstance(label, Node):
-            if label.units is not None:
-                ylabel.append(label.units)
-            label = label.label
-        values = found_values[label]
-        times = [time_step * i for i in range(len(values))]
-        plt.plot(times, values)
-        legend.append(label)
-    plt.legend(legend)
-    if len(ylabel) > 0:
-        plt.ylabel(', '.join(ylabel))
-    plt.xlabel('Time (s)')
-    plt.title('Hybrid Elevator Simulation')
-    plt.show()  
-
-plotValues([height, occupancy], found_values, step.static_value)
+# Visualize results
+plotTimeValues([height, occupancy, error], 
+               found_values, step.static_value, title='Hybrid Elevator Simulation')
