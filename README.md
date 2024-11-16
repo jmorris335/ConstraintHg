@@ -1,10 +1,10 @@
 ![Static Badge](https://img.shields.io/badge/homepage-blue?link=https%3A%2F%2Fgithub.com%2Fjmorris335%2FConstraintHg%2Fwiki)
  ![Read the Docs](https://img.shields.io/readthedocs/constrainthg?link=https%3A%2F%2Fconstrainthg.readthedocs.io%2Fen%2Flatest%2Findex.html) ![Static Badge](https://img.shields.io/badge/tests-passing-brightgreen) ![GitHub Release](https://img.shields.io/github/v/release/jmorris335/ConstraintHg?include_prereleases&display_name=tag) ![GitHub last commit](https://img.shields.io/github/last-commit/jmorris335/ConstraintHg)
 
-
-
 # ConstraintHg
-This repository enables usage of hypergraphs to define and execute system models. **It is not a rigorous data storage solution. Do not use this as a database.** Note that this repo is under active development (no official release yet), therefore changes may occur rapidly. Fork the repository before using it.
+This repository enables usage of hypergraphs to define and execute system models. **It is not a rigorous data storage solution. Do not use this as a database.** Note that this repo is under active development (no official release yet), therefore changes may occur without warning. No functionality is guaranteed. 
+
+**For an detailed overview of the package and introduction to constraint hypergraph theory, see the [wiki](https://github.com/jmorris335/ConstraintHg/wiki)** The latest API documentation is on [Read the Docs](https://constrainthg.readthedocs.io/en/latest/).
 
 ## Install
 ConstraintHg is listed on the Python Package Index. Just use `pip install constrainthg` to get started.
