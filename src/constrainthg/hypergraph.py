@@ -556,16 +556,6 @@ class Edge:
         """Returns True if `t` has already been found as a path to the source node."""
         return t.label in [ft.label for ft in self.found_tnodes[source_node_label]]
 
-    def do_something(self, t: TNode):
-        node_label = t.node_label
-        if node_label not in self.found_tnodes:
-            for label, sub_labels in self.subset_alt_labels.items():
-                if t.node_label in sub_labels:
-                    node_label = label
-                    break
-        if t.label in [ft.label for ft in self.found_tnodes[node_label]]:
-            return []
-
     @staticmethod
     def via_true(*args, **kwargs):
         """Returns true for all inputs (unconditional edge)."""
