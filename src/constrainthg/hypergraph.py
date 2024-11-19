@@ -74,7 +74,7 @@ class TNode:
         children : list, optional
             TNodes that form the source nodes of an edge leading to the TNode.
         cost : float, optional
-            Value indicating the solving the tree rooted at the TNode.
+            Value indicating the cost of solving the tree rooted at the TNode.
         trace : list, optional
             Top down trace of how the TNode could be resolved, used for path exploration.
         gen_edge_label : str, optional
@@ -93,13 +93,13 @@ class TNode:
         self.label = label
         self.value = value
         self.children = [] if children is None else children
-        self.cost = cost
         self.trace = [] if trace is None else trace
         self.gen_edge_label = gen_edge_label
         self.gen_edge_cost = gen_edge_cost
         self.values = {node_label : [value,]}
         self.join_status = join_status
         self.index = max([1] + [c.index for c in self.children])
+        self.cost = cost
 
     def print_conn(self, last=True)-> str:
         """Selecter function for the connector string on the tree print."""
@@ -143,8 +143,30 @@ class TNode:
         for c in self.children:
             out += c.get_descendents()
         return out
+    
+    @property
+    def cost(self)-> float:
+        """The total sum of the weights of each edge in the tree."""
+        if self.calc_cost is None:
+            self.calc_cost = self.get_tree_cost()
+        return self.calc_cost
+    
+    @cost.setter
+    def cost(self, val: float):
+        """Sets the cost property of the TNode."""
+        if val is None:
+            self.calc_cost = self.get_tree_cost()
+        elif not (isinstance(val, float) or isinstance(val, int)):
+            raise TypeError("Input to cost must be float type.")
+        else:
+            self.calc_cost = float(val)
 
-    def get_tree_cost(self, root=None, checked_edges: set=None):
+    @cost.deleter
+    def cost(self):
+        """Deletes the cost property of the TNode."""
+        self.calc_cost = None
+
+    def get_tree_cost(self, root=None, checked_edges: set=None)-> float:
         """Returns the cost of solving to the leaves of the tree."""
         if root is None:
             root = self
@@ -468,9 +490,8 @@ class Edge:
 
         tuple_keys = filter(lambda key : isinstance(self.source_nodes[key], tuple),
                             self.source_nodes)
-        psuedo_nodes = {key : self.source_nodes[key] for key in tuple_keys}
-        for key in psuedo_nodes:
-            pseudo_identifier, pseduo_attribute = psuedo_nodes[key]
+        for key in tuple_keys:
+            pseudo_identifier, pseduo_attribute = self.source_nodes[key]
             if pseudo_identifier in self.source_nodes:
                 sn_label = self.source_nodes[pseudo_identifier].label
                 for st in source_tnodes:
@@ -483,6 +504,7 @@ class Edge:
                 if not isinstance(sn, tuple) and st.node_label == sn.label:
                     source_values[key] = st.value
                     break
+
         return source_values
 
     def process_values(self, source_vals: dict)-> float:
@@ -493,8 +515,48 @@ class Edge:
             return self.rel(**source_vals)
         return None
 
-    def get_source_tnode_combinations(self, t: TNode, DEBUG: bool=False):
+    def get_source_tnode_combinations(self, t: TNode, DEBUG: bool=False)-> list:
         """Returns all viable combinations of source nodes using the TNode `t`."""
+        st_candidates = []
+        if self.add_found_tnode(t):
+            if DEBUG:
+                for st_label, sts in self.found_tnodes.items():
+                    var_info = ', '.join(f'{str(st.value)[:4]}({st.index})' for st in sts)
+                    msg = f' - {st_label}: ' + var_info
+                    logger.log(logging.DEBUG + 2, msg)
+
+            for st_label, sts in self.found_tnodes.items():
+                if st_label == t.node_label:
+                    st_candidates.append([t])
+                elif len(sts) == 0:
+                    return []
+                else:
+                    st_candidates.append(sts)
+
+        st_combos = itertools.product(*st_candidates)
+        return st_combos
+    
+    def add_found_tnode(self, t: TNode)-> bool:
+        """Returns true if `t` successfully added as a viable path to a source node."""
+        node_label = self.get_relevant_node_label(t)
+        if self.check_tnode_already_found(t, node_label):
+            return False
+        append_to_dict_list(self.found_tnodes, node_label, t)
+        return True
+    
+    def get_relevant_node_label(self, t: TNode)-> str:
+        """Returns the node label of `t` or of the super set of `t`, if present."""
+        if t.node_label not in self.found_tnodes:
+            for label, sub_labels in self.subset_alt_labels.items():
+                if t.node_label in sub_labels:
+                    return label
+        return t.node_label
+    
+    def check_tnode_already_found(self, t: TNode, source_node_label: str)-> bool:
+        """Returns True if `t` has already been found as a path to the source node."""
+        return t.label in [ft.label for ft in self.found_tnodes[source_node_label]]
+
+    def do_something(self, t: TNode):
         node_label = t.node_label
         if node_label not in self.found_tnodes:
             for label, sub_labels in self.subset_alt_labels.items():
@@ -503,26 +565,6 @@ class Edge:
                     break
         if t.label in [ft.label for ft in self.found_tnodes[node_label]]:
             return []
-
-        append_to_dict_list(self.found_tnodes, t.node_label, t)
-        st_candidates = []
-
-        if DEBUG:
-            for st_label, sts in self.found_tnodes.items():
-                var_info = ', '.join(f'{str(st.value)[:4]}({st.index})' for st in sts)
-                msg = f' - {st_label}: ' + var_info
-                logger.log(logging.DEBUG + 2, msg)
-
-        for st_label, sts in self.found_tnodes.items():
-            if st_label == t.node_label:
-                st_candidates.append([t])
-            elif len(sts) == 0:
-                return []
-            else:
-                st_candidates.append(sts)
-
-        st_combos = itertools.product(*st_candidates)
-        return st_combos
 
     @staticmethod
     def via_true(*args, **kwargs):
@@ -626,7 +668,6 @@ class Pathfinder:
         parent_t = TNode(label, node_label, parent_val, children,
                          gen_edge_label=gen_edge_label, gen_edge_cost=edge.weight)
         parent_t.values = self.merge_found_values(parent_val, node.label, source_tnodes)
-        parent_t.cost = parent_t.get_tree_cost()
         parent_t.index += edge.index_offset
         self.search_roots.append(parent_t)
         self.search_counter += 1
@@ -637,16 +678,9 @@ class Pathfinder:
         #TODO: Check all leading edges to find the node with the lowest cost path
         if len(self.search_roots) == 0:
             return None
-        # root = None
-        # for st in self.search_roots:
-        #     if st.label == self.target_node.label:
-        #         root = st
-        #         break
-        #     if root is None or root.cost > st.cost:
-        #         root = st
-        # self.search_roots.remove(root)
-        # return root
+
         root = min(self.search_roots, key=lambda t : t.cost)
+
         self.search_roots.remove(root)
         return root
 
