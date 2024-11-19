@@ -292,8 +292,8 @@ class EdgeProperty(Enum):
 class Edge:
     """A relationship along a set of nodes (the source) that produces a single value."""
     def __init__(self, label: str, source_nodes: dict, target: Node, rel: Callable,
-                 via: Callable=None, weight: float=1.0, index_offset: int=0,
-                 edge_props: EdgeProperty=None):
+                 via: Callable=None, select: Callable=None, weight: float=1.0, 
+                 index_offset: int=0, edge_props: EdgeProperty=None):
         """Creates a new `Edge` object. This should generally be called from a Hypergraph
         object using the Hypergraph.addEdge method.
         
@@ -314,8 +314,12 @@ class Edge:
             value (the target).
         via : Callable, optional
             A function that must be true for the edge to be traversable (viable). 
-            Default to uncondtionally
-            true if not set.
+            Defaults to unconditionally true if not set.
+        select : Callable, optional
+            A function that takes in handles of source nodes as inputs in reference to
+            the *index* of each referenced source node, returns a boolean condition 
+            relating the indices of each. Defaults to unconditionally true if not set,
+            meaning any index of source node is valid.
         weight : float > 0.0, default=1.0
             The quanitified cost of traversing the edge. Must be positive, akin to a 
             distance measurement.
@@ -336,6 +340,7 @@ class Edge:
         """
         self.rel = rel
         self.via = self.via_true if via is None else via
+        self.select = self.via_true if select is None else select
         self.source_nodes = self.identify_source_nodes(source_nodes, self.rel, self.via)
         self.create_found_tnodes_dict()
         self.target = target
