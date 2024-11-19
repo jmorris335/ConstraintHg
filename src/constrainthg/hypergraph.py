@@ -568,7 +568,7 @@ class Pathfinder:
     """Object for searching a path through the hypergraph from a collection of source
     nodes to a single target node. If the hypergraph is fully constrained and viable,
     then the result of the search is a singular value of the target node."""
-    def __init__(self, target: Node, sources: list, nodes: dict):
+    def __init__(self, target: Node, sources: list, nodes: dict, no_weights: bool=False):
         """Creates a new Pathfinder object.
         
         Parameters
@@ -579,10 +579,14 @@ class Pathfinder:
             A list of Node objects that have static values for the simulation.
         nodes : dict
             A dictionary of nodes taken from the hypergraph as {label : Node}.
+        no_weights : bool, default=False
+            Optional run mode where weights aren't considered. This speeds up the 
+            simulation but prevents model switching.
         """
         self.nodes = nodes
         self.source_nodes = sources
         self.target_node = target
+        self.no_weights = no_weights
         self.search_roots = []
         self.search_counter = 0
         """Number of nodes explored"""
@@ -655,7 +659,8 @@ class Pathfinder:
         children = source_tnodes
         gen_edge_label = edge.label + '#' + str(self.search_counter)
         label = f'{node_label}#{self.search_counter}'
-        parent_t = TNode(label, node_label, parent_val, children,
+        cost = 0.0 if self.no_weights else None
+        parent_t = TNode(label, node_label, parent_val, children, cost=cost,
                          gen_edge_label=gen_edge_label, gen_edge_cost=edge.weight)
         parent_t.values = self.merge_found_values(parent_val, node.label, source_tnodes)
         parent_t.index += edge.index_offset
@@ -697,10 +702,18 @@ class Pathfinder:
 
 class Hypergraph:
     """Builder class for a hypergraph. See demos for examples on how to use."""
-    def __init__(self):
-        """Initialize a Hypergraph."""
+    def __init__(self, no_weights: bool=False):
+        """Initialize a Hypergraph.
+        
+        Parameters
+        ----------
+        no_weights : bool, default=False
+            Optional run mode where weights aren't considered. This speeds up the 
+            simulation but prevents model switching.
+        """
         self.nodes = {}
         self.edges = {}
+        self.no_weights = no_weights
 
     def get_node(self, node_key)-> Node:
         """Caller function for finding a node in the hypergraph."""
@@ -885,7 +898,7 @@ class Hypergraph:
         else:
             source_nodes = [node for node in self.nodes.values() if node.is_constant]
         target_node = self.get_node(target)
-        pf = Pathfinder(target_node, source_nodes, self.nodes)
+        pf = Pathfinder(target_node, source_nodes, self.nodes, no_weights=self.no_weights)
         try:
             t, found_values = pf.search(debug_nodes, debug_edges, search_depth)
         except Exception as e:
