@@ -89,8 +89,8 @@ def Ris_exiting(*args, **kwargs):
 # Edges
 ## Hybrid connection relationships
 hg.add_edge({'s1': height, 's2': gap, 's3': height_tolerance}, curr_floor, 
-           R.Rfloor_divide, label='(height,gap,height_tol)->current floor',
-           via=lambda s1, s2, s3, **kwargs : abs(s1 % s2) < s3, index_offset=1)
+            R.Rfloor_divide, label='(height,gap,height_tol)->current floor',
+            via=lambda s1, s2, s3, **kwargs : abs(s1 % s2) < s3, index_offset=1)
 hg.add_edge([gap, floor], floor_height, R.Rmultiply)
 hg.add_edge([gap, destination], dest_height, R.Rmultiply)
 hg.add_edge({'s1':dest_height, 's2':height}, error, R.Rsubtract, 
@@ -99,20 +99,20 @@ hg.add_edge({'s1':dest_height, 's2':height}, error, R.Rsubtract,
 ## Motor controller relationships
 hg.add_edge([KP, error], P, R.Rmultiply)
 hg.add_edge({'s1': KI,
-            's2': error, 's5': ('s2', 'index'),
-            's3': I, 's6': ('s3', 'index'),
-            's4': step}, I, R.mult_and_sum(['s1', 's2', 's3'], 's4'),
+             's2': error, 's5': ('s2', 'index'),
+             's3': I, 's6': ('s3', 'index'),
+             's4': step}, I, R.mult_and_sum(['s1', 's2', 's3'], 's4'),
             via=lambda s5, s6, **kwargs : s5 == s6 + 1)
 hg.add_edge({'s1': error, 's5': ('s1', 'index'),
-            's2': alpha,
-            's3': error_f, 's6': ('s3', 'index'),
-            's4': step}, error_f, Rlowpassfilter, 
+             's2': alpha,
+             's3': error_f, 's6': ('s3', 'index'),
+             's4': step}, error_f, Rlowpassfilter, 
             label='low_pass_filter->error_f',
             via=lambda s5, s6, **kwargs : s5 == s6 + 1)
 hg.add_edge(error_f, error_f_prev, R.Rmean)
 hg.add_edge({'s1': KD,
-            's2': error_f, 's3': ('s2', 'index'),
-            's4': error_f_prev, 's5': ('s4', 'index')}, D, R.Rmultiply,
+             's2': error_f, 's3': ('s2', 'index'),
+             's4': error_f_prev, 's5': ('s4', 'index')}, D, R.Rmultiply,
             label='(KD, error_f, error_f_prev)->D',
             via=lambda s3, s5, **kwargs : s3 == s5 + 1)
 hg.add_edge([P, I, D], pid_input, R.Rsum, label='PID', edge_props='LEVEL')
@@ -130,13 +130,13 @@ hg.add_edge(damping, 'neg damping', R.Rnegate)
 hg.add_edge([u, '/gm', 'neg damping'], F, R.Rsum, label='(u,/gm,-damping)->F', edge_props='LEVEL')
 hg.add_edge([F, mass], acc, R.Rdivide, label='(F,mass)->acc', edge_props='LEVEL', index_offset=1)
 hg.add_edge({'s1': acc, 's4': ('s1', 'index'),
-            's2': vel, 's5': ('s2', 'index'),
-            's3': step,}, vel, R.mult_and_sum(['s1', 's3'], 's2'),
+             's2': vel, 's5': ('s2', 'index'),
+             's3': step,}, vel, R.mult_and_sum(['s1', 's3'], 's2'),
             label='(acc,vel,step)->vel',
             via=lambda s4, s5, **kwargs: s4 == s5 + 1)
 hg.add_edge({'s1': vel, 's4': ('s1', 'index'),
-            's2': height, 's5': ('s2', 'index'),
-            's3': step,}, height, R.mult_and_sum(['s1', 's3'], 's2'),
+             's2': height, 's5': ('s2', 'index'),
+             's3': step,}, height, R.mult_and_sum(['s1', 's3'], 's2'),
             label='(vel,height,step)->height',
             via=lambda s4, s5, **kwargs: s4 == s5 + 1)
 
@@ -153,15 +153,15 @@ def addPerson(label: str, goal_floor: int, start_floor: int, person_is_on: bool=
     is_exiting = Node(f'{label} is exiting', description=f'true if passenger {label} is exiting carriage')
 
     hg.add_edge({'s1': curr_floor, 's2':onX, 's3':startX, 's4':goalX, 
-                's5': ('s1', 'index'), 's6': ('s2', 'index')}, onX, Rset_status,
-               label=f'(curr_floor,{label}:is_on,start,goal)->{label} is on',
-               via=lambda s5, s6, **kwargs : s5 == s6 + 1)
+                 's5': ('s1', 'index'), 's6': ('s2', 'index')}, onX, Rset_status,
+                label=f'(curr_floor,{label}:is_on,start,goal)->{label} is on',
+                via=lambda s5, s6, **kwargs : s5 == s6 + 1)
     hg.add_edge({'s1': curr_floor, 's2':onX, 's3':startX, 's4':goalX,
-                's5': ('s1', 'index'), 's6': ('s2', 'index')}, is_boarding, Ris_boarding,
+                 's5': ('s1', 'index'), 's6': ('s2', 'index')}, is_boarding, Ris_boarding,
                 label=f'(curr_floor,{label}:is_on,start,goal)->{label} is boarding',
                 via=lambda s5, s6, **kwargs : s5 == s6 + 1)
     hg.add_edge({'s1': curr_floor, 's2':onX, 's3':goalX,
-                's4': ('s1', 'index'), 's5': ('s2', 'index')}, is_exiting, Ris_exiting,
+                 's4': ('s1', 'index'), 's5': ('s2', 'index')}, is_exiting, Ris_exiting,
                 label=f'(curr_floor,{label}:is_on,goal)->{label} is exiting',
                 via=lambda s4, s5, **kwargs : s4 == s5 + 1)
     boarding_edge.add_source_node(is_boarding)
@@ -174,8 +174,8 @@ hg.insert_edge(boarding_edge)
 hg.insert_edge(exiting_edge)
 
 hg.add_edge({'s1':occupancy, 's2':boarding, 's3':exiting, 's4': ('s1', 'index'), 
-            's5': ('s2', 'index'), 's6': ('s3', 'index')}, occupancy, 
-            lambda s1, s2, s3, **kwargs : s1 + s2 - s3,
+             's5': ('s2', 'index'), 's6': ('s3', 'index')}, occupancy, 
+            rel=lambda s1, s2, s3, **kwargs : s1 + s2 - s3,
             label='(occ, boarding, exiting)->occupancy',
             via=lambda s4, s5, s6, **kwargs : s5 == s6 and s5 == s4 + 1)
 
@@ -192,7 +192,7 @@ debug_edges = {'(acc,vel,step)->vel'} if False else None
 
 # Set final value to extract out
 hg.add_edge({'s1':height, 's2':('s1', 'index')}, 'final value', R.Rfirst, 
-           via=R.geq('s2', 20))
+            via=R.geq('s2', 20))
 
 # hg.printPaths('final value', toPrint=True)
 t, found_values = hg.solve('final value', inputs, to_print=False, search_depth=10000,
