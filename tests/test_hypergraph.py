@@ -136,13 +136,14 @@ class TestHypergraph():
         hg = Hypergraph()
         hg.add_edge('S1', 'A', R.Rmean)
         hg.add_edge('A', 'C', R.Rmean)
-        hg.add_edge('C', 'A', R.Rincrement)
+        hg.add_edge('C', 'A', R.Rincrement, index_offset=1)
         hg.add_edge('S2', 'B', R.Rmean)
         hg.add_edge('B', 'C', R.Rmean)
-        hg.add_edge('C', 'B', R.Rmean)
-        hg.add_edge(['A', 'B'], 'T', R.Rsum, via=lambda s1, s2 : min(s1, s2) > 5)
+        hg.add_edge('C', 'B', R.Rmean, index_offset=1)
+        hg.add_edge(['A', 'B'], 'T', R.Rsum, via=lambda s1, s2 : min(s1, s2) >= 5)
 
         t, fv = hg.solve('T', {'S1': 1, 'S2': 4})
+        print(t.print_tree())
         assert t.value == 12
         assert t.cost == 8
 
@@ -170,3 +171,10 @@ class TestHypergraph():
         t, fv = hg.solve('T', {'S': 10})
         assert t.value == 4
         assert t.cost == 9
+
+    def test_no_weights(self):
+        """Tests a hypergraph with no weights set."""
+        hg = Hypergraph(no_weights=True)
+        hg.add_edge(['A', 'B'], 'C', R.Rsum, weight=10.)
+        t, fv = hg.solve('C', {'A': 100, 'B': 12.9},)
+        assert t.cost == 0.0, "Cost should be 0.0 for no_weights test"

@@ -21,6 +21,7 @@ def append_to_dict_list(d: dict, key, val):
     if key not in d:
         d[key] = []
     d[key].append(val)
+    return d
 
 def make_list(val)-> list:
     """Ensures that the value is a list, or else a list containing the value."""
@@ -332,8 +333,9 @@ class Edge:
         Properties
         ----------
         found_tnodes : dict
-            A dict of lists of source_tnodes that are viable trees to a source node, 
-            format: {node_label : List[TNode,]}
+            A dict of dicts of source_tnodes that are viable trees to a source node, 
+            with each sub_dict referenced by index. 
+            format: {node_label : dict{index : TNode}}
         subset_alt_labels : dict
             A dictionary of alternate node labels if a source node is a super set,
             format: {node_label : List[alt_node_label,]}
@@ -356,7 +358,7 @@ class Edge:
         for sn in self.source_nodes.values():
             if not isinstance(sn, tuple):
                 self.subset_alt_labels[sn.label] = []
-                self.found_tnodes[sn.label] = []
+                self.found_tnodes[sn.label] = {}
                 for sub_sn in sn.sub_nodes:
                     self.subset_alt_labels[sn.label].append(sub_sn.label)
 
@@ -519,6 +521,17 @@ class Edge:
         if self.via(**source_vals):
             return self.rel(**source_vals)
         return None
+    
+    def get_tnodes_satisfying_select(self, t: TNode)-> dict:
+        """Returns a dict of all found TNodes in the edge that satisfy the `select`
+        method, in the format {node_label : [TNode,]}."""
+        out = {}
+        for node_label, indexed_fts in self.found_tnodes.items():
+            found_fts = []
+            for fts in indexed_fts.values():
+                found_fts.extend(fts)
+            out[node_label] = found_fts
+        return out
 
     def get_source_tnode_combinations(self, t: TNode, DEBUG: bool=False)-> list:
         """Returns all viable combinations of source nodes using the TNode `t`."""
@@ -530,7 +543,9 @@ class Edge:
                     msg = f' - {st_label}: ' + var_info
                     logger.log(logging.DEBUG + 2, msg)
 
-            for st_label, sts in self.found_tnodes.items():
+            #TODO: Edit this to get the right nodes
+            selected_tnodes = self.get_tnodes_satisfying_select(t)
+            for st_label, sts in selected_tnodes.items():
                 if st_label == t.node_label:
                     st_candidates.append([t])
                 elif len(sts) == 0:
@@ -546,7 +561,10 @@ class Edge:
         node_label = self.get_relevant_node_label(t)
         if self.check_tnode_already_found(t, node_label):
             return False
-        append_to_dict_list(self.found_tnodes, node_label, t)
+        if node_label in self.found_tnodes:
+            self.found_tnodes[node_label] = {}
+        source_tnodes = self.found_tnodes[node_label]
+        append_to_dict_list(source_tnodes, t.index, t)
         return True
     
     def get_relevant_node_label(self, t: TNode)-> str:
@@ -559,7 +577,11 @@ class Edge:
     
     def check_tnode_already_found(self, t: TNode, source_node_label: str)-> bool:
         """Returns True if `t` has already been found as a path to the source node."""
-        return t.label in [ft.label for ft in self.found_tnodes[source_node_label]]
+        for fts in self.found_tnodes[source_node_label].values():
+            if t.label in [ft.label for ft in fts]:
+                return True
+        return False
+        # return t.label in [ft.label for ft in self.found_tnodes[source_node_label]]
 
     @staticmethod
     def via_true(*args, **kwargs):
@@ -679,7 +701,10 @@ class Pathfinder:
         if len(self.search_roots) == 0:
             return None
 
-        root = min(self.search_roots, key=lambda t : t.cost)
+        min_idx =  min(self.search_roots, key=lambda t : t.index).index
+        lowest_idx_roots = filter(lambda t : t.index == min_idx, self.search_roots)
+        root = min(lowest_idx_roots, key=lambda t : t.cost)
+        # root = min(self.search_roots, key=lambda t : t.cost)
 
         self.search_roots.remove(root)
         return root
