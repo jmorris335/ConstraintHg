@@ -768,6 +768,8 @@ class Hypergraph:
         for node in self.nodes.values():
             if not node.is_constant:
                 node.static_value = None
+        for edge in self.edges.values():
+            edge.create_found_tnodes_dict()
 
     def request_node_label(self, requested_label=None)-> str:
         """Generates a unique label for a node in the hypergraph"""

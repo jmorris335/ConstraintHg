@@ -4,7 +4,7 @@
 # ConstraintHg
 This repository enables usage of hypergraphs to define and execute system models. **It is not a rigorous data storage solution. Do not use this as a database.** Note that this repo is under active development (no official release yet), therefore changes may occur without warning. No functionality is guaranteed. 
 
-**For an detailed overview of the package and introduction to constraint hypergraph theory, see the [wiki](https://github.com/jmorris335/ConstraintHg/wiki)** The latest API documentation is on [Read the Docs](https://constrainthg.readthedocs.io/en/latest/).
+**For an detailed overview of the package and introduction to constraint hypergraph theory, see the [wiki](https://github.com/jmorris335/ConstraintHg/wiki).** The latest API documentation is available on [Read the Docs](https://constrainthg.readthedocs.io/en/latest/).
 
 ## Install
 ConstraintHg is listed on the Python Package Index. Just use `pip install constrainthg` to get started.
