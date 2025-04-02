@@ -60,7 +60,7 @@ class TNode:
 
     def __init__(self, label: str, node_label: str, value=None, children: list=None,
                  cost: float=None, trace: list=None, gen_edge_label: str=None,
-                 gen_edge_cost: float=0.0, join_status: str='None'):
+                 gen_edge_cost: float=0.0, join_status: str='None', max_display_length: int=12):
         """
         Creates the root of a search tree.
 
@@ -84,6 +84,8 @@ class TNode:
             Value for weight (cost) of the generating edge, default is 0.0.
         join_status : str, optional
             Indicates if the TNode is the last of a set of children, used for printing.
+        max_display_length : int, default=12
+            The maximum characters to display for the value of the node.
 
         Properties
         ----------
@@ -94,13 +96,14 @@ class TNode:
         self.label = label
         self.value = value
         self.children = [] if children is None else children
+        self.cost = cost
         self.trace = [] if trace is None else trace
         self.gen_edge_label = gen_edge_label
         self.gen_edge_cost = gen_edge_cost
         self.values = {node_label : [value,]}
         self.join_status = join_status
         self.index = max([1] + [c.index for c in self.children])
-        self.cost = cost
+        self.max_display_length = max_display_length
 
     def print_conn(self, last=True)-> str:
         """Selecter function for the connector string on the tree print."""
@@ -185,9 +188,9 @@ class TNode:
         out = self.node_label
         if self.value is not None:
             if isinstance(self.value, float):
-                out += f'={self.value:.4g}'
+                out += f'={self.value:.4g}'[:self.max_display_length]
             else:
-                out += f'={self.value}'
+                out += f'={self.value}'[:self.max_display_length]
         out += f', index={self.index}'
         if self.cost is not None:
             out += f', cost={self.cost:.4g}'
@@ -639,6 +642,7 @@ class Pathfinder:
             logger.debug('Search trees: ' + ', '.join(f'{s.node_label}' for s in self.search_roots))
 
             root = self.select_root()
+            logger.debug(f'Exploring <{root.label}>, index={root.index}:')
             if root.node_label is self.target_node.label:
                 logger.info(f'Finished search for {self.target_node.label} with value of {root.value}')
                 self.log_debugging_report()
@@ -666,12 +670,12 @@ class Pathfinder:
             self.explored_edges[edge.label][0] += 1
             DEBUG = edge.label in debug_edges
             level = logging.DEBUG + (2 if DEBUG else 0)
-            logger.log(level, f"Edge {i}, <{edge.label}>:")
+            logger.log(level, f"- Edge {i}=<{edge.label}>, target=<{edge.target.label}>:")
 
             combos = edge.get_source_tnode_combinations(t, DEBUG)
             for j, combo in enumerate(combos):
-                node_indices = ', '.join(f'{n.node_label} ({n.index})' for n in combo)
-                logger.debug(f' - Combo {j}: ' + node_indices)
+                node_indices = ', '.join(f'{n.label} ({n.index})' for n in combo)
+                logger.debug(f'   - Combo {j}: ' + node_indices)
                 pt = self.make_parent_tnode(combo, edge.target, edge)
                 self.explored_edges[edge.label][1] += 1
                 if pt is not None:
