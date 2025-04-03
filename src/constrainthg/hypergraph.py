@@ -3,11 +3,9 @@ File: hypergraph.py
 Author: John Morris, jhmrrs@clemson.edu, https://orcid.org/0009-0005-6571-1959
 Purpose: A list of classes for storing and traversing a constraint hypergraph.
 License: All rights reserved.
-Versions:
-- 0.0, 7 Oct. 2024: initialized
-- 0.1, 4 Nov. 2024: basic searching demonstrated
 """
 
+#TODO: Added disposable methods as well as a test, but I'm not sure they're actually necessary. Need to test with this new version before committing.
 from typing import Callable, List
 from inspect import signature
 import logging
@@ -96,7 +94,6 @@ class TNode:
         self.label = label
         self.value = value
         self.children = [] if children is None else children
-        self.cost = cost
         self.trace = [] if trace is None else trace
         self.gen_edge_label = gen_edge_label
         self.gen_edge_cost = gen_edge_cost
@@ -104,6 +101,7 @@ class TNode:
         self.join_status = join_status
         self.index = max([1] + [c.index for c in self.children])
         self.max_display_length = max_display_length
+        self.cost = cost
 
     def print_conn(self, last=True)-> str:
         """Selecter function for the connector string on the tree print."""
@@ -292,12 +290,14 @@ class EdgeProperty(Enum):
     passed during setup. Used as shorthand for common configurations."""
     LEVEL = 1
     """Every source node in the edge must have the same index for the edge to be viable."""
+    DISPOSE_ALL = 2
+    """Every source node can only be used once per execution."""
 
 class Edge:
     """A relationship along a set of nodes (the source) that produces a single value."""
     def __init__(self, label: str, source_nodes: dict, target: Node, rel: Callable,
                  via: Callable=None, select: Callable=None, weight: float=1.0, 
-                 index_offset: int=0, edge_props: EdgeProperty=None):
+                 index_offset: int=0, disposable: list=None, edge_props: EdgeProperty=None):
         """Creates a new `Edge` object. This should generally be called from a Hypergraph
         object using the Hypergraph.addEdge method.
         
@@ -330,6 +330,11 @@ class Edge:
         index_offset : int, default=0
             Offset to apply to the target once solved for. Akin to iterating to the 
             next level of a cycle.
+        disposable : list, optional
+            A list of source node handles that should not be evaluated for future 
+            cyclic executions of the edge. That is, each TNode that corresponds to a 
+            handle in `disposable` is removed from `found_tnodes` after a successful 
+            edge calculation. 
         edge_props : List(EdgeProperty) | EdgeProperty | str | int, optional
             A list of enumerated types that are used to configure the edge.
 
@@ -352,6 +357,7 @@ class Edge:
         self.weight = abs(weight)
         self.label = label
         self.index_offset = index_offset
+        self.disposable = disposable
         self.edge_props = self.setup_edge_properties(edge_props)
 
     def create_found_tnodes_dict(self):
@@ -413,30 +419,37 @@ class Edge:
     def handle_edge_property(self, edge_prop: EdgeProperty):
         """Perform macro functions defined by the EdgeProperty."""
         if edge_prop is EdgeProperty.LEVEL:
-            if not hasattr(self, 'og_source_nodes'):
+            self.make_edge_level()
+        elif edge_prop is EdgeProperty.DISPOSE_ALL:
+            self.disposable = [key for key in self.source_nodes]
+
+    def make_edge_level(self):
+        """Adds a condition to the via function forcing all node indices to be 
+        equivalent."""
+        if not hasattr(self, 'og_source_nodes'):
                 self.og_source_nodes = dict(self.source_nodes.items())
                 self.og_rel = self.rel
                 self.og_via = self.via
-            sns = dict(self.source_nodes.items())
-            tuple_idxs = {label:el[0] for label, el in sns.items() if isinstance(el, tuple)}
-            for label, sn in sns.items():
-                if isinstance(sn, tuple) or label in tuple_idxs.values():
-                    continue
-                next_id = self.get_source_node_identifier()
-                self.source_nodes[next_id] = (label, 'index')
-                tuple_idxs[next_id] = label
-            def og_kwargs(**kwargs):
-                """Returns the original keywords specified when the edge was created."""
-                return {key: val for key,val in kwargs.items() if key in self.og_source_nodes}
-            def level_check(*args, **kwargs):
-                """Returns true if all passed indices are equivalent."""
-                if not self.og_via(*args, **kwargs):
-                    return False
-                idxs = {val for key, val in kwargs.items() if key in tuple_idxs}
-                return len(idxs) == 1
+        sns = dict(self.source_nodes.items())
+        tuple_idxs = {label:el[0] for label, el in sns.items() if isinstance(el, tuple)}
+        for label, sn in sns.items():
+            if isinstance(sn, tuple) or label in tuple_idxs.values():
+                continue
+            next_id = self.get_source_node_identifier()
+            self.source_nodes[next_id] = (label, 'index')
+            tuple_idxs[next_id] = label
+        def og_kwargs(**kwargs):
+            """Returns the original keywords specified when the edge was created."""
+            return {key: val for key,val in kwargs.items() if key in self.og_source_nodes}
+        def level_check(*args, **kwargs):
+            """Returns true if all passed indices are equivalent."""
+            if not self.og_via(*args, **kwargs):
+                return False
+            idxs = {val for key, val in kwargs.items() if key in tuple_idxs}
+            return len(idxs) == 1
 
-            self.via = level_check
-            self.rel = lambda *args, **kwargs : self.og_rel(*args, **og_kwargs(**kwargs))
+        self.via = level_check
+        self.rel = lambda *args, **kwargs : self.og_rel(*args, **og_kwargs(**kwargs))
 
     @staticmethod
     def get_named_arguments(methods: List[Callable])-> set:
@@ -489,10 +502,51 @@ class Edge:
         return out
 
     def process(self, source_tnodes: list):
-        """Processes the TNodes to get the value of the target."""
+        """Processes the tnodes to get the value of the target."""
         labeled_values = self.get_source_values(source_tnodes)
         target_val = self.process_values(labeled_values)
+        if target_val is not None:
+            self.dispose_solved_tnodes(source_tnodes)
         return target_val
+    
+    def dispose_solved_tnodes(self, source_tnodes: list):
+        """Once a TNode has been processed, it is removed from the `found_tnodes` list *only* if
+        it has been marked for removal via inclusion in the `select` tag. This ensures that nodes
+        from previous cycles don't get revetted for future edges, greatly simplifying simulation.
+
+        Process
+        -------
+        1. Get an identifier from the disposal list
+        2. Get the label for the source node corresponding to the identifier
+        3. Find the tnode used in the solution (from source_tnodes) with the matching node_label
+        4. Find the set of found_tnodes from the edge corresponding to the node label
+        5. Remove the tnode in found_tnodes with the same index as the solved tnode
+        """
+        if self.disposable is not None:
+            count = 0
+            for identifier in self.disposable:
+                sn = self.source_nodes.get(identifier, None)
+                if sn is None or isinstance(sn, tuple): continue
+                node_label = sn.label
+
+                for st in source_tnodes:
+                    if st.node_label == node_label:
+                        index = st.index
+                        break
+                else: continue
+
+                count += self.dispose_of_tnodes_with_index(node_label, index)
+            logger.debug(f'(Disposed of {count} nodes in {self.label})')
+
+    def dispose_of_tnodes_with_index(self, node_label: str, index: int)-> int:
+        """Removes each TNode from the edge property `found_tnodes` with a matching
+        node_label and index. Returns the number of TNodes succesfully removed.
+        """
+        if (matching_tnodes := self.found_tnodes.get(node_label, None)) is None:
+            return 0
+        matching_tnodes = [mt for mt in matching_tnodes]
+        self.found_tnodes[node_label] = [t for t in matching_tnodes if t.index != index]
+        return len(matching_tnodes) - len(self.found_tnodes[node_label])
 
     def get_source_values(self, source_tnodes: list):
         """Returns a dictionary of source values with their relevant keys."""
@@ -501,12 +555,12 @@ class Edge:
         tuple_keys = filter(lambda key : isinstance(self.source_nodes[key], tuple),
                             self.source_nodes)
         for key in tuple_keys:
-            pseudo_identifier, pseduo_attribute = self.source_nodes[key]
+            pseudo_identifier, pseudo_attribute = self.source_nodes[key]
             if pseudo_identifier in self.source_nodes:
                 sn_label = self.source_nodes[pseudo_identifier].label
                 for st in source_tnodes:
                     if st.node_label == sn_label:
-                        source_values[key] = getattr(st, pseduo_attribute)
+                        source_values[key] = getattr(st, pseudo_attribute)
                         break
 
         for st in source_tnodes:
@@ -517,11 +571,13 @@ class Edge:
 
         return source_values
 
-    def process_values(self, source_vals: dict)-> float:
+    def process_values(self, source_vals: dict):
         """Finds the target value based on the source values."""
         if None in source_vals:
             return None
         if self.via(**source_vals):
+            for sv in source_vals:
+                self.found_tnodes.pop(sv, None) #https://stackoverflow.com/a/8995774/15496939
             return self.rel(**source_vals)
         return None
     
@@ -674,12 +730,13 @@ class Pathfinder:
 
             combos = edge.get_source_tnode_combinations(t, DEBUG)
             for j, combo in enumerate(combos):
-                node_indices = ', '.join(f'{n.label} ({n.index})' for n in combo)
-                logger.debug(f'   - Combo {j}: ' + node_indices)
                 pt = self.make_parent_tnode(combo, edge.target, edge)
                 self.explored_edges[edge.label][1] += 1
                 if pt is not None:
                     self.explored_edges[edge.label][2] += 1
+
+                node_indices = ', '.join(f'{n.label} ({n.index})' for n in combo)
+                logger.debug(f'   - Combo {j}: ' + node_indices + f'-> <{str(pt)}>')
 
     def make_parent_tnode(self, source_tnodes: list, node: Node, edge: Edge):
         """Creates a TNode for the next step along the edge."""
@@ -825,7 +882,7 @@ class Hypergraph:
         return self.nodes[label]
 
     def add_edge(self, sources: dict, target, rel, via=None, weight: float=1.0,
-                label: str=None, index_offset: int=0, edge_props=None):
+                label: str=None, index_offset: int=0, disposable=None, edge_props=None):
         """Adds an edge to the hypergraph.
         
         Parameters
@@ -851,6 +908,11 @@ class Hypergraph:
         index_offset : int, default=0
             Offset to apply to the target once solved for. Akin to iterating to the 
             next level of a cycle.
+        disposable : list, optional
+            A list of source node handles that should not be evaluated for future 
+            cyclic executions of the edge. That is, each tnode that corresponds to a 
+            handle in `disposable` is removed from `found_tnodes` after a successful 
+            edge calculation. 
         edge_props : List(EdgeProperty) | EdgeProperty | str | int, optional
             A list of enumerated types that are used to configure the edge.
         """
@@ -858,7 +920,7 @@ class Hypergraph:
         target_nodes, target_inputs = self.get_nodes_and_identifiers([target])
         label = self.request_edge_label(label, source_nodes + target_nodes)
         edge = Edge(label, source_inputs, target_nodes[0], rel, via, weight,
-                    index_offset=index_offset, edge_props=edge_props)
+                    index_offset=index_offset, disposable=disposable, edge_props=edge_props)
         self.edges[label] = edge
         for sn in source_nodes:
             sn.leading_edges.add(edge)
