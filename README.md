@@ -87,4 +87,4 @@ Check out the  [demos](https://github.com/jmorris335/ConstraintHg/tree/main/demo
 Author: [John Morris](https://www.people.clemson.edu/jhmrrs/)  
 Organization: [PLM Center](https://github.com/Clemson-PLMC) at Clemson University  
 Contact: Reach out to my GitHub profile ([jmorris335](https://github.com/jmorris335))  
-Usage: An official release will *likely* be provided under the GPL license, but for now **all rights are reserved**. For usage, please reach out to the author directly.
+Usage: An official release will *likely* be provided under the Apache 2.0 license, but for now **all rights are reserved**. For usage, please reach out to the author directly.
