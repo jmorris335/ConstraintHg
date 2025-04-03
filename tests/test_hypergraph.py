@@ -178,3 +178,38 @@ class TestHypergraph():
         hg.add_edge(['A', 'B'], 'C', R.Rsum, weight=10.)
         t, fv = hg.solve('C', {'A': 100, 'B': 12.9},)
         assert t.cost == 0.0, "Cost should be 0.0 for no_weights test"
+
+    def test_retain_previous_indices(self):
+        """Tests whether a solution can be found by combining any previously found
+        source nodes (of any index). The default behavior without disposal."""
+        def negate(s: bool)-> bool:
+            return not s
+
+        hg_no_disposal = Hypergraph()
+        hg_no_disposal.add_edge('SA', 'A', R.Rmean)
+        hg_no_disposal.add_edge('SB', 'B', R.Rmean)
+        hg_no_disposal.add_edge('A', 'A', negate, index_offset=1)
+        hg_no_disposal.add_edge('B', 'B', negate, index_offset=1)
+        hg_no_disposal.add_edge({'a':'A', 'b':'B'}, 'C', lambda a, b : a and b)
+        hg_no_disposal.add_edge('C', 'T', R.Rmean, via=lambda c : c is True)
+        t, fv = hg_no_disposal.solve('T', {'SA': True, 'SB': False})
+        assert t.value == True, "Solver did not appropriately combine previously discovered indices"
+
+    def test_disposable(self):
+        """Tests disposable sources on an edge."""
+        def negate(s: bool)-> bool:
+            return not s
+
+        hg_with_disposal = Hypergraph()
+        hg_with_disposal.add_edge('SA', 'A', R.Rmean)
+        hg_with_disposal.add_edge('SB', 'B', R.Rmean)
+        hg_with_disposal.add_edge('A', 'A', negate, index_offset=1)
+        hg_with_disposal.add_edge('B', 'B', negate, index_offset=1)
+        hg_with_disposal.add_edge({'a':'A', 'b':'B'}, 'C', lambda a, b : a and b,
+                    disposable=['a', 'b'])
+        hg_with_disposal.add_edge('C', 'T', R.Rmean, via=lambda c : c is True)
+        hg_with_disposal.add_edge({'a': 'A', 'a_idx': ('A', 'index')}, 'T', R.Rmean, 
+                    via=lambda a_idx : a_idx >= 5)
+        t, fv = hg_with_disposal.solve('T', {'SA': True, 'SB': False})
+        assert t.value != True, "Solver used an invalid combination to solve the C->T edge"
+        assert t.value == 5, "Solver encountered some error and did not appropriately use the A->T edge"
