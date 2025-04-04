@@ -213,3 +213,19 @@ class TestHypergraph():
         t, fv = hg_with_disposal.solve('T', {'SA': True, 'SB': False})
         assert t.value != True, "Solver used an invalid combination to solve the C->T edge"
         assert t.value == 5, "Solver encountered some error and did not appropriately use the A->T edge"
+
+    def test_index_via(self):
+        """Tests whether the `index_via` functionality is working."""
+        hg = Hypergraph()
+        hg.add_edge('A', 'B', R.Rfirst)
+        hg.add_edge('S', 'B', R.Rfirst)
+        hg.add_edge('B', 'C', R.Rfirst)
+        hg.add_edge('C', 'A', R.Rfirst, index_offset=1)
+        hg.add_edge({'a':'A', 'a_idx': ('a', 'index'),
+                     'b':'B', 'b_idx': ('b', 'index'),
+                     'c':'C', 'c_idx': ('c', 'index')}, 'T', 
+                    rel=lambda a_idx, b_idx, c_idx, **kw : (a_idx, b_idx, c_idx), 
+                    via=lambda a_idx, **kw : a_idx >= 3,
+                    index_via=R.Rsame)
+        t, fv = hg.solve('T', {'S': 0})
+        assert t.value == (3, 3, 3), "Index for each node should be the same."

@@ -5,7 +5,6 @@ Purpose: A list of classes for storing and traversing a constraint hypergraph.
 License: All rights reserved.
 """
 
-#TODO: Added disposable methods as well as a test, but I'm not sure they're actually necessary. Need to test with this new version before committing.
 from typing import Callable, List
 from inspect import signature
 import logging
@@ -296,7 +295,7 @@ class EdgeProperty(Enum):
 class Edge:
     """A relationship along a set of nodes (the source) that produces a single value."""
     def __init__(self, label: str, source_nodes: dict, target: Node, rel: Callable,
-                 via: Callable=None, select: Callable=None, weight: float=1.0, 
+                 via: Callable=None, index_via: Callable=None, weight: float=1.0, 
                  index_offset: int=0, disposable: list=None, edge_props: EdgeProperty=None):
         """Creates a new `Edge` object. This should generally be called from a Hypergraph
         object using the Hypergraph.addEdge method.
@@ -319,7 +318,7 @@ class Edge:
         via : Callable, optional
             A function that must be true for the edge to be traversable (viable). 
             Defaults to unconditionally true if not set.
-        select : Callable, optional
+        index_via : Callable, optional
             A function that takes in handles of source nodes as inputs in reference to
             the *index* of each referenced source node, returns a boolean condition 
             relating the indices of each. Defaults to unconditionally true if not set,
@@ -341,16 +340,16 @@ class Edge:
         Properties
         ----------
         found_tnodes : dict
-            A dict of dicts of source_tnodes that are viable trees to a source node, 
+            A dict of lists of source_tnodes that are viable trees to a source node, 
             with each sub_dict referenced by index. 
-            format: {node_label : dict{index : TNode}}
+            format: {node_label : list[TNode,]}
         subset_alt_labels : dict
             A dictionary of alternate node labels if a source node is a super set,
             format: {node_label : List[alt_node_label,]}
         """
         self.rel = rel
         self.via = self.via_true if via is None else via
-        self.select = self.via_true if select is None else select
+        self.index_via = self.via_true if index_via is None else index_via
         self.source_nodes = self.identify_source_nodes(source_nodes, self.rel, self.via)
         self.create_found_tnodes_dict()
         self.target = target
@@ -367,7 +366,7 @@ class Edge:
         for sn in self.source_nodes.values():
             if not isinstance(sn, tuple):
                 self.subset_alt_labels[sn.label] = []
-                self.found_tnodes[sn.label] = {}
+                self.found_tnodes[sn.label] = []
                 for sub_sn in sn.sub_nodes:
                     self.subset_alt_labels[sn.label].append(sub_sn.label)
 
@@ -503,22 +502,71 @@ class Edge:
 
     def process(self, source_tnodes: list):
         """Processes the tnodes to get the value of the target."""
-        labeled_values = self.get_source_values(source_tnodes)
-        target_val = self.process_values(labeled_values)
+        source_values, source_indices = self.get_source_values_and_indices(source_tnodes)
+        target_val = self.process_values(source_values, source_indices)
         if target_val is not None:
             self.dispose_solved_tnodes(source_tnodes)
         return target_val
     
+    def get_source_values_and_indices(self, source_tnodes: list)-> tuple:
+        """Returns two dictionaries mapping a source identifier with a value (1) 
+        or its index (2).
+        """
+        source_values, source_indices  = {}, {}
+
+        tuple_keys = filter(lambda key : isinstance(self.source_nodes[key], tuple),
+                            self.source_nodes)
+        for key in tuple_keys:
+            value = self.get_psuedo_node_value(source_tnodes, *self.source_nodes[key])
+            source_values[key] = value
+
+        for st in source_tnodes:
+            for key, sn in self.source_nodes.items():
+                if not isinstance(sn, tuple) and st.node_label == sn.label:
+                    source_values[key] = st.value
+                    source_indices[key] = st.index
+                    break
+
+        return source_values, source_indices
+    
+    def get_psuedo_node_value(self, source_tnodes: list, 
+                                    pseudo_identifier: str, pseudo_attribute: str):
+        """Identifies the source node and returns its attribute given by 
+        the pseudo-node notation.
+        """
+        if (sn_label := self.source_nodes.get(pseudo_identifier, None)) is None:
+            return None
+        sn_label = self.source_nodes[pseudo_identifier].label
+        for st in source_tnodes:
+            if st.node_label == sn_label:
+                value = getattr(st, pseudo_attribute)
+                return value
+        return None
+
+    def process_values(self, source_vals: dict, source_indices: dict=None):
+        """Finds the target value based on the source values and indices."""
+        if None in source_vals:
+            return None
+        if source_indices is not None and not self.index_via(**source_indices):
+            return None
+        if self.via(**source_vals):
+            return self.rel(**source_vals)
+        return None
+    
     def dispose_solved_tnodes(self, source_tnodes: list):
-        """Once a TNode has been processed, it is removed from the `found_tnodes` list *only* if
-        it has been marked for removal via inclusion in the `select` tag. This ensures that nodes
-        from previous cycles don't get revetted for future edges, greatly simplifying simulation.
+        """Once a TNode has been processed, it is removed from the `found_tnodes` 
+        list *only* if it has been marked for removal via inclusion in the 
+        `disposable` list. 
+        
+        This ensures that nodes from previous cycles don't get 
+        revetted for future edges, greatly simplifying simulation.
 
         Process
         -------
         1. Get an identifier from the disposal list
         2. Get the label for the source node corresponding to the identifier
-        3. Find the tnode used in the solution (from source_tnodes) with the matching node_label
+        3. Find the tnode used in the solution (from source_tnodes) with the matching 
+        node_label
         4. Find the set of found_tnodes from the edge corresponding to the node label
         5. Remove the tnode in found_tnodes with the same index as the solved tnode
         """
@@ -548,69 +596,25 @@ class Edge:
         self.found_tnodes[node_label] = [t for t in matching_tnodes if t.index != index]
         return len(matching_tnodes) - len(self.found_tnodes[node_label])
 
-    def get_source_values(self, source_tnodes: list):
-        """Returns a dictionary of source values with their relevant keys."""
-        source_values = {}
-
-        tuple_keys = filter(lambda key : isinstance(self.source_nodes[key], tuple),
-                            self.source_nodes)
-        for key in tuple_keys:
-            pseudo_identifier, pseudo_attribute = self.source_nodes[key]
-            if pseudo_identifier in self.source_nodes:
-                sn_label = self.source_nodes[pseudo_identifier].label
-                for st in source_tnodes:
-                    if st.node_label == sn_label:
-                        source_values[key] = getattr(st, pseudo_attribute)
-                        break
-
-        for st in source_tnodes:
-            for key, sn in self.source_nodes.items():
-                if not isinstance(sn, tuple) and st.node_label == sn.label:
-                    source_values[key] = st.value
-                    break
-
-        return source_values
-
-    def process_values(self, source_vals: dict):
-        """Finds the target value based on the source values."""
-        if None in source_vals:
-            return None
-        if self.via(**source_vals):
-            for sv in source_vals:
-                self.found_tnodes.pop(sv, None) #https://stackoverflow.com/a/8995774/15496939
-            return self.rel(**source_vals)
-        return None
-    
-    def get_tnodes_satisfying_select(self, t: TNode)-> dict:
-        """Returns a dict of all found TNodes in the edge that satisfy the `select`
-        method, in the format {node_label : [TNode,]}."""
-        out = {}
-        for node_label, indexed_fts in self.found_tnodes.items():
-            found_fts = []
-            for fts in indexed_fts.values():
-                found_fts.extend(fts)
-            out[node_label] = found_fts
-        return out
-
-    def get_source_tnode_combinations(self, t: TNode, DEBUG: bool=False)-> list:
+    def get_source_tnode_combinations(self, t: TNode, DEBUG: bool=False):
         """Returns all viable combinations of source nodes using the TNode `t`."""
+        if not self.add_found_tnode(t):
+            return []
+        
         st_candidates = []
-        if self.add_found_tnode(t):
-            if DEBUG:
-                for st_label, sts in self.found_tnodes.items():
-                    var_info = ', '.join(f'{str(st.value)[:4]}({st.index})' for st in sts)
-                    msg = f' - {st_label}: ' + var_info
-                    logger.log(logging.DEBUG + 2, msg)
+        if DEBUG:
+            for st_label, sts in self.found_tnodes.items():
+                var_info = ', '.join(f'{str(st.value)[:4]}({st.index})' for st in sts)
+                msg = f' - {st_label}: ' + var_info
+                logger.log(logging.DEBUG + 2, msg)
 
-            #TODO: Edit this to get the right nodes
-            selected_tnodes = self.get_tnodes_satisfying_select(t)
-            for st_label, sts in selected_tnodes.items():
-                if st_label == t.node_label:
-                    st_candidates.append([t])
-                elif len(sts) == 0:
-                    return []
-                else:
-                    st_candidates.append(sts)
+        for st_label, sts in self.found_tnodes.items():
+            if st_label == t.node_label:
+                st_candidates.append([t])
+            elif len(sts) == 0:
+                return []
+            else:
+                st_candidates.append(sts)
 
         st_combos = itertools.product(*st_candidates)
         return st_combos
@@ -620,10 +624,7 @@ class Edge:
         node_label = self.get_relevant_node_label(t)
         if self.check_tnode_already_found(t, node_label):
             return False
-        if node_label in self.found_tnodes:
-            self.found_tnodes[node_label] = {}
-        source_tnodes = self.found_tnodes[node_label]
-        append_to_dict_list(source_tnodes, t.index, t)
+        append_to_dict_list(self.found_tnodes, node_label, t)
         return True
     
     def get_relevant_node_label(self, t: TNode)-> str:
@@ -636,11 +637,7 @@ class Edge:
     
     def check_tnode_already_found(self, t: TNode, source_node_label: str)-> bool:
         """Returns True if `t` has already been found as a path to the source node."""
-        for fts in self.found_tnodes[source_node_label].values():
-            if t.label in [ft.label for ft in fts]:
-                return True
-        return False
-        # return t.label in [ft.label for ft in self.found_tnodes[source_node_label]]
+        return t.label in [ft.label for ft in self.found_tnodes[source_node_label]]
 
     @staticmethod
     def via_true(*args, **kwargs):
@@ -881,7 +878,7 @@ class Hypergraph:
                 self.nodes[label] = Node(label, value)
         return self.nodes[label]
 
-    def add_edge(self, sources: dict, target, rel, via=None, weight: float=1.0,
+    def add_edge(self, sources: dict, target, rel, via=None, index_via=None, weight: float=1.0,
                 label: str=None, index_offset: int=0, disposable=None, edge_props=None):
         """Adds an edge to the hypergraph.
         
@@ -901,6 +898,14 @@ class Hypergraph:
         rel : Callable
             A function taking in a value for each source node that returns a single 
             value for the target.
+        via : Callable, optional
+            A function that must be true for the edge to be traversable (viable). 
+            Defaults to unconditionally true if not set.
+        index_via : Callable, optional
+            A function that takes in handles of source nodes as inputs in reference to
+            the *index* of each referenced source node, returns a boolean condition 
+            relating the indices of each. Defaults to unconditionally true if not set,
+            meaning any index of source node is valid.
         weight : float, default=1.0
             The cost of traversing the edge. Must be positive.
         label : str, optional
@@ -919,7 +924,7 @@ class Hypergraph:
         source_nodes, source_inputs = self.get_nodes_and_identifiers(sources)
         target_nodes, target_inputs = self.get_nodes_and_identifiers([target])
         label = self.request_edge_label(label, source_nodes + target_nodes)
-        edge = Edge(label, source_inputs, target_nodes[0], rel, via, weight,
+        edge = Edge(label, source_inputs, target_nodes[0], rel, via, index_via, weight,
                     index_offset=index_offset, disposable=disposable, edge_props=edge_props)
         self.edges[label] = edge
         for sn in source_nodes:
