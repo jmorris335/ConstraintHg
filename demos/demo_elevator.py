@@ -17,36 +17,37 @@ height_tolerance = Node('height tolerance', 10, description='tolerance on measur
 
 ## Nodes for motor controller
 error = Node('error', description='difference beetween destination and current position', units='m')
-KP = Node('K_P', 1200.0, description='proportional gain for PID')
-KI = Node('K_I', 0.0, description='integral gain for PID')
-KD = Node('K_D', 0.0, description='derivative gain for PID')
+KP = Node('K_P', 271, description='proportional gain for PID')
+KI = Node('K_I', 35, description='integral gain for PID')
+KD = Node('K_D', -0.79, description='derivative gain for PID')
 P = Node('P', description='proportional controller input', units='N')
 I = Node('I', 0.0, description='integrative controller input', units='N')
 D = Node('D', description='derivative controller input', units='N')
-alpha = Node('alpha', 0.1, description='filter constant for low-pass filter')
+alpha = Node('alpha', 0.5, description='filter constant for low-pass filter')
 error_f = Node('filtered error', 0.0, description='error filtered by low-pass filter', units='m')
 error_f_prev = Node('prev filtered error', description='filtered error from the previous iteration', units='m')
-max_pid = Node('max input', 20000, description='maximum controller input', units='N')
+max_pid = Node('max input', 10000, description='maximum controller input', units='N')
 min_pid = Node('min input', -1000, description='minimum controller input', units='N')
 pid_input = Node('PID input', 0., description='input goverend by PID controller', units='N')
 u = Node('controller input', description='input provided by controller', units='N')
 
 ## Nodes for elevator dynamics
-mu_pass_m = Node('avg passenger mass', 65., description='mean passenger mass', units='kg')
+mu_pass_m = Node('avg passenger mass', 75., description='mean passenger mass', units='kg')
 pass_m = Node('passenger mass', description='total passenger mass', units='kg')
 empty_m = Node('empty mass', 1000., description='mass of empty carriage', units='kg')
 occupancy = Node('occupancy', 0, description='persons occupying carriage', units='persons')
 g = Node('g', -9.8, description='gravitational acceleration', units='m/s^2')
 F = Node('net force', description='net vertical force on carriage', units='N')
 mass = Node('mass', description='total mass of carriage', units='kg')
-damping_coef = Node('c', 0.2, description='damping coefficient', units='kg/s')
+damping_coef = Node('c', 50, description='damping coefficient', units='kg/s')
 damping = Node('damping force', description='damping force', units='N')
 height = Node('height', description='vertical position', units='m')
 height_0 = Node('initial height', 0., description='initial height', units='m')
 vel = Node('velocity', description='vertical velocity', units='m/s')
 v_0 = Node('initial velocity', 0., description='initial velocity', units='m/s')
 acc = Node('acceleration', description='vertical acceleration', units='m/s^2')
-step = Node('step size', 1.0, description='step size', units='s')
+step = Node('step size', 0.1, description='step size', units='s')
+counterweight = Node('counterweight', -850., description='counterweight for carriage', units='kg')
 
 ## Nodes for passengers
 goal = Node('goal', description='goal floor for passenger', units='floor')
@@ -101,20 +102,24 @@ hg.add_edge([KP, error], P, R.Rmultiply)
 hg.add_edge({'s1': KI,
              's2': error, 's5': ('s2', 'index'),
              's3': I, 's6': ('s3', 'index'),
-             's4': step}, I, R.mult_and_sum(['s1', 's2', 's3'], 's4'),
+             's4': step}, I, R.mult_and_sum(['s1', 's2', 's4'], 's3'),
             via=lambda s5, s6, **kwargs : s5 == s6 + 1)
 hg.add_edge({'s1': error, 's5': ('s1', 'index'),
              's2': alpha,
-             's3': error_f, 's6': ('s3', 'index'),
-             's4': step}, error_f, Rlowpassfilter, 
+             's3': error_f, 's6': ('s3', 'index')}, error_f, Rlowpassfilter, 
             label='low_pass_filter->error_f',
             via=lambda s5, s6, **kwargs : s5 == s6 + 1)
 hg.add_edge(error_f, error_f_prev, R.Rmean)
-hg.add_edge({'s1': KD,
-             's2': error_f, 's3': ('s2', 'index'),
-             's4': error_f_prev, 's5': ('s4', 'index')}, D, R.Rmultiply,
-            label='(KD, error_f, error_f_prev)->D',
-            via=lambda s3, s5, **kwargs : s3 == s5 + 1)
+hg.add_edge({'s1':error_f, 's3': ('s1', 'index'),
+             's2':error_f_prev, 's4': ('s2', 'index')}, 'error_f_diff', R.Rsubtract,
+            via=lambda s3, s4, **kwargs : s3 == s4 + 1)
+hg.add_edge({'s1':'error_f_diff', 's2':step}, 'error_derivative', R.Rdivide)
+hg.add_edge([KD, 'error_derivative'], D, R.Rmultiply, label='KD,error_f_diff->D')
+# hg.add_edge({'s1': KD,
+#              's2': error_f, 's3': ('s2', 'index'),
+#              's4': error_f_prev, 's5': ('s4', 'index')}, D, R.Rmultiply,
+#             label='(KD, error_f, error_f_prev)->D',
+#             via=lambda s3, s5, **kwargs : s3 == s5 + 1)
 hg.add_edge([P, I, D], pid_input, R.Rsum, label='PID', edge_props='LEVEL')
 hg.add_edge([pid_input, min_pid], 'const_min_input', R.Rmax)
 hg.add_edge(['const_min_input', max_pid], u, R.Rmin)
@@ -123,12 +128,12 @@ hg.add_edge(['const_min_input', max_pid], u, R.Rmin)
 hg.add_edge(v_0, vel, R.Rmean)
 hg.add_edge(height_0, height, R.Rmean)
 hg.add_edge([mu_pass_m, occupancy], pass_m, R.Rmultiply)
-hg.add_edge([pass_m, empty_m], mass, R.Rsum)
+hg.add_edge([pass_m, empty_m, counterweight], mass, R.Rsum)
 hg.add_edge([g, mass], '/gm', R.Rmultiply, label='(g,mass)->/gm')
 hg.add_edge({'s1': damping_coef, 's2':vel}, damping, R.Rmultiply, label='(c,vel,F)->damping')
 hg.add_edge(damping, 'neg damping', R.Rnegate)
 hg.add_edge([u, '/gm', 'neg damping'], F, R.Rsum, label='(u,/gm,-damping)->F', edge_props='LEVEL')
-hg.add_edge([F, mass], acc, R.Rdivide, label='(F,mass)->acc', edge_props='LEVEL', index_offset=1)
+hg.add_edge({'s1':F,'s2':mass}, acc, R.Rdivide, label='(F,mass)->acc', edge_props='LEVEL', index_offset=1)
 hg.add_edge({'s1': acc, 's4': ('s1', 'index'),
              's2': vel, 's5': ('s2', 'index'),
              's3': step,}, vel, R.mult_and_sum(['s1', 's3'], 's2'),
@@ -192,10 +197,10 @@ debug_edges = {'(acc,vel,step)->vel'} if False else None
 
 # Set final value to extract out
 hg.add_edge({'s1':height, 's2':('s1', 'index')}, 'final value', R.Rfirst, 
-            via=R.geq('s2', 20))
+            via=R.geq('s2', 100))
 
 # hg.printPaths('final value', toPrint=True)
-t, found_values = hg.solve('final value', inputs, to_print=False, search_depth=10000,
+t, found_values = hg.solve("final value", inputs, to_print=False, search_depth=10000,
                            debug_nodes=debug_nodes, debug_edges=debug_edges)
 print(t)
 

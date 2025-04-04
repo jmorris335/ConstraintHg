@@ -2,6 +2,8 @@
 import matplotlib.pyplot as plt
 import constrainthg
 
+plt.rcParams['font.family'] = 'times'
+
 def plotTimeValues(labels: list, found_values: dict, time_step: float, 
                    title: str='Simulation'):
     """Plots the values in the dictionary as a function of time.
@@ -18,10 +20,12 @@ def plotTimeValues(labels: list, found_values: dict, time_step: float,
     title : str, optional
         The title of the plot.
     """
+    dashes = ['--', ':', '-.']
     legend = []
     if isinstance(time_step, str):
         times = found_values[time_step]
     for label in labels:
+        dash = dashes[labels.index(label) % len(dashes)]
         if isinstance(label, constrainthg.Node):
             legend_label = label.label + f', ({label.units})' if label.units is not None else ''
             label = label.label
@@ -30,10 +34,10 @@ def plotTimeValues(labels: list, found_values: dict, time_step: float,
         values = found_values[label]
         if not isinstance(time_step, str):
             times = [time_step * i for i in range(len(values))]
-        plt.plot(times[:len(values)], values[:len(times)]) 
+        plt.plot(times[:len(values)], values[:len(times)], 'k', lw=2, linestyle=dash) 
         legend.append(legend_label)
     plt.legend(legend)
     plt.ylabel('Variables')
     plt.xlabel('Time (s)')
-    plt.title(title)
-    plt.show() 
+    # plt.title(title)
+    plt.show()
