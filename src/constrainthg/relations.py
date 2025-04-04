@@ -113,6 +113,11 @@ def Rmin(*args, **kwargs):
     args = extend(args, kwargs)
     return min(args)
 
+def Rsame(*args, **kwargs):
+    """Returns true if all arguments are equivalent."""
+    args = set(extend(args, kwargs))
+    return len(args) == 1
+
 def mult_and_sum(mult_identifiers: list, sum_identifiers: list):
     """Convenient shorthand for multiplying the values identified in 
     `mult_identifiers` and adding them to the values identified in `sum_identifiers`."""
