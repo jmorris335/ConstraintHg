@@ -48,6 +48,19 @@ class TestHypergraph():
         assert t.value == 6
         assert t.cost == 5
 
+    def test_pseudonodes(self):
+        "Test pseudonode functionality."
+        hg = Hypergraph()
+        hg.add_edge('A', 'B', R.Rfirst, weight=5)
+        hg.add_edge({'b':'B', 'b_pseudo':('b', 'index')}, 'Index', R.equal('b_pseudo'))
+        hg.add_edge({'b':'B', 'b_pseudo':('b', 'cost')}, 'Cost', R.equal('b_pseudo'))
+        b, fv = hg.solve('B', {'A': 20})
+        assert b.value == 20, "Solution not correctly identified."
+        index, fv = hg.solve('Index', {'A': 20})
+        assert index.value == 1, "Index not correctly identified."
+        cost, fv = hg.solve('Cost', {'A': 20})
+        assert cost.value == 5, "Cost not correctly identified."
+
     def test_cycles_simple(self):
         """Tests that cycles can be solved."""
         hg = Hypergraph()
