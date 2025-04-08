@@ -136,6 +136,30 @@ def mult_and_sum(mult_identifiers: list, sum_identifiers: list):
         return out
     return Rmultandsum
 
+# BOOLEAN MATH
+def Rall(*args, **kwargs):
+    """Returns true if all arguments are true."""
+    args = extend(args, kwargs)
+    return all(args)
+
+def Rany(*args, **kwargs):
+    """Returns true if any of the arguments are true."""
+    args = extend(args, kwargs)
+    return any(args)
+
+def Rxor(*args, **kwargs):
+    """Returns true if only one of the arguments is true."""
+    args = [a for a in extend(args, kwargs) if isinstance(a, bool)]
+    return sum(args) == 1
+
+def Rnot(*args, **kwargs):
+    """Returns the logical negation of the first boolean argument."""
+    args = extend(args, kwargs)
+    for a in args:
+        if isinstance(a, bool):
+            return not a
+    return not args[0]
+
 # OPERATIONS
 def Rincrement(*args, **kwargs):
     """Increments the maximum source by 1."""
