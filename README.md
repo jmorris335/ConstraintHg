@@ -1,5 +1,5 @@
 <h1 align="center">
-<img src="https://github.com/jmorris335/ConstraintHg/blob/7187bbd8599aadf5e40271f424a6d81353298a10/media/logo.png?raw=true" width="100">
+<img src="https://github.com/jmorris335/ConstraintHg/blob/736a41be16cf65a711c4ae8fa6b41293f4e22bf4/media/logo.png?raw=true" width="100">
 </h1><br>
 
 ![Static Badge](https://img.shields.io/badge/homepage-blue?link=https%3A%2F%2Fgithub.com%2Fjmorris335%2FConstraintHg%2Fwiki)
