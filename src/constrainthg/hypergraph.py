@@ -676,10 +676,11 @@ class Pathfinder:
         self.explored_edges = {}
         """Dict counting the number of times edges were processed {label : int}"""
 
-    def search(self, debug_nodes: list=None, debug_edges: list=None, search_depth: int=10000):
+    def search(self, min_index: int=0, debug_nodes: list=None, debug_edges: list=None, search_depth: int=10000):
         """Searches the hypergraph for a path from the source nodes to the target 
         node. Returns the solved TNode for the target and a dictionary of found values
-        {label : [Any,]}. """
+        {label : [Any,]}. The minimum index of the found nodeis given by min_index.
+        """
         debug_nodes = [] if debug_nodes is None else debug_nodes
         debug_edges = [] if debug_edges is None else debug_edges
         logger.info(f'Begin search for {self.target_node.label}')
@@ -696,7 +697,7 @@ class Pathfinder:
 
             root = self.select_root()
             logger.debug(f'Exploring <{root.label}>, index={root.index}:')
-            if root.node_label is self.target_node.label:
+            if root.node_label is self.target_node.label and root.index >= min_index:
                 logger.info(f'Finished search for {self.target_node.label} with value of {root.value}')
                 self.log_debugging_report()
                 return root, root.values
@@ -967,8 +968,9 @@ class Hypergraph:
             node = self.get_node(key)
             node.static_value = value
 
-    def solve(self, target, node_values: dict=None, to_print: bool=False,
-              debug_nodes: list=None, debug_edges: list=None, search_depth: int=100000):
+    def solve(self, target, node_values: dict=None, to_print: bool=False, 
+              min_index:int=0, debug_nodes: list=None, debug_edges: list=None, 
+              search_depth: int=100000):
         """Runs a DFS search to identify the first valid solution for `target`.
         
         Parameters
@@ -979,6 +981,8 @@ class Hypergraph:
             A dictionary {label : value} of input values.
         to_print : bool, default=False
             Prints the search tree if set to true.
+        min_index : int, default=0
+            The minumum index of the node to solve for.
         debug_nodes : List[label,], optional
             A list of node labels to log debugging information for
         debug_edges : List[label,], optional
@@ -1003,7 +1007,7 @@ class Hypergraph:
         target_node = self.get_node(target)
         pf = Pathfinder(target_node, source_nodes, self.nodes, no_weights=self.no_weights)
         try:
-            t, found_values = pf.search(debug_nodes, debug_edges, search_depth)
+            t, found_values = pf.search(min_index, debug_nodes, debug_edges, search_depth)
         except Exception as e:
             logger.error(str(e))
             raise e

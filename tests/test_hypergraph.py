@@ -242,3 +242,14 @@ class TestHypergraph():
                     index_via=R.Rsame)
         t, fv = hg.solve('T', {'S': 0})
         assert t.value == (3, 3, 3), "Index for each node should be the same."
+
+    def test_min_index(self):
+        """Tests whether the minumum index of a target node can be searched for."""
+        hg = Hypergraph()
+        hg.add_edge('A', 'B', R.Rfirst)
+        hg.add_edge('B', 'C', R.Rfirst)
+        hg.add_edge('C', 'A', R.Rincrement, index_offset=1)
+        a0, fv = hg.solve('A', {'A': 0})
+        assert a0.index == 1, "Should be initial index of A"
+        af, fv = hg.solve('A', {'A': 0}, min_index=5)
+        assert af.index == 5, "Index should be 5"
