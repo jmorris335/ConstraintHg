@@ -213,17 +213,17 @@ class TestHypergraph():
         def negate(s: bool)-> bool:
             return not s
 
-        hg_with_disposal = Hypergraph()
-        hg_with_disposal.add_edge('SA', 'A', R.Rmean)
-        hg_with_disposal.add_edge('SB', 'B', R.Rmean)
-        hg_with_disposal.add_edge('A', 'A', negate, index_offset=1)
-        hg_with_disposal.add_edge('B', 'B', negate, index_offset=1)
-        hg_with_disposal.add_edge({'a':'A', 'b':'B'}, 'C', lambda a, b : a and b,
+        hg = Hypergraph()
+        hg.add_edge('SA', 'A', R.Rmean)
+        hg.add_edge('SB', 'B', R.Rmean)
+        hg.add_edge('A', 'A', negate, index_offset=1)
+        hg.add_edge('B', 'B', negate, index_offset=1)
+        hg.add_edge({'a':'A', 'b':'B'}, 'C', lambda a, b : a and b,
                     disposable=['a', 'b'])
-        hg_with_disposal.add_edge('C', 'T', R.Rmean, via=lambda c : c is True)
-        hg_with_disposal.add_edge({'a': 'A', 'a_idx': ('A', 'index')}, 'T', R.Rmean, 
-                    via=lambda a_idx : a_idx >= 5)
-        t, fv = hg_with_disposal.solve('T', {'SA': True, 'SB': False})
+        hg.add_edge('C', 'T', R.Rmean, via=lambda c : c is True)
+        hg.add_edge({'a': 'A', 'a_idx': ('a', 'index')}, 'T', R.equal('a_idx'), 
+                    via=lambda a_idx, **kw : a_idx >= 5)
+        t, fv = hg.solve('T', {'SA': True, 'SB': False})
         assert t.value != True, "Solver used an invalid combination to solve the C->T edge"
         assert t.value == 5, "Solver encountered some error and did not appropriately use the A->T edge"
 
