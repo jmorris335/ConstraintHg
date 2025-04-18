@@ -8,11 +8,13 @@
 
 ConstraintHg is a systems modeling kernel written in Python that enables general definition and universal simulation of any system. The kernel breaks a system down into the informational values (nodes) and functional relationships (hyperedges), providing robust simulation through pathfinding operations. This repository is under active development (no official release yet), and is therefore subject to change without warning. **It is not a rigorous data storage solution. Do not use this as a database.**
 
-## Usage
+## Usage and More Information
 - Detailed overview of how to use: [Wiki/Home](https://github.com/jmorris335/ConstraintHg/wiki)
 - Overview of Constraint Hypergraphs: [Wiki/Overview](https://github.com/jmorris335/ConstraintHg/wiki/Overview)
 - API Documentation: [Read the Docs](https://constrainthg.readthedocs.io/en/latest/)
 - Video overview: [YouTube](https://www.youtube.com/watch?v=Ph2yhaThex0)
+- Papers:
+  - [Introduction of Constraint Hypergraphs](https://doi.org/10.1115/1.4068375)
 
 
 ## Install
@@ -21,14 +23,14 @@ ConstraintHg is listed on the Python Package Index. To install, paste the follow
    pip install constrainthg
 ```
 
-# Introduction
+## Introduction
 Hypergraphs are normal graphs but without the constraint that edges must only link between two nodes. Because of this expanded generality, hypergraphs can be used to model more complex relationships. For instance, the relationship `A + B = C` is a multinodal relationship between three nodes, A, B, and C. You can think of all three nodes being linked by a 2D hyperedge, so that to move along that hyperedge you need at least two of three nodes. 
 
 A constraint hypergraph is a hypergraph where the relationships are constraints that can be solved for by some execution engine, generally via API calls. These constraints reveal the behavior of the system. The goal is for the hypergraph to be platform agnostic, while API calls allow for edges to be processed on any available software.
 
 Processing a series of nodes and edges (a "route") is what constitutes a simulation, so one of the uses of an constraint hypergraph is enabling high-level simulation ability from any possible entry point in a system model.
 
-## Getting started
+### Getting started
 *Note that this demo is found in [`demos/demo_basic.py`](https://github.com/jmorris335/ConstraintHg/blob/main/demos/demo_basic.py)*
 Let's build a basic constraint hypergraph of the following equations:
 - $A + B = C$
@@ -93,7 +95,7 @@ The output of the above should be:
    └──B= 7, cost=0
 ```
 
-## Examples
+### Examples
 Many examples are available in the [demos](https://github.com/jmorris335/ConstraintHg/tree/main/demos) directory. These, and other external examples include:
 - [Pendulum](https://github.com/jmorris335/ConstraintHg/blob/main/demos/demo_pendulum.py): demonstrating model selection
 - [Elevator](https://github.com/jmorris335/ElevatorHypergraph): combining discrete-event simulation with a PID controller
