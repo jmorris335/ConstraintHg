@@ -678,8 +678,8 @@ class Pathfinder:
 
     def search(self, min_index: int=0, debug_nodes: list=None, debug_edges: list=None, search_depth: int=10000):
         """Searches the hypergraph for a path from the source nodes to the target 
-        node. Returns the solved TNode for the target and a dictionary of found values
-        {label : [Any,]}. The minimum index of the found nodeis given by min_index.
+        node. Returns the solved TNode for the target, with a dictionary of found 
+        values {label : [Any,]} given by the `target.values`.
         """
         debug_nodes = [] if debug_nodes is None else debug_nodes
         debug_edges = [] if debug_edges is None else debug_edges
@@ -700,13 +700,13 @@ class Pathfinder:
             if root.node_label is self.target_node.label and root.index >= min_index:
                 logger.info(f'Finished search for {self.target_node.label} with value of {root.value}')
                 self.log_debugging_report()
-                return root, root.values
+                return root
 
             self.explore(root, debug_nodes, debug_edges)
 
         logger.info('Finished search, no solutions found')
         self.log_debugging_report()
-        return None, None
+        return None
 
     def explore(self, t: TNode, debug_nodes: list=None, debug_edges: list=None):
         """Discovers all possible routes from the TNode."""
@@ -1013,7 +1013,7 @@ class Hypergraph:
         target_node = self.get_node(target)
         pf = Pathfinder(target_node, source_nodes, self.nodes, no_weights=self.no_weights)
         try:
-            t, found_values = pf.search(min_index, debug_nodes, debug_edges, search_depth)
+            t = pf.search(min_index, debug_nodes, debug_edges, search_depth)
         except Exception as e:
             logger.error(str(e))
             raise e
@@ -1022,7 +1022,7 @@ class Hypergraph:
                 print(t.print_tree())
             else:
                 print("No solutions found")
-        return t, found_values
+        return t
 
     def print_paths(self, target, to_print: bool=False)-> str:
         """Prints the hypertree of all paths to the target node."""

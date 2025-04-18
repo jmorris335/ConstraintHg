@@ -5,26 +5,26 @@ class TestHypergraph():
     def test_simple_add(self):
         hg = Hypergraph()
         hg.add_edge(['A', 'B'], 'C', R.Rsum)
-        t, fv = hg.solve('C', {'A': 100, 'B': 12.9},)
+        t = hg.solve('C', {'A': 100, 'B': 12.9},)
         assert t.value == 112.9, "Sum should be 112.9"
 
     def test_simple_multiply(self):
         hg = Hypergraph()
         hg.add_edge(['A', 'B'], 'C', R.Rmultiply)
-        t, fv = hg.solve('C', {'A': 3, 'B': 1.5},)
+        t = hg.solve('C', {'A': 3, 'B': 1.5},)
         assert t.value == 4.5, "Product should be 4.5"
 
     def test_simple_subtract(self):
         hg = Hypergraph()
         hg.add_edge({'s1':'A', 's2':'B'}, 'C', R.Rsubtract)
-        t, fv = hg.solve('C', {'A': 3, 'B': 2})
+        t = hg.solve('C', {'A': 3, 'B': 2})
         assert t.value == 1, "Subtraction should be 1"
 
     def test_simple_void(self):
         hg = Hypergraph()
         via_le10 = lambda *args, **kwargs : all([s < 10 for s in R.extend(args, kwargs)])
         hg.add_edge(['A', 'B'], 'C', R.Rsum, via=via_le10)
-        t, fv = hg.solve('C', {'A': 100, 'B': 51})
+        t = hg.solve('C', {'A': 100, 'B': 51})
         assert t == None, "Should have invalid condition"
 
     def test_branching(self):
@@ -44,7 +44,7 @@ class TestHypergraph():
         hg.add_edge('H', 'G', R.Rincrement)
         hg.add_edge('H', 'T', R.Rincrement)
         # hg.addEdge('G', 'T', R.Rincrement)
-        t, fv = hg.solve('T', {'A': 1})
+        t = hg.solve('T', {'A': 1})
         assert t.value == 6
         assert t.cost == 5
 
@@ -54,11 +54,11 @@ class TestHypergraph():
         hg.add_edge('A', 'B', R.Rfirst, weight=5)
         hg.add_edge({'b':'B', 'b_pseudo':('b', 'index')}, 'Index', R.equal('b_pseudo'))
         hg.add_edge({'b':'B', 'b_pseudo':('b', 'cost')}, 'Cost', R.equal('b_pseudo'))
-        b, fv = hg.solve('B', {'A': 20})
+        b = hg.solve('B', {'A': 20})
         assert b.value == 20, "Solution not correctly identified."
-        index, fv = hg.solve('Index', {'A': 20})
+        index = hg.solve('Index', {'A': 20})
         assert index.value == 1, "Index not correctly identified."
-        cost, fv = hg.solve('Cost', {'A': 20})
+        cost = hg.solve('Cost', {'A': 20})
         assert cost.value == 5, "Cost not correctly identified."
 
     def test_cycles_simple(self):
@@ -69,7 +69,7 @@ class TestHypergraph():
         hg.add_edge('B', 'C', R.Rincrement)
         hg.add_edge('C', 'A', R.Rmean)
         hg.add_edge('A', 'T', R.Rmean, via=lambda a : a > 5)
-        t, fv = hg.solve('T', {'S': 0})
+        t = hg.solve('T', {'S': 0})
         assert t.value == 6
 
     def test_loops(self):
@@ -79,7 +79,7 @@ class TestHypergraph():
         hg.add_edge('S', 'A', R.Rmean)
         hg.add_edge('A', 'A', R.Rincrement)
 
-        t, fv = hg.solve('T', {'S': 0})
+        t = hg.solve('T', {'S': 0})
         assert t.value == 3
         assert t.cost == 5
 
@@ -97,7 +97,7 @@ class TestHypergraph():
         hg.add_edge('D', 'E', R.Rmean)
         hg.add_edge('E', 'B', R.Rincrement)
 
-        t, fv = hg.solve('T', {'S': 0})
+        t = hg.solve('T', {'S': 0})
         assert t.value == 3
         assert t.cost == 10
 
@@ -112,7 +112,7 @@ class TestHypergraph():
         hg.add_edge('C', 'A', R.Rmean)
         hg.add_edge('A', 'T', R.Rmean, via=lambda s1 : s1 > 2)
 
-        t, fv = hg.solve('T', {'S': 0})
+        t = hg.solve('T', {'S': 0})
         assert t.value == 3
         assert t.cost == 12
 
@@ -128,7 +128,7 @@ class TestHypergraph():
         hg.add_edge('C', 'A', R.Rmean)
         hg.add_edge('A', 'T', R.Rmean, via=R.geq('s1', 3))
 
-        t, fv = hg.solve('T', {'S': 0})
+        t = hg.solve('T', {'S': 0})
         assert t.value == 4
         assert t.cost == 15
 
@@ -140,7 +140,7 @@ class TestHypergraph():
         hg.add_edge('S1', 'A', R.Rmean)
         hg.add_edge('A', 'T', R.Rmean, via=R.geq('s1', 4))
 
-        t, fv = hg.solve('T', {'S0': 0, 'S1': 0})
+        t = hg.solve('T', {'S0': 0, 'S1': 0})
         assert t.value == 4
         assert t.cost == 7
 
@@ -155,7 +155,7 @@ class TestHypergraph():
         hg.add_edge('C', 'B', R.Rmean, index_offset=1)
         hg.add_edge(['A', 'B'], 'T', R.Rsum, via=lambda s1, s2 : min(s1, s2) >= 5)
 
-        t, fv = hg.solve('T', {'S1': 1, 'S2': 4})
+        t = hg.solve('T', {'S1': 1, 'S2': 4})
         print(t.print_tree())
         assert t.value == 10
         assert t.cost == 6
@@ -169,7 +169,7 @@ class TestHypergraph():
         hg.add_edge(['A', 'C'], 'A', R.Rsum, edge_props='LEVEL', index_offset=1)
         hg.add_edge('A', 'T', R.Rfirst, via=R.geq('s1', 7))
 
-        t, fv = hg.solve('T', {'S': 0})
+        t = hg.solve('T', {'S': 0})
         assert t.value == 14
         assert t.cost == 11
 
@@ -181,7 +181,7 @@ class TestHypergraph():
         hg.add_edge('A', 'B', R.Rmean, index_offset=1)
         hg.add_edge('A', 'T', R.Rmean, via=R.geq('s1', 4))
 
-        t, fv = hg.solve('T', {'S': 10})
+        t = hg.solve('T', {'S': 10})
         assert t.value == 4
         assert t.cost == 9
 
@@ -189,7 +189,7 @@ class TestHypergraph():
         """Tests a hypergraph with no weights set."""
         hg = Hypergraph(no_weights=True)
         hg.add_edge(['A', 'B'], 'C', R.Rsum, weight=10.)
-        t, fv = hg.solve('C', {'A': 100, 'B': 12.9},)
+        t = hg.solve('C', {'A': 100, 'B': 12.9},)
         assert t.cost == 0.0, "Cost should be 0.0 for no_weights test"
 
     def test_retain_previous_indices(self):
@@ -205,7 +205,7 @@ class TestHypergraph():
         hg_no_disposal.add_edge('B', 'B', negate, index_offset=1)
         hg_no_disposal.add_edge({'a':'A', 'b':'B'}, 'C', lambda a, b : a and b)
         hg_no_disposal.add_edge('C', 'T', R.Rmean, via=lambda c : c is True)
-        t, fv = hg_no_disposal.solve('T', {'SA': True, 'SB': False})
+        t = hg_no_disposal.solve('T', {'SA': True, 'SB': False})
         assert t.value == True, "Solver did not appropriately combine previously discovered indices"
 
     def test_disposable(self):
@@ -223,7 +223,7 @@ class TestHypergraph():
         hg.add_edge('C', 'T', R.Rmean, via=lambda c : c is True)
         hg.add_edge({'a': 'A', 'a_idx': ('a', 'index')}, 'T', R.equal('a_idx'), 
                     via=lambda a_idx, **kw : a_idx >= 5)
-        t, fv = hg.solve('T', {'SA': True, 'SB': False})
+        t = hg.solve('T', {'SA': True, 'SB': False})
         assert t.value != True, "Solver used an invalid combination to solve the C->T edge"
         assert t.value == 5, "Solver encountered some error and did not appropriately use the A->T edge"
 
@@ -240,7 +240,7 @@ class TestHypergraph():
                     rel=lambda a_idx, b_idx, c_idx, **kw : (a_idx, b_idx, c_idx), 
                     via=lambda a_idx, **kw : a_idx >= 3,
                     index_via=R.Rsame)
-        t, fv = hg.solve('T', {'S': 0})
+        t = hg.solve('T', {'S': 0})
         assert t.value == (3, 3, 3), "Index for each node should be the same."
 
     def test_min_index(self):
@@ -249,9 +249,9 @@ class TestHypergraph():
         hg.add_edge('A', 'B', R.Rfirst)
         hg.add_edge('B', 'C', R.Rfirst)
         hg.add_edge('C', 'A', R.Rincrement, index_offset=1)
-        a0, fv = hg.solve('A', {'A': 0})
+        a0 = hg.solve('A', {'A': 0})
         assert a0.index == 1, "Should be initial index of A"
-        af, fv = hg.solve('A', {'A': 0}, min_index=5)
+        af = hg.solve('A', {'A': 0}, min_index=5)
         assert af.index == 5, "Index should be 5"
 
     def test_edge_order_irrelevant(self):
@@ -265,7 +265,7 @@ class TestHypergraph():
         hg.add_edge({'d': 'D', 'c': 'C'}, 'T', R.Rincrement)
         t, i = 1, 1
         while t is not None and i < 50:
-            t, fv = hg.solve('T', {'S': 1})
+            t = hg.solve('T', {'S': 1})
             i += 1
         assert i == 50, "Configurations may have been non-deterministic"
         assert t is not None, "Solution should always be discoverable"
