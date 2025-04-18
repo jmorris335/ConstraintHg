@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools >= 61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "constrainthg"
-version = "0.1.1"
+version = "0.2"
 dependencies = [
     "numpy"
 ]
@@ -12,12 +12,13 @@ requires-python = ">=3.1"
 authors = [
   {name = "John Morris", email = "jhmrrs@clemson.edu"},
 ]
-description = "Methods for building and simulating constraint hypergraphs."
+description = "Kernel for building and simulating constraint hypergraphs."
 readme = "README.md"
-license = {text = "All rights reserved"}
+license = { text = "All rights reserved" }
+license-files = ["LICENSE*"]
 keywords = ["hypergraphs", "systems engineering"]
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 4 - Beta",
   "Programming Language :: Python"
 ]
 
