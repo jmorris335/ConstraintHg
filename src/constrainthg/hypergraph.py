@@ -8,7 +8,7 @@ License: All rights reserved.
 from typing import Callable, List
 from inspect import signature
 import logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('constrainthg')
 import itertools
 from enum import Enum
 
@@ -799,7 +799,7 @@ class Pathfinder:
 
 class Hypergraph:
     """Builder class for a hypergraph. See demos for examples on how to use."""
-    def __init__(self, no_weights: bool=False):
+    def __init__(self, no_weights: bool=False, setup_logger: bool=False, logging_level=None):
         """Initialize a Hypergraph.
         
         Parameters
@@ -807,10 +807,73 @@ class Hypergraph:
         no_weights : bool, default=False
             Optional run mode where weights aren't considered. This speeds up the 
             simulation but prevents model switching.
+        setup_logger : bool, default=False
+            Sets up logging in the library (off by default). The logging level can be
+            set by calling `Hypergraph.set_logging_level`.
+        logging_level : int | str, optional
+            Sets the logging level for the library. Setting the logging level requires
+            an additional logging handler to be passed to 
+            `logger.getLogger('constrainthg')`. This can be done at the application 
+            level (in the calling script) or automatically by passing `setup_logger` 
+            as True.
         """
         self.nodes = {}
         self.edges = {}
         self.no_weights = no_weights
+        self.logging_is_setup = self.check_if_logger_setup()
+        if setup_logger:
+            self.setup_logger()
+        if logging_level is not None:
+            self.set_logging_level(logging_level)
+
+    def check_if_logger_setup(self)->bool:
+        """Checks if a Handler beyond the NullHandler was created for the logger."""
+        if not logger.hasHandlers():
+            return False
+        non_null = [h for h in logger.handlers if not isinstance(h, logging.NullHandler)]
+        return len(non_null) > 0 
+
+    def setup_logger(self)->logging.Logger:
+        """An optional call to setup logging."""
+        fh = logging.FileHandler("constrainthg.log")
+        log_formatter = logging.Formatter(
+            fmt="[{asctime} | {levelname}]: {message}",
+            style="{",
+            datefmt="%Y-%m-%d %H:%M",
+            )
+        fh.setFormatter(log_formatter)
+        logger.addHandler(fh)
+        self.logging_is_setup = True
+        return logger
+    
+    def set_logging_level(self, logging_level=logging.INFO):
+        """Sets the logging level.
+        
+        Parameters
+        ----------
+        logging_level : int | str, default=logging.INFO (20)
+            The level to set logging to, based on the Python logging library. More 
+            information is available at 
+            https://docs.python.org/3/howto/logging.html#logging-levels
+
+        Notes
+        -----
+        The logging approach is the following, with higher levels include all items 
+        logged on lower ones:
+        - logging.DEBUG (10): all edges and found combinations are listed, as well as 
+        search trees at each explored node.
+        - logging.DEBUG+1 (11): debugging report is logged after a search is complete.
+        - logging.DEBUG+2 (12): edges passed to `debug_edges` and nodes passed 
+        to `debug_nodes` as arguments to `Hypergraph.solve` are logged, as well as
+        search trees at each explored node.
+        - logging.INFO (20): start and end of a search are logged.
+        - Warnings and errors are handled by the logging package (logging.WARNING and
+        logging.ERROR). Note that these will *not* print to `sys.stderr`, though they
+        will normally get raised and returned by the library.
+        """
+        if not self.logging_is_setup:
+            self.setup_logger()
+        logger.setLevel(logging_level)
 
     def get_node(self, node_key)-> Node:
         """Caller function for finding a node in the hypergraph."""
@@ -978,7 +1041,7 @@ class Hypergraph:
 
     def solve(self, target, node_values: dict=None, to_print: bool=False, 
               min_index:int=0, debug_nodes: list=None, debug_edges: list=None, 
-              search_depth: int=100000):
+              search_depth: int=100000, logging_level=None):
         """Runs a DFS search to identify the first valid solution for `target`.
         
         Parameters
@@ -997,6 +1060,10 @@ class Hypergraph:
             A list of edge labels to log debugging information for
         search_depth : int, default=100000
             Number of nodes to explore before concluding no valid path.
+        logging_level : int | str, optional
+            The logging level to use for the simulation. Configures logging if not 
+            already configured. `logging.DEBUG` or `logging.INFO` are informative 
+            levels. See `Hypergraph.set_logging_level` for more information.
 
         Returns
         -------
@@ -1005,6 +1072,9 @@ class Hypergraph:
         dict | None
             a dictionary of values found for each node in the search path, as {label : List[value,]}
         """
+        if logging_level is not None:
+            prev_logging_level = logger.getEffectiveLevel()
+            self.set_logging_level(logging_level)
         self.reset()
         if node_values is not None:
             self.set_node_values(node_values)
@@ -1019,6 +1089,9 @@ class Hypergraph:
         except Exception as e:
             logger.error(str(e))
             raise e
+        finally:
+            if logging_level is not None:
+                self.set_logging_level(prev_logging_level)
         if to_print:
             if t is not None:
                 print(t.print_tree())
