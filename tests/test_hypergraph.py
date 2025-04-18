@@ -157,8 +157,8 @@ class TestHypergraph():
 
         t, fv = hg.solve('T', {'S1': 1, 'S2': 4})
         print(t.print_tree())
-        assert t.value == 12
-        assert t.cost == 8
+        assert t.value == 10
+        assert t.cost == 6
 
     def test_nested_loop(self):
         """A loop nested in a cycle."""
@@ -253,3 +253,20 @@ class TestHypergraph():
         assert a0.index == 1, "Should be initial index of A"
         af, fv = hg.solve('A', {'A': 0}, min_index=5)
         assert af.index == 5, "Index should be 5"
+
+    def test_edge_order_irrelevant(self):
+        """Tests that the order in which edges are provided does not affect the graphs
+        searchability."""
+        hg = Hypergraph()
+        hg.add_edge('S', 'D', R.Rincrement)
+        hg.add_edge('S', 'A', R.Rincrement)
+        hg.add_edge('A', 'B', R.Rincrement, label='ZZZ')
+        hg.add_edge(['A', 'B'], 'C', R.Rincrement, label='AAA')
+        hg.add_edge({'d': 'D', 'c': 'C'}, 'T', R.Rincrement)
+        t, i = 1, 1
+        while t is not None and i < 50:
+            t, fv = hg.solve('T', {'S': 1})
+            i += 1
+        assert i == 50, "Configurations may have been non-deterministic"
+        assert t is not None, "Solution should always be discoverable"
+        assert t.value == 5, "Graph calculation is incorrect"

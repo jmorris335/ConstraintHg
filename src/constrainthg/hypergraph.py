@@ -710,11 +710,9 @@ class Pathfinder:
 
     def explore(self, t: TNode, debug_nodes: list=None, debug_edges: list=None):
         """Discovers all possible routes from the TNode."""
-        n = self.nodes[t.node_label]
-        super_node_leading_edges = (sup_n.leading_edges for sup_n in n.super_nodes)
-        leading_edges = n.leading_edges.union(*super_node_leading_edges)
-        if n.label in debug_nodes:
-            logger.log(logging.DEBUG + 2, f'Exploring {n.label}, index: {t.index}, ' +
+        leading_edges = self.get_edges_to_explore(t, debug_nodes)
+        if t.node_label in debug_nodes:
+            logger.log(logging.DEBUG + 2, f'Exploring {t.node_label}, index: {t.index}, ' +
                        'leading edges: ' + ', '.join(str(le) for le in leading_edges) + 
                        f'\n{t.print_tree()}')
 
@@ -736,6 +734,14 @@ class Pathfinder:
                 node_indices = ', '.join(f'{n.label} ({n.index})' for n in combo)
                 logger.debug(f'   - Combo {j}: ' + node_indices + f'-> <{str(pt)}>')
 
+    def get_edges_to_explore(self, t: TNode, debug_nodes: list=None)->list:
+        """Finds and orders all edges leading from the node by label."""
+        n = self.nodes[t.node_label]
+        super_node_leading_edges = (sup_n.leading_edges for sup_n in n.super_nodes)
+        leading_edges = list(n.leading_edges.union(*super_node_leading_edges))
+        leading_edges.sort(key=lambda le : le.label)
+        return leading_edges
+    
     def make_parent_tnode(self, source_tnodes: list, node: Node, edge: Edge):
         """Creates a TNode for the next step along the edge."""
         parent_val = edge.process(source_tnodes)
@@ -744,7 +750,7 @@ class Pathfinder:
         node_label = node.label
         children = source_tnodes
         gen_edge_label = edge.label + '#' + str(self.search_counter)
-        label = f'{node_label}#{self.search_counter}'
+        label = f'{node_label}#{self.search_counter + 1}'
         cost = 0.0 if self.no_weights else None
         parent_t = TNode(label, node_label, parent_val, children, cost=cost,
                          gen_edge_label=gen_edge_label, gen_edge_cost=edge.weight)
