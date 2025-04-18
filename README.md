@@ -3,7 +3,7 @@
 </h1><br>
 
 ![Static Badge](https://img.shields.io/badge/homepage-blue?link=https%3A%2F%2Fgithub.com%2Fjmorris335%2FConstraintHg%2Fwiki)
- ![Read the Docs](https://img.shields.io/readthedocs/constrainthg?link=https%3A%2F%2Fconstrainthg.readthedocs.io%2Fen%2Flatest%2Findex.html) ![Static Badge](https://img.shields.io/badge/tests-16/17-red) ![GitHub Release](https://img.shields.io/github/v/release/jmorris335/ConstraintHg?include_prereleases&display_name=tag) ![GitHub last commit](https://img.shields.io/github/last-commit/jmorris335/ConstraintHg)
+ ![Read the Docs](https://img.shields.io/readthedocs/constrainthg?link=https%3A%2F%2Fconstrainthg.readthedocs.io%2Fen%2Flatest%2Findex.html) ![Static Badge](https://img.shields.io/badge/tests-21/21-green) ![GitHub Release](https://img.shields.io/github/v/release/jmorris335/ConstraintHg?include_prereleases&display_name=tag) ![GitHub last commit](https://img.shields.io/github/last-commit/jmorris335/ConstraintHg)
 
 # ConstraintHg
 This repository enables usage of hypergraphs to define and execute system models. **It is not a rigorous data storage solution. Do not use this as a database.** Note that this repo is under active development (no official release yet), therefore changes may occur without warning. No functionality is guaranteed. 
@@ -16,7 +16,7 @@ ConstraintHg is listed on the Python Package Index. Just use `pip install constr
 # Introduction
 Hypergraphs are normal graphs but without the constraint that edges must only link between two nodes. Because of this expanded generality, hypergraphs can be used to model more complex relationships. For instance, the relationship `A + B = C` is a multinodal relationship between three nodes, A, B, and C. You can think of all three nodes being linked by a 2D hyperedge, so that to move along that hyperedge you need at least two of three nodes. 
 
-An constraint hypergraph is a hypergraph where the relationships are constraints that can be solved for by some execution engine, generally via API calls. These constraints reveal the behavior of the system. The goal is for the hypergraph to be platform agnostic, while API calls allow for edges to be processed on any available software.
+A constraint hypergraph is a hypergraph where the relationships are constraints that can be solved for by some execution engine, generally via API calls. These constraints reveal the behavior of the system. The goal is for the hypergraph to be platform agnostic, while API calls allow for edges to be processed on any available software.
 
 Processing a series of nodes and edges (a "route") is what constitutes a simulation, so one of the uses of an constraint hypergraph is enabling high-level simulation ability from any possible entry point in a system model.
 
