@@ -200,10 +200,10 @@ hg.add_edge({'s1':height, 's2':('s1', 'index')}, 'final value', R.Rfirst,
             via=R.geq('s2', 100))
 
 # hg.printPaths('final value', toPrint=True)
-t, found_values = hg.solve("final value", inputs, to_print=False, search_depth=10000,
+t = hg.solve("final value", inputs, to_print=False, search_depth=10000,
                            debug_nodes=debug_nodes, debug_edges=debug_edges)
 print(t)
 
 # Visualize results
 plotTimeValues([height, occupancy, error], 
-               found_values, step.static_value, title='Hybrid Elevator Simulation')
+               t.values, step.static_value, title='Hybrid Elevator Simulation')

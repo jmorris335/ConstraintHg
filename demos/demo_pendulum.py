@@ -54,13 +54,13 @@ hg.add_edge({'s1':theta, 's2':('s1', 'index'), 's3': omega}, 'final theta', R.eq
 
 # hg.printPaths('final theta')
 
-t, found_values = hg.solve('final theta', to_print=False)
+t = hg.solve('final theta', to_print=False)
 print(t)
 # print(t.printTree())
 
 getTimes = lambda l : [time_step.static_value * i for i in range(len(l))]
-thetas = found_values[theta.label]
-omegas = found_values[omega.label]
+thetas = t.values[theta.label]
+omegas = t.values[omega.label]
 plt.plot(getTimes(thetas), thetas)
 plt.plot(getTimes(omegas), omegas)
 plt.legend(['theta', 'omega'])
