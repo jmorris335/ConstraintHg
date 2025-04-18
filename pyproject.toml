@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools >= 61.0"]
+requires = ["setuptools >= 70.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -14,7 +14,6 @@ authors = [
 ]
 description = "Kernel for building and simulating constraint hypergraphs."
 readme = "README.md"
-license = { text = "All rights reserved" }
 license-files = ["LICENSE*"]
 keywords = ["hypergraphs", "systems engineering"]
 classifiers = [

@@ -14,7 +14,7 @@ import constrainthg
 project = 'ConstraintHg'
 copyright = '2024, John Morris, All rights reserved'
 author = 'John Morris'
-release = '0.1.1'
+release = '0.2.1'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
