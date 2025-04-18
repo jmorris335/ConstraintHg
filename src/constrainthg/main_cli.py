@@ -6,7 +6,7 @@ from constrainthg import relations as R
 print("ConstraintHg, a hypergraph modeling toolbox for systems engineering...\n")
 print("Demo:")
 
-hg = Hypergraph()
+hg = Hypergraph(setup_logger=True)
 hg.add_edge(['A', 'B'], 'C', R.Rsum)
 hg.add_edge('A', 'D', R.Rnegate)
 hg.add_edge('B', 'E', R.Rnegate)

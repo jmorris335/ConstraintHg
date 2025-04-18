@@ -5,13 +5,21 @@
 ![Static Badge](https://img.shields.io/badge/homepage-blue?link=https%3A%2F%2Fgithub.com%2Fjmorris335%2FConstraintHg%2Fwiki)
  ![Read the Docs](https://img.shields.io/readthedocs/constrainthg?link=https%3A%2F%2Fconstrainthg.readthedocs.io%2Fen%2Flatest%2Findex.html) ![Static Badge](https://img.shields.io/badge/tests-21/21-brightgreen) ![GitHub Release](https://img.shields.io/github/v/release/jmorris335/ConstraintHg?include_prereleases&display_name=tag) ![GitHub last commit](https://img.shields.io/github/last-commit/jmorris335/ConstraintHg)
 
-# ConstraintHg
-This repository enables usage of hypergraphs to define and execute system models. **It is not a rigorous data storage solution. Do not use this as a database.** Note that this repo is under active development (no official release yet), therefore changes may occur without warning. No functionality is guaranteed. 
 
-**For an detailed overview of the package and introduction to constraint hypergraph theory, see the [wiki](https://github.com/jmorris335/ConstraintHg/wiki).** The latest API documentation is available on [Read the Docs](https://constrainthg.readthedocs.io/en/latest/).
+ConstraintHg is a systems modeling kernel written in Python that enables general definition and universal simulation of any system. The kernel breaks a system down into the informational values (nodes) and functional relationships (hyperedges), providing robust simulation through pathfinding operations. This repository is under active development (no official release yet), and is therefore subject to change without warning. **It is not a rigorous data storage solution. Do not use this as a database.**
+
+## Usage
+- Detailed overview of how to use: [Wiki/Home](https://github.com/jmorris335/ConstraintHg/wiki)
+- Overview of Constraint Hypergraphs: [Wiki/Overview](https://github.com/jmorris335/ConstraintHg/wiki/Overview)
+- API Documentation: [Read the Docs](https://constrainthg.readthedocs.io/en/latest/)
+- Video overview: [YouTube](https://www.youtube.com/watch?v=Ph2yhaThex0)
+
 
 ## Install
-ConstraintHg is listed on the Python Package Index. Just use `pip install constrainthg` to get started.
+ConstraintHg is listed on the Python Package Index. To install, paste the following to your command terminal: 
+```
+   pip install constrainthg
+```
 
 # Introduction
 Hypergraphs are normal graphs but without the constraint that edges must only link between two nodes. Because of this expanded generality, hypergraphs can be used to model more complex relationships. For instance, the relationship `A + B = C` is a multinodal relationship between three nodes, A, B, and C. You can think of all three nodes being linked by a 2D hyperedge, so that to move along that hyperedge you need at least two of three nodes. 
@@ -85,7 +93,12 @@ The output of the above should be:
    └──B= 7, cost=0
 ```
 
-Check out the  [demos](https://github.com/jmorris335/ConstraintHg/tree/main/demos) directory for more examples.
+## Examples
+Many examples are available in the [demos](https://github.com/jmorris335/ConstraintHg/tree/main/demos) directory. These, and other external examples include:
+- [Pendulum](https://github.com/jmorris335/ConstraintHg/blob/main/demos/demo_pendulum.py): demonstrating model selection
+- [Elevator](https://github.com/jmorris335/ElevatorHypergraph): combining discrete-event simulation with a PID controller
+- [Naval Microgrid](https://github.com/jmorris335/MicrogridHg): complex system featuring data querying and dynamic simulation and linear systems
+- [Crankshaft](https://github.com/jmorris335/tool-interoperability-scripts/tree/main): integrates CAD software (Onshape) with dynamic simulation
 
 ## Licensing and Usage
 Author: [John Morris](https://www.people.clemson.edu/jhmrrs/)  
