@@ -88,6 +88,8 @@ class TNode:
         ----------
         index : int
             The maximum times the TNode or any child TNodes are repeated in the tree.
+        values : dict
+            The values of all the child TNodes of the form {label : [Any,]}.
         """
         self.node_label = node_label
         self.label = label
