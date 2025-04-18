@@ -1112,7 +1112,7 @@ class Hypergraph:
         """Recursive helper to print all paths to the target node."""
         if isinstance(node, tuple):
             return None
-        label = f'{node.label}#{len(trace)}'
+        label = f'{node.label}#{0 if trace is None else len(trace)}'
         t = TNode(label, node.label, node.static_value, join_status=join_status,
                   trace=trace)
         branch_costs = []
