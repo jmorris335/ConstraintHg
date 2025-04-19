@@ -19,7 +19,7 @@ ConstraintHg is a systems modeling kernel written in Python that enables general
 ### Licensing and Usage
 Author: [John Morris](https://www.people.clemson.edu/jhmrrs/)  
 Contact: Reach out to my GitHub profile ([jmorris335](https://github.com/jmorris335))  
-Usage: Released under the Apache 2.0 license. This permissive license allows you can use, modify, and distribute this source code as desired (official terms are in the LICENSE file). The main limitations are that you'll need to include a copy of this license as well as the NOTICE file, and you'll have to state your changes. **We'd appreciate hearing if you used this for something helpful. Let us know by contacting us via our [profiles]((https://github.com/jmorris335)!**
+Usage: Released under the Apache 2.0 license. This permissive license allows you can use, modify, and distribute this source code as desired (official terms are in the LICENSE file). The main limitations are that you'll need to include a copy of this license as well as the NOTICE file, and you'll have to state your changes. **We'd appreciate hearing if you used this for something helpful. Let us know by contacting us via our [profiles](https://github.com/jmorris335)!**
 
 ### Install
 ConstraintHg is listed on the Python Package Index. To install, paste the following to your command terminal: 
