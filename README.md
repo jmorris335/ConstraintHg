@@ -8,7 +8,7 @@
 
 ConstraintHg is a systems modeling kernel written in Python that enables general definition and universal simulation of any system. The kernel breaks a system down into the informational values (nodes) and functional relationships (hyperedges), providing robust simulation through pathfinding operations. This repository is under active development (no official release yet), and is therefore subject to change without warning. **It is not a rigorous data storage solution. Do not use this as a database.**
 
-## Usage and More Information
+## Links and More Information
 - Detailed overview of how to use: [Wiki/Home](https://github.com/jmorris335/ConstraintHg/wiki)
 - Overview of Constraint Hypergraphs: [Wiki/Overview](https://github.com/jmorris335/ConstraintHg/wiki/Overview)
 - API Documentation: [Read the Docs](https://constrainthg.readthedocs.io/en/latest/)
@@ -16,8 +16,12 @@ ConstraintHg is a systems modeling kernel written in Python that enables general
 - Papers:
   - [Introduction of Constraint Hypergraphs](https://doi.org/10.1115/1.4068375)
 
+### Licensing and Usage
+Author: [John Morris](https://www.people.clemson.edu/jhmrrs/)  
+Contact: Reach out to my GitHub profile ([jmorris335](https://github.com/jmorris335))  
+Usage: Released under the Apache 2.0 license. This permissive license allows you can use, modify, and distribute this source code as desired (official terms are in the LICENSE file). The main limitations are that you'll need to include a copy of this license as well as the NOTICE file, and you'll have to state your changes. **We'd appreciate hearing if you used this for something helpful. Let us know by contacting us via our [profiles]((https://github.com/jmorris335)!**
 
-## Install
+### Install
 ConstraintHg is listed on the Python Package Index. To install, paste the following to your command terminal: 
 ```
    pip install constrainthg
@@ -101,9 +105,3 @@ Many examples are available in the [demos](https://github.com/jmorris335/Constra
 - [Elevator](https://github.com/jmorris335/ElevatorHypergraph): combining discrete-event simulation with a PID controller
 - [Naval Microgrid](https://github.com/jmorris335/MicrogridHg): complex system featuring data querying and dynamic simulation and linear systems
 - [Crankshaft](https://github.com/jmorris335/tool-interoperability-scripts/tree/main): integrates CAD software (Onshape) with dynamic simulation
-
-## Licensing and Usage
-Author: [John Morris](https://www.people.clemson.edu/jhmrrs/)  
-Organization: [PLM Center](https://github.com/Clemson-PLMC) at Clemson University  
-Contact: Reach out to my GitHub profile ([jmorris335](https://github.com/jmorris335))  
-Usage: An official release will *likely* be provided under the Apache 2.0 license, but for now **all rights are reserved**. For usage, please reach out to the author directly.

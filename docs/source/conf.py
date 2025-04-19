@@ -12,7 +12,8 @@ sys.path.insert(0, os.path.abspath('../../src/'))
 import constrainthg
 
 project = 'ConstraintHg'
-copyright = '2024, John Morris, All rights reserved'
+copyright = '2024, John Morris'
+license = 'Apache 2.0'
 author = 'John Morris'
 release = '0.2.1'
 

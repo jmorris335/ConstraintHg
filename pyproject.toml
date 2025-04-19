@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "constrainthg"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
     "numpy"
 ]
@@ -14,6 +14,7 @@ authors = [
 ]
 description = "Kernel for building and simulating constraint hypergraphs."
 readme = "README.md"
+license = "Apache-2.0"
 license-files = ["LICENSE*"]
 keywords = ["hypergraphs", "systems engineering"]
 classifiers = [

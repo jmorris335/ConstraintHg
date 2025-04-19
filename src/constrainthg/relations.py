@@ -1,16 +1,27 @@
 """
+Copyright 2025 John Morris
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
 File: relations.py
 Author: John Morris, jhmrrs@clemson.edu, https://orcid.org/0009-0005-6571-1959
 Purpose: A list of basic relations employable with edges in the hypergraph.
-License: All rights reserved.
-Versions:
-- 0.0, 7 Oct. 2024: initialized
 Notes:
-- Generally imported as import relations as R
+- Generally imported as import relations as R  
 - All relationship functions begin with a capital R, so that they are normally called 
-as `R.Rfunction`
+as `R.Rfunction`  
 - Each relationships should have *args, and **kwargs as its arguments and only 
-arguments. Specific keywords referenced in kwargs should be `s1`, `s2`, ... only.
+arguments. Specific keywords referenced in kwargs should be `s1`, `s2`, ... only.  
 """
 
 import numpy as np
