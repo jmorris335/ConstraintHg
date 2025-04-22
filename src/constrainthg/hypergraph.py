@@ -1054,7 +1054,7 @@ class Hypergraph:
 
     def solve(self, target, inputs: dict=None, to_print: bool=False, 
               min_index:int=0, debug_nodes: list=None, debug_edges: list=None, 
-              search_depth: int=100000, logging_level=None):
+              search_depth: int=100000, logging_level=None, to_reset: bool=True):
         """Runs a DFS search to identify the first valid solution for `target`.
         
         Parameters
@@ -1077,6 +1077,10 @@ class Hypergraph:
             The logging level to use for the simulation. Configures logging if not 
             already configured. `logging.DEBUG` or `logging.INFO` are informative 
             levels. See `Hypergraph.set_logging_level` for more information.
+        to_reset : bool, default=True
+            Resets the Hypergraph so that only nodes with static values are preseeded.
+            Should be `True` for independent simulations, `False` for repeated 
+            simulations of different values from the same scenario.
 
         Returns
         -------
@@ -1088,7 +1092,7 @@ class Hypergraph:
         if logging_level is not None:
             prev_logging_level = logger.getEffectiveLevel()
             self.set_logging_level(logging_level)
-        self.reset()
+        if to_reset: self.reset()
         if inputs is not None:
             self.set_node_values(inputs)
             source_nodes = [self.get_node(label) for label in inputs]
@@ -1159,3 +1163,49 @@ class Hypergraph:
         if num_children > 1:
             return 'join_stop' if index == num_children - 1 else 'join'
         return 'none'
+
+def solve_for_many(self, targets, indices=None, **kwargs)->list:
+        """Solves the hypergraph repeatedly until a value for each specified node at
+        each specified index is found.
+        
+        Parameters
+        ----------
+        targets : List[Node | str] | Node | str
+            A list of nodes to solve for.
+        indices : List[List[int,] | int] | int, optional
+            A list, where each element is a list of indices for each Node in `targets`.
+        **kwargs : See `Hypergraph.solve` for other keyword arguments.
+
+        Process
+        -------
+        Calls `Hypergraph.solve` for the first node in `targets`, then searches the 
+        dict of found values to see if any following nodes are found. Then recalls the
+        method passing the values with the greatest index as inputs to the graph.
+        """
+        targets, indices = make_list(targets), make_list(indices)
+        targets = [self.get_node(target) for target in targets]
+        for i, t in enumerate(targets):
+            if len(indices) > i: make_list(indices[i])
+            else: indices.append([0])
+        
+        found_values = {}
+        def gather_inputs(fv: dict)->dict: 
+            return {key : val[-1] for key, val in fv.items()}
+        def reconcile_inputs(fv: dict, latest: dict)-> dict:
+            #FIXME: This is supposed to find the inputs for the next run, but it might 
+            # get make chains where the indices to match up (different paths). 
+            for fv_key in fv:
+                if fv_key in latest:
+                    pass
+
+        for target, t_indices in zip(targets, indices):
+            for index in t_indices:
+                if len(found_values.get(target, [])) > index:
+                    continue
+                inputs = gather_inputs(found_values)
+                t = self.solve(target, inputs=inputs, min_index=index, to_reset=False, 
+                               **kwargs)
+                if t is None:
+                    return None
+                found_values = reconcile_inputs(found_values, t.values)
+        return found_values
