@@ -203,3 +203,38 @@ def Rsin(*args, **kwargs):
     """Returns the sine of the mean of all arguments."""
     args = extend(args, kwargs)
     return np.sin(np.mean(args))
+
+def Rcos(*args, **kwargs):
+    """Returns the cosine of the mean of all arguments."""
+    args = extend(args, kwargs)
+    return np.cos(np.mean(args))
+
+def Rtan(*args, **kwargs):
+    """Returns the tangent of the mean of all arguments."""
+    args = extend(args, kwargs)
+    return np.tan(np.mean(args))
+
+# Types
+def Rlist(*args, **kwargs):
+    """Returns a list of all node values in the order specified."""
+    out = extend(args, kwargs)
+    return out
+
+def Rtuple(*args, **kwargs):
+    """Returns a tuple of all node values in the order specified."""
+    out = extend(args, kwargs)
+    out = tuple(out)
+    return out
+
+def Rdict(*args, **kwargs):
+    """Returns a dictionary with either the keyed argument `key` or the first argument 
+    as the dict key."""
+    args, kwargs = get_keyword_arguments(args, kwargs, 'key')
+    key = kwargs.get['key', None]
+    if key is None:
+        key = args.pop[-1]
+    if len(args) == 1:
+        out = {key: args[0]}
+    else:
+        out = {key: args}
+    return out
