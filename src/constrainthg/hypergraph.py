@@ -1052,7 +1052,7 @@ class Hypergraph:
             node = self.get_node(key)
             node.static_value = value
 
-    def solve(self, target, node_values: dict=None, to_print: bool=False, 
+    def solve(self, target, inputs: dict=None, to_print: bool=False, 
               min_index:int=0, debug_nodes: list=None, debug_edges: list=None, 
               search_depth: int=100000, logging_level=None):
         """Runs a DFS search to identify the first valid solution for `target`.
@@ -1061,7 +1061,7 @@ class Hypergraph:
         ----------
         target : Node | str
             The node or label of the node to solve for.
-        node_values : dict, optional
+        inputs : dict, optional
             A dictionary {label : value} of input values.
         to_print : bool, default=False
             Prints the search tree if set to true.
@@ -1089,10 +1089,10 @@ class Hypergraph:
             prev_logging_level = logger.getEffectiveLevel()
             self.set_logging_level(logging_level)
         self.reset()
-        if node_values is not None:
-            self.set_node_values(node_values)
-            source_nodes = [self.get_node(label) for label in node_values]
-            source_nodes += [node for node in self.nodes.values() if node.is_constant and node.label not in node_values]
+        if inputs is not None:
+            self.set_node_values(inputs)
+            source_nodes = [self.get_node(label) for label in inputs]
+            source_nodes += [node for node in self.nodes.values() if node.is_constant and node.label not in inputs]
         else:
             source_nodes = [node for node in self.nodes.values() if node.is_constant]
         target_node = self.get_node(target)
