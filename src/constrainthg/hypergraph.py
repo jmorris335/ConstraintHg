@@ -233,15 +233,13 @@ class Node:
             A description of the node useful for debugging.
         units : str, optional
             Units of value.
-        is_constant : bool, default=False
-            Describes whether the node should be reset in between simulations.
         starting_index : int, default=1
             The starting index of the node.
 
         Properties
         ----------
-        is_constant : bool, default = False
-            Boolean indicating if the value of the node should change.
+        is_constant : bool
+            Describes whether the node should be reset in between simulations.
 
         Notes
         -----
