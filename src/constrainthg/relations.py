@@ -163,6 +163,11 @@ def Rxor(*args, **kwargs):
     args = [a for a in extend(args, kwargs) if isinstance(a, bool)]
     return sum(args) == 1
 
+def Rnot_any(*args, **kwargs):
+    """Returns true if none of the arguments are true."""
+    args = extend(args, kwargs)
+    return not any(args)
+
 def Rnot(*args, **kwargs):
     """Returns the logical negation of the first boolean argument."""
     args = extend(args, kwargs)

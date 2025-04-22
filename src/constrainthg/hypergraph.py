@@ -1032,7 +1032,7 @@ class Hypergraph:
             for key, node in nodes.items():
                 if isinstance(node, tuple):
                     if node[0] not in nodes:
-                        raise Exception(f"Pseudo node identifier '{node[0]}' not included in Edge.")
+                        raise Exception(f"Pseudo node identifier for '{node[0]}' not included in Edge.")
                 else:
                     node = self.insert_node(node)
                     node_list.append(node)
@@ -1186,6 +1186,7 @@ def solve_for_many(self, targets, indices=None, **kwargs)->list:
             if len(indices) > i: make_list(indices[i])
             else: indices.append([0])
         
+        kwargs['to_reset'] = False
         found_values = {}
         def gather_inputs(fv: dict)->dict: 
             return {key : val[-1] for key, val in fv.items()}
@@ -1201,8 +1202,7 @@ def solve_for_many(self, targets, indices=None, **kwargs)->list:
                 if len(found_values.get(target, [])) > index:
                     continue
                 inputs = gather_inputs(found_values)
-                t = self.solve(target, inputs=inputs, min_index=index, to_reset=False, 
-                               **kwargs)
+                t = self.solve(target, inputs=inputs, min_index=index, **kwargs)
                 if t is None:
                     return None
                 found_values = reconcile_inputs(found_values, t.values)
