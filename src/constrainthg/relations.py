@@ -58,6 +58,10 @@ def get_keyword_arguments(args: list, kwargs: dict, excluded_keys: list):
     return to_combine, exceptional_vals
 
 # ALGEBRAIC RELATIONS
+def Rnull(*args, **kwargs):
+    """Returns zero."""
+    return 0
+
 def Rsum(*args, **kwargs):
     """Sums all arguments."""
     args = extend(args, kwargs)
