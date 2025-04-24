@@ -1,0 +1,29 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: ConstraintHg
+message: >-
+  If you use this software, please cite it using the  
+  metadata from this file, and let the authors know via
+  their GitHub profiles.
+type: software
+authors:
+  - given-names: John
+    family-names: Morris
+    email: jhmrrs@clemson.edu
+    orcid: 'https://orcid.org/0009-0005-6571-1959'
+    affiliation: PLM Center at Clemson University
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.15278018
+    description: DOI for repository (latest release)
+repository-code: 'https://github.com/jmorris335/ConstraintHg'
+url: 'https://constrainthg.readthedocs.io/en/latest/'
+abstract: >-
+  System modeling kernel enabling universal simulation of a
+  system representation structured using a constraint
+  hypergraph.
+license: Apache-2.0
+version: 2.2.0
+date-released: '2025-04-23'
