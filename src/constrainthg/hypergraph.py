@@ -1162,48 +1162,48 @@ class Hypergraph:
             return 'join_stop' if index == num_children - 1 else 'join'
         return 'none'
 
-def solve_for_many(self, targets, indices=None, **kwargs)->list:
-        """Solves the hypergraph repeatedly until a value for each specified node at
-        each specified index is found.
+    # def solve_for_many(self, targets, indices=None, **kwargs)->list:
+    #     """Solves the hypergraph repeatedly until a value for each specified node at
+    #     each specified index is found.
         
-        Parameters
-        ----------
-        targets : List[Node | str] | Node | str
-            A list of nodes to solve for.
-        indices : List[List[int,] | int] | int, optional
-            A list, where each element is a list of indices for each Node in `targets`.
-        **kwargs : See `Hypergraph.solve` for other keyword arguments.
+    #     Parameters
+    #     ----------
+    #     targets : List[Node | str] | Node | str
+    #         A list of nodes to solve for.
+    #     indices : List[List[int,] | int] | int, optional
+    #         A list, where each element is a list of indices for each Node in `targets`.
+    #     **kwargs : See `Hypergraph.solve` for other keyword arguments.
 
-        Process
-        -------
-        Calls `Hypergraph.solve` for the first node in `targets`, then searches the 
-        dict of found values to see if any following nodes are found. Then recalls the
-        method passing the values with the greatest index as inputs to the graph.
-        """
-        targets, indices = make_list(targets), make_list(indices)
-        targets = [self.get_node(target) for target in targets]
-        for i, t in enumerate(targets):
-            if len(indices) > i: make_list(indices[i])
-            else: indices.append([0])
+    #     Process
+    #     -------
+    #     Calls `Hypergraph.solve` for the first node in `targets`, then searches the 
+    #     dict of found values to see if any following nodes are found. Then recalls the
+    #     method passing the values with the greatest index as inputs to the graph.
+    #     """
+    #     targets, indices = make_list(targets), make_list(indices)
+    #     targets = [self.get_node(target) for target in targets]
+    #     for i, t in enumerate(targets):
+    #         if len(indices) > i: make_list(indices[i])
+    #         else: indices.append([0])
         
-        kwargs['to_reset'] = False
-        found_values = {}
-        def gather_inputs(fv: dict)->dict: 
-            return {key : val[-1] for key, val in fv.items()}
-        def reconcile_inputs(fv: dict, latest: dict)-> dict:
-            #FIXME: This is supposed to find the inputs for the next run, but it might 
-            # get make chains where the indices to match up (different paths). 
-            for fv_key in fv:
-                if fv_key in latest:
-                    pass
+    #     kwargs['to_reset'] = False
+    #     found_values = {}
+    #     def gather_inputs(fv: dict)->dict: 
+    #         return {key : val[-1] for key, val in fv.items()}
+    #     def reconcile_inputs(fv: dict, latest: dict)-> dict:
+    #         #FIXME: This is supposed to find the inputs for the next run, but it might 
+    #         # get make chains where the indices to match up (different paths). 
+    #         for fv_key in fv:
+    #             if fv_key in latest:
+    #                 pass
 
-        for target, t_indices in zip(targets, indices):
-            for index in t_indices:
-                if len(found_values.get(target, [])) > index:
-                    continue
-                inputs = gather_inputs(found_values)
-                t = self.solve(target, inputs=inputs, min_index=index, **kwargs)
-                if t is None:
-                    return None
-                found_values = reconcile_inputs(found_values, t.values)
-        return found_values
+    #     for target, t_indices in zip(targets, indices):
+    #         for index in t_indices:
+    #             if len(found_values.get(target, [])) > index:
+    #                 continue
+    #             inputs = gather_inputs(found_values)
+    #             t = self.solve(target, inputs=inputs, min_index=index, **kwargs)
+    #             if t is None:
+    #                 return None
+    #             found_values = reconcile_inputs(found_values, t.values)
+    #     return found_values
