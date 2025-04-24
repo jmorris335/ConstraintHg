@@ -25,5 +25,5 @@ abstract: >-
   system representation structured using a constraint
   hypergraph.
 license: Apache-2.0
-version: 2.2.0
+version: 0.2.2
 date-released: '2025-04-23'
