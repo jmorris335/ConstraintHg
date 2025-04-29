@@ -13,15 +13,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-File: relations.py
-Author: John Morris, jhmrrs@clemson.edu, https://orcid.org/0009-0005-6571-1959
-Purpose: A list of basic relations employable with edges in the hypergraph.
+| File: relations.py
+| Author: John Morris, jhmrrs@clemson.edu, https://orcid.org/0009-0005-6571-1959
+| Purpose: A list of basic relations employable with edges in the hypergraph.
+
 Notes:
-- Generally imported as import relations as R  
+------
+
+- Generally imported as import relations as R
 - All relationship functions begin with a capital R, so that they are normally called 
-as `R.Rfunction`  
-- Each relationships should have *args, and **kwargs as its arguments and only 
-arguments. Specific keywords referenced in kwargs should be `s1`, `s2`, ... only.  
+  as `R.Rfunction`
+- Each relationships should have \*args, and \**kwargs as its arguments and only 
+  arguments. Specific keywords referenced in kwargs should be `s1`, `s2`, ... only. 
 """
 
 import numpy as np

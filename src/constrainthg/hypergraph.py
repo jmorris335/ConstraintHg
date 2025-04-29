@@ -13,9 +13,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-File: hypergraph.py
-Author: John Morris, jhmrrs@clemson.edu, https://orcid.org/0009-0005-6571-1959
-Purpose: Classes for storing and traversing a constraint hypergraph.
+| File: hypergraph.py
+| Author: John Morris, jhmrrs@clemson.edu, https://orcid.org/0009-0005-6571-1959
+| Purpose: Classes for storing and traversing a constraint hypergraph.
 """
 
 from typing import Callable, List
