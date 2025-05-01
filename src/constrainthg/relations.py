@@ -21,8 +21,8 @@ Notes:
 ------
 
 - Generally imported as import relations as R
-- All relationship functions begin with a capital R, so that they are normally called 
-  as `R.Rfunction`
+- All relationship functions begin with a capital R, so that they are normally 
+called as `R.Rfunction`
 - Each relationships should have \*args, and \**kwargs as its arguments and only 
   arguments. Specific keywords referenced in kwargs should be `s1`, `s2`, ... only. 
 """
@@ -35,30 +35,29 @@ def extend(args: list, kwargs: dict)-> list:
     return list(args) + list(kwargs.values())
 
 def get_keyword_arguments(args: list, kwargs: dict, excluded_keys: list):
-    """Combines all arguments except those with a given key. Returns the arguments 
-    for the given keys as a dictionary
-    and the remaining arguments as a list.
+    """Combines all arguments except those with a given key. Returns the 
+    arguments or the given keys as a dictionary and the remaining 
+    arguments as a list.
     
-    Note that keys not found in `kwargs` are taken from `args` in the order of the 
-    `excluded_keys` list."""
+    Note that keys not found in `kwargs` are taken from `args` in the 
+    order of the `excluded_keys` list."""
     if not isinstance(excluded_keys, list):
         excluded_keys = [excluded_keys]
-    exceptional_vals, to_combine = {}, []
+    exceptional_vals = {}
 
     for key, val in kwargs.items():
         if key in excluded_keys:
             exceptional_vals[key] = val
         else:
-            to_combine.append(val)
+            args.append(val)
 
-    i = 0
-    for key in excluded_keys:
-        if key not in exceptional_vals:
-            exceptional_vals[key] = args[i]
-            i += 1
+    try:
+        for key in excluded_keys:
+            if key not in exceptional_vals:
+                exceptional_vals[key] = args.pop(0)
+    except: IndexError
 
-    to_combine += list(args[i:])
-    return to_combine, exceptional_vals
+    return args, exceptional_vals
 
 # ALGEBRAIC RELATIONS
 def Rnull(*args, **kwargs):
