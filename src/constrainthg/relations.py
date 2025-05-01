@@ -44,6 +44,7 @@ def get_keyword_arguments(args: list, kwargs: dict, excluded_keys: list):
     if not isinstance(excluded_keys, list):
         excluded_keys = [excluded_keys]
     exceptional_vals = {}
+    args = list(args)
 
     for key, val in kwargs.items():
         if key in excluded_keys:
