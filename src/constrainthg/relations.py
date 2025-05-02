@@ -23,7 +23,7 @@ Notes:
 - Generally imported as import relations as R
 - All relationship functions begin with a capital R, so that they are normally 
 called as `R.Rfunction`
-- Each relationships should have \*args, and \**kwargs as its arguments and only 
+- Each relationships should have `*args`, and `**kwargs` as its arguments and only 
 arguments. Specific keywords referenced in kwargs should be `s1`, `s2`, ... only. 
 """
 
