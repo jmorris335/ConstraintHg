@@ -937,9 +937,22 @@ class Hypergraph:
             check_label = label + str(i := i + 1)
         return check_label
 
-    def add_node(self, *args, **kwargs)-> Node:
-        """Wraps Node.__init__() and also inserts the Node into the hypergraph."""
-        node = Node(*args, **kwargs)
+    def add_node(self, node=None, *args, **kwargs)-> Node:
+        """Creates (if necessary) a Node and inserts into the hypergraph.
+
+        Wraps ``Hypergraph.insert_node`` and ``Node.__init__``.
+        
+        Parameters
+        ----------
+        node : Node | str, optional
+            The node (or node label) to add to the hypergraph. If not 
+            provided, then args and kwargs are passed to Node.__init__.
+        """
+        if node is None:
+            try:
+                node = Node(*args, **kwargs)
+            except:
+                return None
         self.insert_node(node)
 
     def insert_node(self, node: Node, value=None)-> Node:
