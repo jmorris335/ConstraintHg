@@ -934,7 +934,7 @@ class Hypergraph:
         i = 0
         check_label = label
         while check_label in self.edges:
-            check_label = label + str(i := i + 1)
+            check_label = label + '#' + str(i := i + 1)
         return check_label
 
     def add_node(self, node=None, *args, **kwargs)-> Node:
