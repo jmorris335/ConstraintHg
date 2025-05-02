@@ -24,7 +24,7 @@ Notes:
 - All relationship functions begin with a capital R, so that they are normally 
 called as `R.Rfunction`
 - Each relationships should have \*args, and \**kwargs as its arguments and only 
-  arguments. Specific keywords referenced in kwargs should be `s1`, `s2`, ... only. 
+arguments. Specific keywords referenced in kwargs should be `s1`, `s2`, ... only. 
 """
 
 import numpy as np
@@ -227,15 +227,14 @@ def Rtan(*args, **kwargs):
     return np.tan(np.mean(args))
 
 # Types
-def Rlist(*args, **kwargs):
-    """Returns a list of all node values in the order specified."""
-    out = extend(args, kwargs)
+def to_list(order: list, *args, **kwargs):
+    """Returns a list of all node values given in `order`."""
+    out = [kwargs[a] for a in order]
     return out
 
-def Rtuple(*args, **kwargs):
-    """Returns a tuple of all node values in the order specified."""
-    out = extend(args, kwargs)
-    out = tuple(out)
+def to_tuple(order: list, *args, **kwargs):
+    """Returns a tuple of the node values given in `order`."""
+    out = tuple([kwargs[a] for a in order])
     return out
 
 def Rdict(*args, **kwargs):
