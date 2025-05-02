@@ -134,6 +134,8 @@ def Rmin(*args, **kwargs):
 def Rsame(*args, **kwargs):
     """Returns true if all arguments are equivalent."""
     args = set(extend(args, kwargs))
+    if len(args) == 0: #Trivial case
+        return True
     return len(args) == 1
 
 def mult_and_sum(mult_identifiers: list, sum_identifiers: list):
