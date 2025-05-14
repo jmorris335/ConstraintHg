@@ -10,7 +10,7 @@ ConstraintHg
 
 Quick Links
 -----------
-Demonstration of package: `<https://github.com/jmorris335/ConstraintHg/wiki>`_
+Demonstration of package: :doc:`constrainthg_intro`
    Provides more indepth discussion on constraint hypergraphs and package usage.
 
 Overview of Constraint Hypergraphs: :doc:`chg_overview`
