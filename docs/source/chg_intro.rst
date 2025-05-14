@@ -4,7 +4,7 @@ Introduction to Constraint Hypergraphs
 
 .. contents::
    :local:
-   :depth: 1
+   :depth: 2
    :caption: Contents:
 
 A constraint hypergraph is a modeling framework for capturing and synthesizing information at a fundamental level. They can be used to describe different domains such as workplace personnel, project structures, aircraft carriers, and ecological systems. Their primary use is to represent a real system by a sequence of executable actions which can be read by a computer, allowing the computer to reason and predict about information anywhere in the system. In short, if something can be known, then it can be captured in a constraint hypergraph; if something is represented in a constraint hypergraph, then it can be understood by a computer.

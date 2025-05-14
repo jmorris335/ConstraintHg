@@ -1,12 +1,11 @@
+============
 ConstraintHg
 ============
 
-.. image:: ./media/icon.svg
-   :width: 200px
+.. image:: ./media/logo.svg
+   :width: 400px
    :alt: ConstraintHg
    :align: center
-
-This is the home page for the ConstraintHg software package.
 
 
 Quick Links
@@ -14,18 +13,18 @@ Quick Links
 Demonstration of package: `<https://github.com/jmorris335/ConstraintHg/wiki>`_
    Provides more indepth discussion on constraint hypergraphs and package usage.
 
-Overview of Constraint Hypergraphs: :doc:`chg_overview.rst`
+Overview of Constraint Hypergraphs: :doc:`chg_overview`
    Launchpad for resources for learning about Constraint Hypergraphs.
 
-Repository: `<https://github.com/jmorris335/ConstraintHg>`
+Repository: `<https://github.com/jmorris335/ConstraintHg>`_
    GitHub repository for package.
 
 PyPI Package Listing: `<https://pypi.org/project/constrainthg/>`_
    Listing on the Python Package Index
 
 
-Documentation
--------------
+API Documentation
+-----------------
 
 .. toctree::
    :maxdepth: 2
