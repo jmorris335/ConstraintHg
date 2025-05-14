@@ -5,16 +5,16 @@ Overview of Constraint Hypergraphs
 This is the launchpad for information about constraint hypergraphs (CHGs), 
 the mathematical framework undergirding `ConstraintHg <home_>`_.
 
-.. contents::
-   :local:
-   :depth: 1
-   :caption: Contents:
-
 Good Starting Points
 ====================
 
-- Brief Introduction with examples: :doc:`chg_intro`
-- High level overview of using CHGs with digital twins: `<https://www.youtube.com/watch?v=Ph2yhaThex0>`_
+Brief Introduction with examples: :doc:`chg_intro`
+
+`Video <https://www.youtube.com/watch?v=Ph2yhaThex0>`_ overview of using CHGs with digital twins: 
+
+.. raw:: html
+    
+    <iframe width="560" height="315" src="https://www.youtube.com/embed/Ph2yhaThex0?si=cnhRVxP2oTeQ_4g6" title="CHGs used for Digital Twins" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 More In-Depth
 =============
