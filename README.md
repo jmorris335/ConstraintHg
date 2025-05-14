@@ -2,15 +2,16 @@
 <img src="https://github.com/jmorris335/ConstraintHg/blob/14d9ea2db0e73d440dd4de1491ba0ffee0233d87/media/logo.svg?raw=true" width="300">
 </h1><br>
 
-![Static Badge](https://img.shields.io/badge/homepage-blue?link=https%3A%2F%2Fgithub.com%2Fjmorris335%2FConstraintHg%2Fwiki) [![DOI](https://zenodo.org/badge/869248124.svg)](https://doi.org/10.5281/zenodo.15278018) [![Read the Docs](https://img.shields.io/readthedocs/constrainthg?link=https%3A%2F%2Fconstrainthg.readthedocs.io%2Fen%2Flatest%2Findex.html)](https://constrainthg.readthedocs.io/en/latest/) ![Static Badge](https://img.shields.io/badge/tests-21/21-brightgreen) ![GitHub Release](https://img.shields.io/github/v/release/jmorris335/ConstraintHg?include_prereleases&display_name=tag) ![GitHub last commit](https://img.shields.io/github/last-commit/jmorris335/ConstraintHg)
+![Static Badge](https://img.shields.io/badge/homepage-blue?link=https%3A%2F%2Fconstrainthg.readthedocs.io%2Fen%2Flatest%2Findex.html) [![DOI](https://zenodo.org/badge/869248124.svg)](https://doi.org/10.5281/zenodo.15278018) [![Read the Docs](https://img.shields.io/readthedocs/constrainthg?link=https%3A%2F%2Fconstrainthg.readthedocs.io%2Fen%2Flatest%2Findex.html)](https://constrainthg.readthedocs.io/en/latest/) ![Static Badge](https://img.shields.io/badge/tests-21/21-brightgreen) ![GitHub Release](https://img.shields.io/github/v/release/jmorris335/ConstraintHg?include_prereleases&display_name=tag) ![GitHub last commit](https://img.shields.io/github/last-commit/jmorris335/ConstraintHg)
 
 
 ConstraintHg is a systems modeling kernel written in Python that enables general definition and universal simulation of any system. The kernel breaks a system down into the informational values (nodes) and functional relationships (hyperedges), providing robust simulation through pathfinding operations. This repository is under active development (no official release yet), and is therefore subject to change without warning. **It is not a rigorous data storage solution. Do not use this as a database.**
 
 ## Links and More Information
-- Detailed overview of how to use: [Wiki/Home](https://github.com/jmorris335/ConstraintHg/wiki)
-- Overview of Constraint Hypergraphs: [Wiki/Overview](https://github.com/jmorris335/ConstraintHg/wiki/Overview)
-- API Documentation: [Read the Docs](https://constrainthg.readthedocs.io/en/latest/)
+- Homepage: [Link](https://constrainthg.readthedocs.io/en/latest/index.html)
+- Learn to use: [Get Started](https://constrainthg.readthedocs.io/en/latest/constrainthg_intro.html)
+- Learn about Constraint Hypergraphs: [Resources](https://constrainthg.readthedocs.io/en/latest/chg_overview.html)
+- API Documentation: [Read the Docs](https://constrainthg.readthedocs.io/en/latest/constrainthg.html)
 - Video overview: [YouTube](https://www.youtube.com/watch?v=Ph2yhaThex0)
 - Papers:
   - [Introduction of Constraint Hypergraphs](https://doi.org/10.1115/1.4068375)
