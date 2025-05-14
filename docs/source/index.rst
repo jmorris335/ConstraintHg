@@ -32,9 +32,6 @@ API Documentation
    constrainthg
 
 
-More
------
 :ref:`genindex`
 :ref:`modindex`
 :ref:`search`
-

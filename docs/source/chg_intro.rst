@@ -92,3 +92,8 @@ _____
 Footnotes
 =========
 .. [#] The definition of a model employed here is of a set of relationships between a set of variables. That means that every algebraic equation you have used is a model and every system of equations. CAD models fit this context as well, as they constrain the positions of geometric features relative to each other. This definition also covers flow charts, Markov processes, block diagrams, Petri nets, and really most modeling frameworks! We call the combination of known relationships and variables the *model space*.
+
+:doc:`Home </index>`
+:ref:`genindex`
+:ref:`modindex`
+:ref:`search`

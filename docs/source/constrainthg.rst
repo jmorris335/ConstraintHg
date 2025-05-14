@@ -54,3 +54,7 @@ Relations Module
    :undoc-members:
    :show-inheritance:
 
+:doc:`Home </index>`
+:ref:`genindex`
+:ref:`modindex`
+:ref:`search`
