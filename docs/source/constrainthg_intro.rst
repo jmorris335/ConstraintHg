@@ -239,7 +239,4 @@ If you solve this graph, the solver will have to iterate through the cycle hundr
 
     Results of simulation solving for settling time of damped pendulum.
 
-:doc:`Home </index>`
-:ref:`genindex`
-:ref:`modindex`
-:ref:`search`
+:doc:`Home </index>` | :ref:`genindex` | :ref:`Search <search>`

@@ -6,6 +6,4 @@ constrainthg
 
    constrainthg
 
-:doc:`Home </index>`
-:ref:`genindex`
-:ref:`search`
+:doc:`Home </index>` | :ref:`genindex` | :ref:`Search <search>`

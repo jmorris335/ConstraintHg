@@ -32,6 +32,4 @@ API Documentation
    constrainthg
 
 
-:ref:`genindex`
-:ref:`modindex`
-:ref:`search`
+:ref:`genindex` | :ref:`modindex` | :ref:`Search <search>`
