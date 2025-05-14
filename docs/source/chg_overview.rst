@@ -49,7 +49,7 @@ Questions
 Reach out to jhmrrs AT clemson DOT edu for questions or more information.
 
 
-:doc:`Home </index>` | :ref:`genindex` | :ref:`Search <search>`
+:doc:`Home </index>` \| :ref:`genindex` \| :ref:`Search <search>`
 
 .. _ConstraintHg Repo: https://github.com/jmorris335/ConstraintHg
 .. _home: https://constrainthg.readthedocs.io/en/latest/
