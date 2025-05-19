@@ -91,8 +91,8 @@ and then call the ``Hypergraph.add_edge()`` method. The syntax is ``add_edge([<n
     hg.add_edge(omega0, omega, R.Rmean, label='omega0->omega')
     hg.add_edge({'s1': g, 's2': r}, 'g/r', R.Rdivide, label='(g,r)->b1') #dictionary of source nodes ensures 'g' is the numerator.
     hg.add_edge(theta, s_theta, R.Rsin, label='theta->sine')
-    hg.add_edge(`s_theta, 'g/r'], F, R.Rmultiply, label='(sine, b1)->F')
-    hg.add_edge(`omega, c], 'beta2', R.Rmultiply, label='(omega, c)->b2')
+    hg.add_edge([s_theta, 'g/r'], F, R.Rmultiply, label='(sine, b1)->F')
+    hg.add_edge([omega, c], 'beta2', R.Rmultiply, label='(omega, c)->b2')
 
 Cycles
 ------
