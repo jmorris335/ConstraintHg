@@ -19,11 +19,11 @@ Brief Introduction with examples: :doc:`chg_intro`
 More In-Depth
 =============
 
-Unified Systems Modeling and Simulation: `<https://doi.org/10.1115/1.4068375>`_
+Unified Systems Modeling and Simulation: `DOI <https://doi.org/10.1115/1.4068375>`_
     First published paper covering Contraint Hypergraphs, goes into technical 
     details about how they are defined. A video overview is available `here <https://www.youtube.com/watch?v=nQaxbmd1yds>`_
 
-Integrating Simulation Software with CHGs: `<https://www.people.clemson.edu/jhmrrs/publications/#:~:text=Declarative%20Integration%20of%20CAD%20Software%20into%20Multi%2DPhysics%20Simulation%20via%20Constraint%20Hypergraphs>`_
+Integrating Simulation Software with CHGs: `Linked here <https://www.people.clemson.edu/jhmrrs/publications/#:~:text=Declarative%20Integration%20of%20CAD%20Software%20into%20Multi%2DPhysics%20Simulation%20via%20Constraint%20Hypergraphs>`_
     Shows how CHGs enable declarative modeling between simulation software, 
     demonstrating with integration of a dynamic model with Onshape's CAD API. 
     The code for this model is available `here <https://github.com/jmorris335/tool-interoperability-scripts/tree/main>`_
