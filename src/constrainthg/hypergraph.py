@@ -319,12 +319,15 @@ class Edge:
             A unique string identifier for the edge.
         source_nodes : dict{str : Node | Tuple(str, str)} | list[Node | 
                        Tuple(str, str)] |  Tuple(str, str) | Node 
-            A dictionary of `Node` objects forming the source nodes of the edge, 
-            where the key is the identifiable label for each source used in rel processing.
-            The Node object may be a Node, or a length-2 Tuple (identifier : attribute) 
-            with the first element an identifier in the edge and the second element a 
-            string referencing an attribute of the identified Node to use as the value 
-            (a pseudo node).
+            A dictionary of `Node` objects forming the source nodes of 
+            the edge, where the key is the identifiable label for each 
+            source used in rel processing. The Node object may be a Node, 
+            or a length-2 Tuple (identifier : attribute) with the first 
+            element an identifier in the edge and the second element a 
+            string referencing an attribute of the identified Node to 
+            use as the value (a pseudo node).
+        target : Node
+            Node that the edge maps to.
         rel : Callable
             A function taking the values of the source nodes and returning a single 
             value (the target).
