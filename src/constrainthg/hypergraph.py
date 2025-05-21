@@ -97,6 +97,7 @@ class TNode:
         max_display_length : int, default=12
             The maximum characters to display for the value of the node.
 
+            
         Properties
         ----------
         index : int
@@ -236,11 +237,13 @@ class Node:
         starting_index : int, default=1
             The starting index of the node.
 
+            
         Properties
         ----------
         is_constant : bool
             Describes whether the node should be reset in between simulations.
 
+            
         Notes
         -----
         1. The subsetting accomplished by `super_nodes` is best conducted using `via` functions
@@ -299,11 +302,17 @@ class Node:
 
 class EdgeProperty(Enum):
     """Enumerated object describing various configurations of an Edge that can be 
-    passed during setup. Used as shorthand for common configurations."""
+    passed during setup. Used as shorthand for common configurations.
+    
+    Members
+    -------
+    LEVEL : 1
+        Every source node in the edge must have the same index for the edge to be viable.
+    DISPOSE_ALL : 2
+        Every source node can only be used once per execution.
+    """
     LEVEL = 1
-    """Every source node in the edge must have the same index for the edge to be viable."""
     DISPOSE_ALL = 2
-    """Every source node can only be used once per execution."""
 
 class Edge:
     """A relationship along a set of nodes (the source) that produces a single value."""
@@ -352,6 +361,7 @@ class Edge:
             edge calculation. 
         edge_props : List(EdgeProperty) | EdgeProperty | str | int, optional
             A list of enumerated types that are used to configure the edge.
+
 
         Properties
         ----------
@@ -577,6 +587,7 @@ class Edge:
         This ensures that nodes from previous cycles don't get 
         revetted for future edges, greatly simplifying simulation.
 
+        
         Process
         -------
         1. Get an identifier from the disposal list
@@ -681,6 +692,14 @@ class Pathfinder:
         no_weights : bool, default=False
             Optional run mode where weights aren't considered. This speeds up the 
             simulation but prevents model switching.
+
+            
+        Properties
+        ----------
+        search_counter : int
+            Number of nodes explored
+        explored_edges : dict
+            Dict counting the number of times edges were processed {label : int}
         """
         self.nodes = nodes
         self.source_nodes = sources
@@ -688,15 +707,13 @@ class Pathfinder:
         self.no_weights = no_weights
         self.search_roots = []
         self.search_counter = 0
-        """Number of nodes explored"""
         self.explored_edges = {}
-        """Dict counting the number of times edges were processed {label : int}"""
 
-    def search(self, min_index: int=0, debug_nodes: list=None, debug_edges: list=None, search_depth: int=10000):
+    def search(self, min_index: int=0, debug_nodes: list=None, debug_edges: list=None, 
+               search_depth: int=10000):
         """Searches the hypergraph for a path from the source nodes to the target 
         node. Returns the solved TNode for the target, with a dictionary of found 
-        values {label : [Any,]} given by the `target.values`.
-        """
+        values {label : [Any,]} given by the `target.values`."""
         debug_nodes = [] if debug_nodes is None else debug_nodes
         debug_edges = [] if debug_edges is None else debug_edges
         logger.info(f'Begin search for {self.target_node.label}')
@@ -735,7 +752,9 @@ class Pathfinder:
         for i, edge in enumerate(leading_edges):
             if edge.label not in self.explored_edges:
                 self.explored_edges[edge.label] = [0, 0, 0]
+            
             self.explored_edges[edge.label][0] += 1
+            
             DEBUG = edge.label in debug_edges
             level = logging.DEBUG + (2 if DEBUG else 0)
             logger.log(level, f"- Edge {i}=<{edge.label}>, target=<{edge.target.label}>:")
@@ -1096,6 +1115,7 @@ class Hypergraph:
             Should be `True` for independent simulations, `False` for repeated 
             simulations of different values from the same scenario.
 
+            
         Returns
         -------
         TNode | None
