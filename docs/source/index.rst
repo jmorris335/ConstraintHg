@@ -1,3 +1,5 @@
+.. Intentional space
+
 .. image:: ./media/logo.svg
    :width: 400px
    :alt: ConstraintHg
