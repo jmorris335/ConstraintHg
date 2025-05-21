@@ -678,7 +678,8 @@ class Pathfinder:
     """Object for searching a path through the hypergraph from a collection of source
     nodes to a single target node. If the hypergraph is fully constrained and viable,
     then the result of the search is a singular value of the target node."""
-    def __init__(self, target: Node, sources: list, nodes: dict, no_weights: bool=False):
+    def __init__(self, target: Node, sources: list, nodes: dict, 
+                 no_weights: bool=False, memory_mode: bool=False):
         """Creates a new Pathfinder object.
         
         Parameters
@@ -692,30 +693,51 @@ class Pathfinder:
         no_weights : bool, default=False
             Optional run mode where weights aren't considered. This speeds up the 
             simulation but prevents model switching.
+        memory_mode : bool, default=False
+            Optional run mode where all encountered TNodes are stored to a list
+            property. Increases memory usage.
 
             
         Properties
         ----------
         search_counter : int
-            Number of nodes explored
+            Number of nodes explored.
         explored_edges : dict
-            Dict counting the number of times edges were processed {label : int}
+            Dict counting the number of times edges were processed {label : int}.
+        explored_tnodes : list
+            Dict containing the all TNodes explored during searching, if not 
+            running in memory mode.
         """
         self.nodes = nodes
         self.source_nodes = sources
         self.target_node = target
         self.no_weights = no_weights
+        self.memory_mode = memory_mode
         self.search_roots = []
         self.search_counter = 0
         self.explored_edges = {}
+        self.explored_nodes = []
 
     def search(self, min_index: int=0, debug_nodes: list=None, debug_edges: list=None, 
                search_depth: int=10000):
         """Searches the hypergraph for a path from the source nodes to the target 
         node. Returns the solved TNode for the target, with a dictionary of found 
-        values {label : [Any,]} given by the `target.values`."""
+        values {label : [Any,]} given by the `target.values`.
+        
+        Parameters
+        ----------
+        min_index : int, default=0
+            Minimum index of the target node.
+        debug_nodes: list, optional
+            List of nodes to log additional information for.
+        debug_edges : list, optional
+            List of edges to log additional information for.
+        search_depth : int, default=10000
+            Number of TNodes to explore before search is failed.
+        """
         debug_nodes = [] if debug_nodes is None else debug_nodes
         debug_edges = [] if debug_edges is None else debug_edges
+        self.explored_nodes, self.explored_edges = [], []
         logger.info(f'Begin search for {self.target_node.label}')
 
         for sn in self.source_nodes:
@@ -768,6 +790,9 @@ class Pathfinder:
 
                 node_indices = ', '.join(f'{n.label} ({n.index})' for n in combo)
                 logger.debug(f'   - Combo {j}: ' + node_indices + f'-> <{str(pt)}>')
+        
+        if self.memory_mode:
+            self.explored_nodes.append(t)
 
     def get_edges_to_explore(self, t: TNode, debug_nodes: list=None)->list:
         """Finds and orders all edges leading from the node by label."""
