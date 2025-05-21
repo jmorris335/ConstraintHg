@@ -270,3 +270,13 @@ class TestHypergraph():
         assert i == 50, "Configurations may have been non-deterministic"
         assert t is not None, "Solution should always be discoverable"
         assert t.value == 5, "Graph calculation is incorrect"
+
+    def test_memory_mode(self):
+        """Tests that memory mode returns a collection of solved TNodes."""
+        hg = Hypergraph(memory_mode=True)
+        hg.add_edge(['A', 'B'], 'C', R.Rsum)
+        hg.add_edge(['A', 'C'], 'D', R.Rsum)
+        hg.add_edge('D', 'E', R.Rnegate)
+        t = hg.solve('E', {'A': 2, 'B': 3},)
+        assert len(hg.solved_tnodes) == 5, "Some TNodes not solved for"
+        assert hg.solved_tnodes[-1].value == -7, "TNode order may be incorrect"

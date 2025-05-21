@@ -748,10 +748,15 @@ class Pathfinder:
             if self.search_counter > search_depth:
                 self.log_debugging_report()
                 raise Exception("Maximum search limit exceeded.")
+            
             logger.debug('Search trees: ' + ', '.join(f'{s.node_label}' for s in self.search_roots))
 
             root = self.select_root()
+
             logger.debug(f'Exploring <{root.label}>, index={root.index}:')
+            if self.memory_mode:
+                self.explored_nodes.append(root)
+
             if root.node_label is self.target_node.label and root.index >= min_index:
                 logger.info(f'Finished search for {self.target_node.label} with value of {root.value}')
                 self.log_debugging_report()
@@ -790,9 +795,6 @@ class Pathfinder:
 
                 node_indices = ', '.join(f'{n.label} ({n.index})' for n in combo)
                 logger.debug(f'   - Combo {j}: ' + node_indices + f'-> <{str(pt)}>')
-        
-        if self.memory_mode:
-            self.explored_nodes.append(t)
 
     def get_edges_to_explore(self, t: TNode, debug_nodes: list=None)->list:
         """Finds and orders all edges leading from the node by label."""
