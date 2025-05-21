@@ -1,7 +1,3 @@
-============
-ConstraintHg
-============
-
 .. image:: ./media/logo.svg
    :width: 400px
    :alt: ConstraintHg
