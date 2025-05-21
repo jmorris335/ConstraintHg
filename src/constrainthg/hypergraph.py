@@ -686,7 +686,7 @@ class Pathfinder:
         ----------
         target : Node
             The Node that the Pathfinder will attempt to solve for.
-        source_nodes : list
+        sources : list
             A list of Node objects that have static values for the simulation.
         nodes : dict
             A dictionary of nodes taken from the hypergraph as {label : Node}.
@@ -856,24 +856,38 @@ class Pathfinder:
         logger.log(logging.DEBUG + 1, out)
 
 class Hypergraph:
-    """Builder class for a hypergraph. See demos for examples on how to use."""
-    def __init__(self, no_weights: bool=False, setup_logger: bool=False, logging_level=None):
+    """Builder class for a hypergraph. See demos for examples on how to use.
+    
+    Properties
+    ----------
+    nodes : dict
+        Nodes in the hypergraph, {label : Node}
+    edges : dict
+        Edges in the hypergraph, {label : Edge}
+    solved_tnodes : list
+        List of solved TNodes from a simulation. Only set if run in 
+        `memory_mode`.
+    """
+    def __init__(self, no_weights: bool=False, setup_logger: bool=False, 
+                 logging_level=None, memory_mode: bool=False):
         """Initialize a Hypergraph.
         
         Parameters
         ----------
         no_weights : bool, default=False
-            Optional run mode where weights aren't considered. This speeds up the 
-            simulation but prevents model switching.
+            Optional run mode where weights aren't considered. This 
+            speeds up the simulation but prevents model switching.
         setup_logger : bool, default=False
-            Sets up logging in the library (off by default). The logging level can be
-            set by calling `Hypergraph.set_logging_level`.
+            Sets up logging in the library (off by default). The logging 
+            level can be set by calling `Hypergraph.set_logging_level`.
         logging_level : int | str, optional
-            Sets the logging level for the library. Setting the logging level requires
-            an additional logging handler to be passed to 
-            `logger.getLogger('constrainthg')`. This can be done at the application 
-            level (in the calling script) or automatically by passing `setup_logger` 
-            as True.
+            Sets the logging level for the library. Setting the logging 
+            level requires an additional logging handler to be passed to 
+            `logger.getLogger('constrainthg')`. This can be done at the 
+            application level (in the calling script) or automatically 
+            by passing `setup_logger` as True.
+        memory_mode : bool, default=False
+            Store every solved for TNode to the Hypergraph.
         """
         self.nodes = {}
         self.edges = {}
@@ -883,6 +897,8 @@ class Hypergraph:
             self.setup_logger()
         if logging_level is not None:
             self.set_logging_level(logging_level)
+        self.memory_mode = memory_mode
+        self.solved_tnodes = []
 
     def check_if_logger_setup(self)->bool:
         """Checks if a Handler beyond the NullHandler was created for the logger."""
@@ -958,6 +974,7 @@ class Hypergraph:
                 node.static_value = None
         for edge in self.edges.values():
             edge.create_found_tnodes_dict()
+        self.solved_tnodes = []
 
     def request_node_label(self, requested_label=None)-> str:
         """Generates a unique label for a node in the hypergraph"""
@@ -1112,7 +1129,8 @@ class Hypergraph:
 
     def solve(self, target, inputs: dict=None, to_print: bool=False, 
               min_index:int=0, debug_nodes: list=None, debug_edges: list=None, 
-              search_depth: int=100000, logging_level=None, to_reset: bool=True):
+              search_depth: int=100000, memory_mode: bool=False,
+              logging_level=None, to_reset: bool=True):
         """Runs a DFS search to identify the first valid solution for `target`.
         
         Parameters
@@ -1159,9 +1177,21 @@ class Hypergraph:
         else:
             source_nodes = [node for node in self.nodes.values() if node.is_constant]
         target_node = self.get_node(target)
-        pf = Pathfinder(target_node, source_nodes, self.nodes, no_weights=self.no_weights)
+
+        pf = Pathfinder(target=target_node, 
+                        sources=source_nodes, 
+                        nodes=self.nodes, 
+                        no_weights=self.no_weights,
+                        memory_mode=self.memory_mode,
+                    )
         try:
-            t = pf.search(min_index, debug_nodes, debug_edges, search_depth)
+            t = pf.search(min_index=min_index, 
+                          debug_nodes=debug_nodes, 
+                          debug_edges=debug_edges, 
+                          search_depth=search_depth,
+                    )
+            if self.memory_mode:
+                self.solved_tnodes = pf.explored_nodes
         except Exception as e:
             logger.error(str(e))
             raise e
