@@ -737,7 +737,7 @@ class Pathfinder:
         """
         debug_nodes = [] if debug_nodes is None else debug_nodes
         debug_edges = [] if debug_edges is None else debug_edges
-        self.explored_nodes, self.explored_edges = [], []
+        self.explored_nodes, self.explored_edges = [], {}
         logger.info(f'Begin search for {self.target_node.label}')
 
         for sn in self.source_nodes:
