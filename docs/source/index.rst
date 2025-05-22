@@ -7,18 +7,24 @@
 
 Get Started
 -----------
+
 Use `PIP <https://pypi.org/project/constrainthg/>`_ to install ConstraintHg into your Python environment::
 
    pip install constrainthg
 
 From there you'll want to import the library into your Python script. 
-This is a pretty typical method to use::python
+This is a pretty typical method to use:
+
+.. code-block:: python
 
    from constrainthg.hypergraph import Node, Hypergraph
    import constrainthg.relations as R
 
+For a walkthrough, check out the demonstration below!
+
 Quick Links
 -----------
+
 Demonstration of package: :doc:`constrainthg_intro`
    Provides more indepth discussion on constraint hypergraphs and package usage.
 
