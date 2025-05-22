@@ -5,6 +5,17 @@
    :alt: ConstraintHg
    :align: center
 
+Get Started
+-----------
+Use `PIP <https://pypi.org/project/constrainthg/>`_ to install ConstraintHg into your Python environment::
+
+   pip install constrainthg
+
+From there you'll want to import the library into your Python script. 
+This is a pretty typical method to use::python
+
+   from constrainthg.hypergraph import Node, Hypergraph
+   import constrainthg.relations as R
 
 Quick Links
 -----------
