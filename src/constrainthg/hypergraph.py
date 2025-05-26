@@ -958,7 +958,7 @@ class Hypergraph:
         try:
             return self.nodes[node_key]
         except KeyError:
-            return None
+            raise KeyError(f'No node with label <{node_key}> found in Hypergraph.')
 
     def get_edge(self, edge_key)-> Node:
         """Caller function for finding a node in the hypergraph."""
@@ -1124,9 +1124,16 @@ class Hypergraph:
         return node_list, inputs
 
     def set_node_values(self, node_values: dict):
-        """Sets the values of the given nodes."""
+        """Sets the values of the given nodes.
+        
+        Creates a new node in the hypergraph if the given label is not 
+        found.
+        """
         for key, value in node_values.items():
-            node = self.get_node(key)
+            try:
+                node = self.get_node(key)
+            except KeyError:
+                node = self.insert_node(key, value)
             node.static_value = value
 
     def solve(self, target, inputs: dict=None, to_print: bool=False, 
@@ -1172,13 +1179,22 @@ class Hypergraph:
             prev_logging_level = logger.getEffectiveLevel()
             self.set_logging_level(logging_level)
         if to_reset: self.reset()
-        if inputs is not None:
-            self.set_node_values(inputs)
-            source_nodes = [self.get_node(label) for label in inputs]
-            source_nodes += [node for node in self.nodes.values() if node.is_constant and node.label not in inputs]
-        else:
-            source_nodes = [node for node in self.nodes.values() if node.is_constant]
-        target_node = self.get_node(target)
+
+        inputs = {} if inputs is None else inputs
+        self.set_node_values(inputs)
+        
+        source_nodes = []
+        for label in inputs:
+            try:
+                source_nodes.append(self.get_node(label))
+            except KeyError:
+                raise KeyError(f'Input node <{label}> not found in Hypergraph.')
+        source_nodes += [node for node in self.nodes.values() if node.is_constant and node.label not in inputs]
+        
+        try:
+            target_node = self.get_node(target)
+        except KeyError:
+            raise KeyError(f'Target node {str(target)} not found in Hypergraph.')
 
         pf = Pathfinder(target=target_node, 
                         sources=source_nodes, 
@@ -1209,7 +1225,10 @@ class Hypergraph:
 
     def print_paths(self, target, to_print: bool=False)-> str:
         """Prints the hypertree of all paths to the target node."""
-        target_node = self.get_node(target)
+        try:
+            target_node = self.get_node(target)
+        except KeyError:
+            raise KeyError(f'Target node {str(target)} not found in Hypergraph.')
         target_tnode = self.print_paths_helper(target_node)
         out = target_tnode.print_tree()
         if to_print:
