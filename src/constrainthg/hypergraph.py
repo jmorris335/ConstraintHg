@@ -1140,7 +1140,7 @@ class Hypergraph:
               min_index:int=0, debug_nodes: list=None, debug_edges: list=None, 
               search_depth: int=100000, memory_mode: bool=False,
               logging_level=None, to_reset: bool=True):
-        """Runs a DFS search to identify the first valid solution for `target`.
+        """Runs a BFS search to identify the first valid solution for `target`.
         
         Parameters
         ----------
