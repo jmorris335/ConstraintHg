@@ -1250,18 +1250,20 @@ class Hypergraph:
         except KeyError:
             raise KeyError(f'Target node {str(target)} not found in Hypergraph.')
 
-        pf = Pathfinder(target=target_node, 
-                        sources=source_nodes, 
-                        nodes=self.nodes, 
-                        no_weights=self.no_weights,
-                        memory_mode=self.memory_mode,
-                    )
+        pf = Pathfinder(
+            target=target_node, 
+            sources=source_nodes, 
+            nodes=self.nodes, 
+            no_weights=self.no_weights,
+            memory_mode=self.memory_mode or memory_mode,
+        )
         try:
-            t = pf.search(min_index=min_index, 
-                          debug_nodes=debug_nodes, 
-                          debug_edges=debug_edges, 
-                          search_depth=search_depth,
-                    )
+            t = pf.search(
+                min_index=min_index, 
+                debug_nodes=debug_nodes, 
+                debug_edges=debug_edges, 
+                search_depth=search_depth,
+            )
             if self.memory_mode or memory_mode:
                 self.solved_tnodes = pf.explored_nodes
         except Exception as e:
