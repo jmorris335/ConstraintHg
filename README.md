@@ -2,10 +2,17 @@
 <img src="https://github.com/jmorris335/ConstraintHg/blob/14d9ea2db0e73d440dd4de1491ba0ffee0233d87/media/logo.svg?raw=true" width="300">
 </h1><br>
 
-[![DOI](https://zenodo.org/badge/869248124.svg)](https://doi.org/10.5281/zenodo.15278018) [![Read the Docs](https://img.shields.io/readthedocs/constrainthg?link=https%3A%2F%2Fconstrainthg.readthedocs.io%2Fen%2Flatest%2Findex.html)](https://constrainthg.readthedocs.io/en/latest/) ![Static Badge](https://img.shields.io/badge/tests-21/21-brightgreen) ![GitHub Release](https://img.shields.io/github/v/release/jmorris335/ConstraintHg?include_prereleases&display_name=tag) ![GitHub last commit](https://img.shields.io/github/last-commit/jmorris335/ConstraintHg)
+[![DOI](https://zenodo.org/badge/869248124.svg)](https://doi.org/10.5281/zenodo.15278018) [![Read the Docs](https://img.shields.io/readthedocs/constrainthg?link=https%3A%2F%2Fconstrainthg.readthedocs.io%2Fen%2Flatest%2Findex.html)](https://constrainthg.readthedocs.io/en/latest/) ![Static Badge](https://img.shields.io/badge/tests-26/26-brightgreen) ![GitHub Release](https://img.shields.io/github/v/release/jmorris335/ConstraintHg?include_prereleases&display_name=tag) ![GitHub last commit](https://img.shields.io/github/last-commit/jmorris335/ConstraintHg)
 
 
 ConstraintHg is a systems modeling kernel written in Python that enables general definition and universal simulation of any system. The kernel breaks a system down into the informational values (nodes) and functional relationships (hyperedges), providing robust simulation through pathfinding operations. This repository is under active development (no official release yet), and is therefore subject to change without warning. **It is not a rigorous data storage solution. Do not use this as a database.**
+
+## Uses
+ConstraintHg enables the following functionalities:
+- **Universal systems modeling:** any model can be represented as a Constraint Hypergraph, meaning that models of different types and sources can be combined inside a single hypergraph.
+- **Universal simulation:** Any simulation that could be conducted on a systems model can be discovered by ConstraintHg, or in other words, a program for calculating any piece of information (given a set of inputs) can be compiled for any system--given that such a program exists!
+- **System interrogation:** Any system can be turned into a black box where information is autonomously returned by ConstraintHg--whether that information was recorded or simulated. This is especially useful for automatons trying to interface with a system.
+- **Digital twin representation:** Modeling a real systsem with ConstraintHg is equivalent to creating a digital twin of that system, providing universal observation of the properties and biconnectiviy with the modeled system.
 
 ## Links and More Information
 - Homepage: [Link](https://constrainthg.readthedocs.io/en/latest/index.html)

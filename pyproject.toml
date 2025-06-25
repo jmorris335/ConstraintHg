@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "constrainthg"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
     "numpy"
 ]
@@ -18,13 +18,13 @@ license = "Apache-2.0"
 license-files = ["LICENSE*"]
 keywords = ["hypergraphs", "systems engineering"]
 classifiers = [
-  "Development Status :: 4 - Beta",
+  "Development Status :: 3 - Alpha",
   "Programming Language :: Python"
 ]
 
 [project.urls]
-Homepage = "https://github.com/jmorris335/ConstraintHg/wiki"
-Documentation = "https://constrainthg.readthedocs.io/en/latest/"
+Homepage = "https://constrainthg.readthedocs.io/en/latest/"
+Documentation = "https://constrainthg.readthedocs.io/en/latest/constrainthg.html"
 Repository = "https://github.com/jmorris335/ConstraintHg"
 "Bug Tracker" = "https://github.com/jmorris335/ConstraintHg/issues"
 
