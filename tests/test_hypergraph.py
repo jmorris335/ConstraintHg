@@ -1,6 +1,8 @@
 from constrainthg.hypergraph import Hypergraph
 from constrainthg import relations as R
 
+import pytest
+
 class TestHypergraphBehavior():
     def test_simple_add(self):
         hg = Hypergraph()
@@ -281,3 +283,29 @@ class TestHypergraphInterface:
         t = hg.solve('E', {'A': 2, 'B': 3},)
         assert len(hg.solved_tnodes) == 5, "Some TNodes not solved for"
         assert hg.solved_tnodes[-1].value == -7, "TNode order may be incorrect"
+
+    def test_hypergraph_union(self):
+        """Tests union method for merging with new Hypergraph."""
+        hg1 = Hypergraph()
+        hg1.add_edge(['A', 'B'], 'C', R.Rsum)
+        hg2 = Hypergraph()
+        hg2.add_edge(['C', 'D'], 'E', R.Rsum)
+
+        inputs = {'A': 3, 'B': 6, 'D': 100}
+        with pytest.raises(KeyError):
+            hg1.solve('E', inputs)
+        hg1.union(hg1, hg2)
+        t = hg1.solve('E', inputs)
+        assert t.value == 109
+
+    def test_iadd(self):
+        """Tests iadd (+=) dunder overwrite."""
+        hg1 = Hypergraph()
+        hg1.add_edge(['A', 'B'], 'C', R.Rsum)
+        hg2 = Hypergraph()
+        hg2.add_edge(['C', 'D'], 'E', R.Rsum)
+
+        inputs = {'A': 3, 'B': 6, 'D': 100}
+        hg1 += hg2
+        t = hg1.solve('E', inputs)
+        assert t.value == 109

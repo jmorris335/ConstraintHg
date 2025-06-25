@@ -1068,18 +1068,6 @@ class Hypergraph:
                 label = self.request_node_label(node)
                 self.nodes[label] = Node(label, value)
         return self.nodes[label]
-    
-    @staticmethod
-    def union(a, *args):
-        """Merges with another Hypergraph via a union operation, 
-        preserving all nodes and edges in the two graphs.
-        """
-        for b in args:
-            if not isinstance(b, Hypergraph) or not isinstance(b, Hypergraph):
-                raise Exception(f'Parameters are not of type Hypergraph')
-            for node in b.nodes:
-                a.insert_node(node)
-        return a
 
     def add_edge(self, sources: dict, target, rel, via=None, index_via=None, weight: float=1.0,
                 label: str=None, index_offset: int=0, disposable=None, edge_props=None):
@@ -1148,6 +1136,24 @@ class Hypergraph:
         self.edges[edge.label] = edge
         tn = self.insert_node(edge.target)
         tn.generating_edges.add(edge)
+
+    @staticmethod
+    def union(a, *args):
+        """Merges with another Hypergraph via a union operation, 
+        preserving all nodes and edges in the two graphs.
+        """
+        if not isinstance(a, Hypergraph):
+            raise Exception(f'Input must by of type Hypergraph.')
+        for b in args:
+            if not isinstance(b, Hypergraph):
+                raise Exception(f'Parameters are not of type Hypergraph.')
+            for node in b.nodes.values():
+                a.insert_node(node)
+            for edge in b.edges.values():
+                a.insert_edge(edge)
+            a_tns = set(a.solved_tnodes).union(set(b.solved_tnodes))
+            a.solved_tnodes = list(a_tns)
+        return a
 
     def get_nodes_and_identifiers(self, nodes):
         """Helper function for getting a list of nodes and their identified argument 
