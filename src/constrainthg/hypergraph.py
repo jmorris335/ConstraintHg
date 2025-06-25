@@ -1048,7 +1048,7 @@ class Hypergraph:
                 node = Node(*args, **kwargs)
             except:
                 return None
-        self.insert_node(node)
+        return self.insert_node(node)
 
     def insert_node(self, node: Node, value=None)-> Node:
         """Adds a node to the hypergraph via a union operation."""
