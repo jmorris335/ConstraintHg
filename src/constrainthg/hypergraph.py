@@ -1210,6 +1210,8 @@ class Hypergraph:
             A list of edge labels to log debugging information for
         search_depth : int, default=100000
             Number of nodes to explore before concluding no valid path.
+        memory_mode : bool, default=False
+            Found TNodes in the path are saved to the Hypergraph.
         logging_level : int | str, optional
             The logging level to use for the simulation. Configures logging if not 
             already configured. `logging.DEBUG` or `logging.INFO` are informative 
@@ -1260,7 +1262,7 @@ class Hypergraph:
                           debug_edges=debug_edges, 
                           search_depth=search_depth,
                     )
-            if self.memory_mode:
+            if self.memory_mode or memory_mode:
                 self.solved_tnodes = pf.explored_nodes
         except Exception as e:
             logger.error(str(e))
