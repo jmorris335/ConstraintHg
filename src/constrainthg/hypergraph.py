@@ -910,15 +910,17 @@ class Hypergraph:
         self.solved_tnodes = []
 
     def __iadd__(self, o):
+        """Merges the passed Hypergraph to self via a union operation."""
         return self.union(self, o)
 
     def __add__(self, o):
-        """Returns a new Hypergraph that is the union of the original."""
+        """Creates a shallow copy of self and joins that to ``o`` via a 
+        union operation."""
         if not isinstance(o, Hypergraph):
             raise Exception("Input must be of type Hypergraph.")
-        new_hg = self.copy()
+        new_hg = self.__copy__()
         new_hg = self.union(new_hg, o)
-        return self.union()
+        return new_hg
     
     def __copy__(self):
         """Returns a shallow copy of the Hypergraph."""
@@ -926,9 +928,7 @@ class Hypergraph:
             no_weights=self.no_weights,
             memory_mode=self.memory_mode,
         )
-        new_hg.nodes = self.nodes
-        new_hg.edges = self.edges
-        new_hg.solved_tnodes = self.solved_tnodes
+        self.union(new_hg, self)
         return new_hg
 
     def check_if_logger_setup(self)->bool:

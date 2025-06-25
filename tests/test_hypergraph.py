@@ -309,3 +309,30 @@ class TestHypergraphInterface:
         hg1 += hg2
         t = hg1.solve('E', inputs)
         assert t.value == 109
+
+    def test_copy(self):
+        """Test shallow copy method."""
+        hg1 = Hypergraph()
+        hg1.add_edge(['A', 'B'], 'C', R.Rsum)
+        hg2 = hg1.__copy__()
+        hg2.add_edge(['C', 'D'], 'E', R.Rsum)
+
+        inputs = {'A': 3, 'B': 6, 'D': 100}
+        with pytest.raises(KeyError):
+            hg1.solve('E', inputs)
+        t = hg2.solve('E', inputs)
+        assert t.value == 109
+
+    def test_add(self):
+        """Tests add (+) dunder overwrite."""
+        hg1 = Hypergraph()
+        hg1.add_edge(['A', 'B'], 'C', R.Rsum)
+        hg2 = Hypergraph()
+        hg2.add_edge(['C', 'D'], 'E', R.Rsum)
+        hg3 = hg1 + hg2
+
+        inputs = {'A': 3, 'B': 6, 'D': 100}
+        with pytest.raises(KeyError):
+            hg1.solve('E', inputs)
+        t = hg3.solve('E', inputs)
+        assert t.value == 109
