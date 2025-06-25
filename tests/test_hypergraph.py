@@ -1,7 +1,7 @@
 from constrainthg.hypergraph import Hypergraph
 from constrainthg import relations as R
 
-class TestHypergraph():
+class TestHypergraphBehavior():
     def test_simple_add(self):
         hg = Hypergraph()
         hg.add_edge(['A', 'B'], 'C', R.Rsum)
@@ -47,19 +47,6 @@ class TestHypergraph():
         t = hg.solve('T', {'A': 1})
         assert t.value == 6
         assert t.cost == 5
-
-    def test_pseudonodes(self):
-        "Test pseudonode functionality."
-        hg = Hypergraph()
-        hg.add_edge('A', 'B', R.Rfirst, weight=5)
-        hg.add_edge({'b':'B', 'b_pseudo':('b', 'index')}, 'Index', R.equal('b_pseudo'))
-        hg.add_edge({'b':'B', 'b_pseudo':('b', 'cost')}, 'Cost', R.equal('b_pseudo'))
-        b = hg.solve('B', {'A': 20})
-        assert b.value == 20, "Solution not correctly identified."
-        index = hg.solve('Index', {'A': 20})
-        assert index.value == 1, "Index not correctly identified."
-        cost = hg.solve('Cost', {'A': 20})
-        assert cost.value == 5, "Cost not correctly identified."
 
     def test_cycles_simple(self):
         """Tests that cycles can be solved."""
@@ -185,6 +172,37 @@ class TestHypergraph():
         assert t.value == 4
         assert t.cost == 9
 
+    def test_edge_order_irrelevant(self):
+        """Tests that the order in which edges are provided does not affect the graphs
+        searchability."""
+        hg = Hypergraph()
+        hg.add_edge('S', 'D', R.Rincrement)
+        hg.add_edge('S', 'A', R.Rincrement)
+        hg.add_edge('A', 'B', R.Rincrement, label='ZZZ')
+        hg.add_edge(['A', 'B'], 'C', R.Rincrement, label='AAA')
+        hg.add_edge({'d': 'D', 'c': 'C'}, 'T', R.Rincrement)
+        t, i = 1, 1
+        while t is not None and i < 50:
+            t = hg.solve('T', {'S': 1})
+            i += 1
+        assert i == 50, "Configurations may have been non-deterministic"
+        assert t is not None, "Solution should always be discoverable"
+        assert t.value == 5, "Graph calculation is incorrect"
+
+class TestHypergraphInterface:
+    def test_pseudonodes(self):
+        "Test pseudonode functionality."
+        hg = Hypergraph()
+        hg.add_edge('A', 'B', R.Rfirst, weight=5)
+        hg.add_edge({'b':'B', 'b_pseudo':('b', 'index')}, 'Index', R.equal('b_pseudo'))
+        hg.add_edge({'b':'B', 'b_pseudo':('b', 'cost')}, 'Cost', R.equal('b_pseudo'))
+        b = hg.solve('B', {'A': 20})
+        assert b.value == 20, "Solution not correctly identified."
+        index = hg.solve('Index', {'A': 20})
+        assert index.value == 1, "Index not correctly identified."
+        cost = hg.solve('Cost', {'A': 20})
+        assert cost.value == 5, "Cost not correctly identified."
+
     def test_no_weights(self):
         """Tests a hypergraph with no weights set."""
         hg = Hypergraph(no_weights=True)
@@ -253,23 +271,6 @@ class TestHypergraph():
         assert a0.index == 1, "Should be initial index of A"
         af = hg.solve('A', {'A': 0}, min_index=5)
         assert af.index == 5, "Index should be 5"
-
-    def test_edge_order_irrelevant(self):
-        """Tests that the order in which edges are provided does not affect the graphs
-        searchability."""
-        hg = Hypergraph()
-        hg.add_edge('S', 'D', R.Rincrement)
-        hg.add_edge('S', 'A', R.Rincrement)
-        hg.add_edge('A', 'B', R.Rincrement, label='ZZZ')
-        hg.add_edge(['A', 'B'], 'C', R.Rincrement, label='AAA')
-        hg.add_edge({'d': 'D', 'c': 'C'}, 'T', R.Rincrement)
-        t, i = 1, 1
-        while t is not None and i < 50:
-            t = hg.solve('T', {'S': 1})
-            i += 1
-        assert i == 50, "Configurations may have been non-deterministic"
-        assert t is not None, "Solution should always be discoverable"
-        assert t.value == 5, "Graph calculation is incorrect"
 
     def test_memory_mode(self):
         """Tests that memory mode returns a collection of solved TNodes."""
