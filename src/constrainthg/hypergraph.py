@@ -282,8 +282,8 @@ class Node:
 
     @staticmethod
     def union(a, *args):
-        """Performs a deep union of the two nodes, replacing values of `a` with those 
-        of `b` where necessary."""
+        """Performs a deep union of the two nodes, replacing values of 
+        `a` with those of `b` where necessary."""
         for b in args:
             if not isinstance(a, Node) or not isinstance(b, Node):
                 raise TypeError("Inputs must be of type Node.")
@@ -869,6 +869,13 @@ class Hypergraph:
     solved_tnodes : list
         List of solved TNodes from a simulation. Only set if run in 
         `memory_mode`.
+    no_weights : bool
+        Indicates no weights have been given to the edges in the 
+        Hypergraph, speeding up processing (but preventing model 
+        switching).
+    memory_mode : bool
+        Indicates whether the TNodes in the Hypergraph should be saved 
+        between calls.
     """
     def __init__(self, no_weights: bool=False, setup_logger: bool=False, 
                  logging_level=None, memory_mode: bool=False):
@@ -901,6 +908,28 @@ class Hypergraph:
             self.set_logging_level(logging_level)
         self.memory_mode = memory_mode
         self.solved_tnodes = []
+
+    def __iadd__(self, o):
+        return self.union(self, o)
+
+    def __add__(self, o):
+        """Returns a new Hypergraph that is the union of the original."""
+        if not isinstance(o, Hypergraph):
+            raise Exception("Input must be of type Hypergraph.")
+        new_hg = self.copy()
+        new_hg = self.union(new_hg, o)
+        return self.union()
+    
+    def __copy__(self):
+        """Returns a shallow copy of the Hypergraph."""
+        new_hg = Hypergraph(
+            no_weights=self.no_weights,
+            memory_mode=self.memory_mode,
+        )
+        new_hg.nodes = self.nodes
+        new_hg.edges = self.edges
+        new_hg.solved_tnodes = self.solved_tnodes
+        return new_hg
 
     def check_if_logger_setup(self)->bool:
         """Checks if a Handler beyond the NullHandler was created for the logger."""
@@ -1039,6 +1068,18 @@ class Hypergraph:
                 label = self.request_node_label(node)
                 self.nodes[label] = Node(label, value)
         return self.nodes[label]
+    
+    @staticmethod
+    def union(a, *args):
+        """Merges with another Hypergraph via a union operation, 
+        preserving all nodes and edges in the two graphs.
+        """
+        for b in args:
+            if not isinstance(b, Hypergraph) or not isinstance(b, Hypergraph):
+                raise Exception(f'Parameters are not of type Hypergraph')
+            for node in b.nodes:
+                a.insert_node(node)
+        return a
 
     def add_edge(self, sources: dict, target, rel, via=None, index_via=None, weight: float=1.0,
                 label: str=None, index_offset: int=0, disposable=None, edge_props=None):
@@ -1048,46 +1089,51 @@ class Hypergraph:
         ----------
         sources : dict{str : Node | Tuple(Node, str)} | list[Node | 
                        Tuple(Node, str)] |  Tuple(Node, str) | Node 
-            A dictionary of `Node` objects forming the source nodes of the edge, 
-            where the key is the identifiable label for each source used in rel processing.
-            The Node object may be a Node, or a length-2 Tuple with the second element
-            a string referencing an attribute of the Node to use as the value (a pseudo
-            node).
+            A dictionary of `Node` objects forming the source nodes of 
+            the edge, where the key is the identifiable label for each 
+            source used in rel processing. The Node object may be a Node, 
+            or a length-2 Tuple with the second element a string 
+            referencing an attribute of the Node to use as the value (a 
+            pseudo node).
         targets : list | str | Node
-            A list of nodes that are the target of the given edge, with the same type
-            as sources. Since each edge can only have one target, this makes a unique
-            edge for each target.
+            A list of nodes that are the target of the given edge, with 
+            the same type as sources. Since each edge can only have one 
+            target, this makes a unique edge for each target.
         rel : Callable
-            A function taking in a value for each source node that returns a single 
-            value for the target.
+            A function taking in a value for each source node that 
+            returns a single value for the target.
         via : Callable, optional
-            A function that must be true for the edge to be traversable (viable). 
-            Defaults to unconditionally true if not set.
+            A function that must be true for the edge to be traversable 
+            (viable). Defaults to unconditionally true if not set.
         index_via : Callable, optional
-            A function that takes in handles of source nodes as inputs in reference to
-            the *index* of each referenced source node, returns a boolean condition 
-            relating the indices of each. Defaults to unconditionally true if not set,
-            meaning any index of source node is valid.
+            A function that takes in handles of source nodes as inputs 
+            in reference to the *index* of each referenced source node, 
+            returns a boolean condition  relating the indices of each. 
+            Defaults to unconditionally true if not set, meaning any 
+            index of source node is valid.
         weight : float, default=1.0
             The cost of traversing the edge. Must be positive.
         label : str, optional
             A unique identifier for the edge.
         index_offset : int, default=0
-            Offset to apply to the target once solved for. Akin to iterating to the 
-            next level of a cycle.
+            Offset to apply to the target once solved for. Akin to 
+            iterating to the next level of a cycle.
         disposable : list, optional
-            A list of source node handles that should not be evaluated for future 
-            cyclic executions of the edge. That is, each tnode that corresponds to a 
-            handle in `disposable` is removed from `found_tnodes` after a successful 
-            edge calculation. 
+            A list of source node handles that should not be evaluated 
+            for future cyclic executions of the edge. That is, each 
+            tnode that corresponds to a handle in `disposable` is 
+            removed from `found_tnodes` after a successful edge 
+            calculation. 
         edge_props : List(EdgeProperty) | EdgeProperty | str | int, optional
             A list of enumerated types that are used to configure the edge.
         """
         source_nodes, source_inputs = self.get_nodes_and_identifiers(sources)
         target_nodes, target_inputs = self.get_nodes_and_identifiers([target])
         label = self.request_edge_label(label, source_nodes + target_nodes)
-        edge = Edge(label, source_inputs, target_nodes[0], rel, via, index_via, weight,
-                    index_offset=index_offset, disposable=disposable, edge_props=edge_props)
+        edge = Edge(label, source_inputs, target_nodes[0], 
+                    rel, via, index_via, weight,
+                    index_offset=index_offset, disposable=disposable, 
+                    edge_props=edge_props)
         self.edges[label] = edge
         for sn in source_nodes:
             sn.leading_edges.add(edge)
