@@ -336,3 +336,15 @@ class TestHypergraphInterface:
             hg1.solve('E', inputs)
         t = hg3.solve('E', inputs)
         assert t.value == 109
+
+    def test_resolving_inputs(self):
+        """Tests whether CHG resolves inputs (an erroneous behavior)."""
+        hg = Hypergraph()
+        hg.add_edge('S', 'A', R.Rmean)
+        hg.add_edge('A', 'B', R.Rmean)
+        hg.add_edge('B', 'C', R.Rincrement)
+        hg.add_edge('C', 'A', R.Rmean, index_offset=1)
+        hg.add_edge('A', 'T', R.Rmean, index_via=R.geq('s1', 5))
+        t = hg.solve('T', {'S': 0, 'A': 10})
+        assert t.value != 4, 'Input resolved for'
+        assert t.value == 14

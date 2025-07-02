@@ -814,13 +814,29 @@ class Pathfinder:
         gen_edge_label = edge.label + '#' + str(self.search_counter)
         label = f'{node_label}#{self.search_counter + 1}'
         cost = 0.0 if self.no_weights else None
+
         parent_t = TNode(label, node_label, parent_val, children, cost=cost,
                          gen_edge_label=gen_edge_label, gen_edge_cost=edge.weight)
         parent_t.values = self.merge_found_values(parent_val, node.label, source_tnodes)
         parent_t.index += edge.index_offset
+
+        if self.edge_resolves_input(parent_t):
+            return None
         self.search_roots.append(parent_t)
         self.search_counter += 1
         return parent_t
+    
+    def edge_resolves_input(self, parent_t: TNode):
+        """Returns True if the edge attempts to resolve the first index
+        of an input.
+        
+        Note that inputs can be resolved as part of cycles, but only for 
+        later indices (2 or greater).
+        """
+        source_node_labels = [sn.label for sn in self.source_nodes]
+        target_is_input = parent_t.node_label in source_node_labels
+        resolves_input = parent_t.index == 1 and target_is_input
+        return resolves_input
 
     def select_root(self)-> TNode:
         """Determines the most optimal path to explore."""
