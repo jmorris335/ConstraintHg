@@ -14,32 +14,37 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 | File: relations.py
-| Author: John Morris, jhmrrs@clemson.edu, https://orcid.org/0009-0005-6571-1959
-| Purpose: A list of basic relations employable with edges in the hypergraph.
+| Author: John Morris
+|   jhmrrs@clemson.edu
+|   https://orcid.org/0009-0005-6571-1959
+| Purpose: A list of basic relations employable with edges in the
+|   hypergraph.
+
 
 Notes:
 ------
 
 - Generally imported as import relations as R
-- All relationship functions begin with a capital R, so that they are normally 
-called as `R.Rfunction`
-- Each relationships should have `*args`, and `**kwargs` as its arguments and only 
-arguments. Specific keywords referenced in kwargs should be `s1`, `s2`, ... only. 
+- All relationship functions begin with a capital R, so that they are
+normally called as `R.Rfunction`
+- Each relationship should have `*args`, and `**kwargs` as its
+arguments and only arguments. Specific keywords referenced in kwargs
+should be `s1`, `s2`, ... only.
 """
 
 import numpy as np
 
 # AUX FUNCTIONS
-def extend(args: list, kwargs: dict)-> list:
+def extend(args: list, kwargs: dict) -> list:
     """Combines all arguments into a single list, with args leading."""
     return list(args) + list(kwargs.values())
 
 def get_keyword_arguments(args: list, kwargs: dict, excluded_keys: list):
-    """Combines all arguments except those with a given key. Returns the 
-    arguments or the given keys as a dictionary and the remaining 
+    """Combines all arguments except those with a given key. Returns the
+    arguments or the given keys as a dictionary and the remaining
     arguments as a list.
-    
-    Note that keys not found in `kwargs` are taken from `args` in the 
+
+    Note that keys not found in `kwargs` are taken from `args` in the
     order of the `excluded_keys` list."""
     if not isinstance(excluded_keys, list):
         excluded_keys = [excluded_keys]
@@ -56,7 +61,8 @@ def get_keyword_arguments(args: list, kwargs: dict, excluded_keys: list):
         for key in excluded_keys:
             if key not in exceptional_vals:
                 exceptional_vals[key] = args.pop(0)
-    except: IndexError
+    except IndexError:
+        pass
 
     return args, exceptional_vals
 
@@ -102,7 +108,8 @@ def Rfloor(*args, **kwargs):
     return np.floor(args[0])
 
 def Rfloor_divide(*args, **kwargs):
-    """Returns the largest integer smaller or equal to the division of s1 and s2."""
+    """Returns the largest integer smaller or equal to the division of
+    s1 and s2."""
     args, kwargs = get_keyword_arguments(args, kwargs, ['s1', 's2'])
     return kwargs['s1'] // kwargs['s2']
 
@@ -134,18 +141,20 @@ def Rmin(*args, **kwargs):
 def Rsame(*args, **kwargs):
     """Returns true if all arguments are equivalent."""
     args = set(extend(args, kwargs))
-    if len(args) == 0: #Trivial case
+    if len(args) == 0:  # Trivial case
         return True
     return len(args) == 1
 
 def mult_and_sum(mult_identifiers: list, sum_identifiers: list):
-    """Convenient shorthand for multiplying the values identified in 
-    `mult_identifiers` and adding them to the values identified in `sum_identifiers`."""
+    """Convenient shorthand for multiplying the values identified in
+    `mult_identifiers` and adding them to the values identified in
+    `sum_identifiers`."""
     if not isinstance(mult_identifiers, list):
         mult_identifiers = [mult_identifiers]
     if not isinstance(sum_identifiers, list):
         sum_identifiers = [sum_identifiers]
     labels = mult_identifiers + sum_identifiers
+
     def Rmultandsum(*args, **kwargs):
         out = 1.0
         args, kwargs = get_keyword_arguments(args, kwargs, labels)
@@ -197,16 +206,16 @@ def Rfirst(*args, **kwargs):
     return kwargs['s1']
 
 def equal(identifier: str):
-    """Returns a method that returns the argument with the same keyword as 
-    `identifier`."""
+    """Returns a method that returns the argument with the same keyword
+    as `identifier`."""
     def Requal(*args, **kwargs):
         args, kwargs = get_keyword_arguments(args, kwargs, identifier)
         return kwargs[identifier]
     return Requal
 
 def geq(identifier: str, val: int):
-    """Returns a method that returns True if the identifier is greater than or equal 
-    to `val`."""
+    """Returns a method that returns True if the identifier is greater
+    than or equal to `val`."""
     def Rcyclecounter(*args, **kwargs):
         args, kwargs = get_keyword_arguments(args, kwargs, identifier)
         return kwargs[identifier] >= val
@@ -240,8 +249,8 @@ def to_tuple(order: list, *args, **kwargs):
     return out
 
 def Rdict(*args, **kwargs):
-    """Returns a dictionary with either the keyed argument `key` or the first argument 
-    as the dict key."""
+    """Returns a dictionary with either the keyed argument `key` or the
+    first argument as the dict key."""
     args, kwargs = get_keyword_arguments(args, kwargs, 'key')
     key = kwargs.get['key', None]
     if key is None:
