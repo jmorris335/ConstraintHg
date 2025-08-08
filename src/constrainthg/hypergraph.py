@@ -933,7 +933,6 @@ class Pathfinder:
         min_idx = min(self.search_roots, key=lambda t: t.index).index
         lowest_idx_roots = filter(lambda t: t.index == min_idx, self.search_roots)
         root = min(lowest_idx_roots, key=lambda t: t.cost)
-        # root = min(self.search_roots, key=lambda t: t.cost)
 
         self.search_roots.remove(root)
         return root
