@@ -3,7 +3,7 @@
 from constrainthg.hypergraph import Hypergraph
 from constrainthg import relations as R
 
-print("ConstraintHg, a hypergraph modeling toolbox for systems engineering...\n")
+print("ConstraintHg, a kernel for systems modeling and simulation...\n")
 print("Demo:")
 
 hg = Hypergraph(setup_logger=True)
