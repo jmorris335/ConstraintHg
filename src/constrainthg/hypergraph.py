@@ -1356,16 +1356,7 @@ class Hypergraph:
 
         inputs = {} if inputs is None else inputs
         self.set_node_values(inputs)
-
-        source_nodes = []
-        for label in inputs:
-            try:
-                source_nodes.append(self.get_node(label))
-            except KeyError:
-                msg = f'Input node <{label}> not found in Hypergraph.'
-                raise KeyError(msg)
-        source_nodes += [node for node in self.nodes.values()
-                         if node.is_constant and node.label not in inputs]
+        source_nodes = self.process_source_nodes(inputs)
 
         try:
             target_node = self.get_node(target)
@@ -1396,11 +1387,29 @@ class Hypergraph:
             if logging_level is not None:
                 self.set_logging_level(prev_logging_level)
         if to_print:
-            if t is not None:
-                print(t.print_tree())
-            else:
-                print("No solutions found")
+            print("No solutions found" if t is None else t.print_tree())
         return t
+
+    def process_source_nodes(self, inputs):
+        """Processes source nodes for the simulation."""
+        source_nodes = []
+        for label in inputs:
+            try:
+                source_nodes.append(self.get_node(label))
+            except KeyError:
+                msg = f'Input node <{label}> not found in Hypergraph.'
+                raise KeyError(msg)
+        source_nodes += self.get_constant_nodes(inputs)
+        return source_nodes
+
+    def get_constant_nodes(self, inputs: list=None):
+        """Returns all the constant nodes in the Hypergraph, optionally
+        filtered by nodes not in `inputs`."""
+        if inputs is None:
+            inputs = []
+        constant_nodes = [node for node in self.nodes.values()
+                          if node.is_constant and node.label not in inputs]
+        return constant_nodes
 
     def print_paths(self, target, to_print: bool=False) -> str:
         """Prints the hypertree of all paths to the target node."""
