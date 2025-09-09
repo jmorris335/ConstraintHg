@@ -1035,6 +1035,13 @@ class Hypergraph:
         )
         self.union(new_hg, self)
         return new_hg
+    
+    def __str__(self) -> str:
+        """Prints a short list of the Hypergraph."""
+        out = 'Hypergraph with'
+        out += f' {len(self.nodes)} nodes'
+        out += f'and {len(self.edges)} edges'
+        return out
 
     def check_if_logger_setup(self) -> bool:
         """Checks if a Handler beyond the NullHandler was created for
@@ -1450,7 +1457,12 @@ class Hypergraph:
 
         t.cost = min(branch_costs) if len(branch_costs) > 0 else 0.
         return t
-
+    
+    def print_nodes(self) -> str:
+        out = 'Nodes in Hypergraph:'
+        out += ''.join([f'\n - {n}' for n in self.nodes.values()])
+        return out
+        
     def edge_in_cycle(self, edge: Edge, t: TNode):
         """Returns true if the edge is part of a cycle in the tree rooted at
         the TNode."""

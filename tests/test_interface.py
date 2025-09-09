@@ -1,4 +1,4 @@
-from constrainthg.hypergraph import Hypergraph
+from constrainthg.hypergraph import Hypergraph, Node
 from constrainthg import relations as R
 
 import pytest
@@ -160,3 +160,25 @@ class TestHypergraphInterface:
         t = hg.solve('T', {'S': 0, 'A': 10})
         assert t.value != 4, 'Input resolved for'
         assert t.value == 14
+
+    def test_print_nodes(self):
+        """Tests proper formatting of Hypergraph.print_nodes()"""
+        hg = Hypergraph()
+        hg.add_node('A')
+        b_desc = 'A node'
+        hg.add_node(Node('B', 3, description=b_desc))
+        out = hg.print_nodes()
+        print(out)
+
+        title_len = len('Nodes in Hypergraph:')
+        format_len = len('\n - X')
+        spacer_len = len(': ')
+        calc_len = title_len + 2*format_len + len(b_desc) + spacer_len 
+        assert len(out) == calc_len
+
+    def test_hg_str(self):
+        """Tests valid execution of Hypergraph.__str__()"""
+        hg = Hypergraph()
+        hg.add_edge('A', 'B', R.Rsum)
+        hg.add_edge('B', 'C', R.Rmultiply)
+        assert isinstance(str(hg), str)
