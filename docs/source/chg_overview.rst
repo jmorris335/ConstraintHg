@@ -2,6 +2,7 @@
 Overview of Constraint Hypergraphs
 ==================================
 
+
 This is the launchpad for information about constraint hypergraphs (CHGs), 
 the mathematical framework undergirding `ConstraintHg <home_>`_.
 
@@ -18,6 +19,7 @@ Brief Introduction with examples: :doc:`chg_intro`
 
 More In-Depth
 =============
+.. start research
 
 Unified Systems Modeling and Simulation: `DOI <https://doi.org/10.1115/1.4068375>`_
     First published paper covering Contraint Hypergraphs, goes into technical 
@@ -28,8 +30,16 @@ Integrating Simulation Software with CHGs: `Linked here <https://www.people.clem
     demonstrating with integration of a dynamic model with Onshape's CAD API. 
     The code for this model is available `here <https://github.com/jmorris335/tool-interoperability-scripts/tree/main>`_
 
+Constraint Hypergraphs as a foundation for Digital Twins: `Preprint <https://doi.org/10.48550/arXiv.2507.05494>`_
+    Paper showing how CHGs form a robust framework for working with digital twins, 
+    enabling observation and simulation for autonomous agents.
+
+.. end research
+
 Demonstrations
 ==============
+
+.. start demonstrations
 
 This is a simple list showing many of the places we've seen CHGs used. If you find more,
 reach out to us to include them here! 
@@ -40,6 +50,9 @@ Note that many simple examples are available in the
 `Pendulum <https://github.com/jmorris335/ConstraintHg/blob/main/demos/demo_pendulum.py>`_
     Demonstrates model selection.
 
+`Powder Bed Fusion Additive Manufacturing Machine <https://github.com/jmorris335/Powder-Based-Fusion-Digital-Twin>`_
+    Demonstrates interoperability between different part models.
+
 `Elevator <https://github.com/jmorris335/ElevatorHypergraph>`_
     Combines discrete-event simulation with a PID controller.
 
@@ -47,11 +60,13 @@ Note that many simple examples are available in the
     Complex system featuring data querying and dynamic simulation and linear systems.
 
 `Crankshaft <https://github.com/jmorris335/tool-interoperability-scripts/tree/main>`_
-    Integrates CAD software (Onshape) with dynamic simulation.
+    Shows how different software can be integrated together such as CAD (Onshape), FEA (Ansys), and MATLAB.
+
+.. end demonstrations
 
 Questions
 =========
-Reach out to jhmrrs AT clemson DOT edu for questions or more information.
+Reach out at our `discussion board <https://github.com/jmorris335/ConstraintHg/discussions/categories/q-a>`_ to ask questions and see relevant updates.
 
 
 :doc:`Home </index>` \| :ref:`genindex` \| :ref:`Search <search>`

@@ -34,9 +34,22 @@ exclude_patterns = []
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
+# THEME
 html_theme = 'furo'
 html_static_path = ['_static']
 html_favicon = './media/icon.ico'
+html_logo = './media/logo.svg'
+html_theme_options = {
+    "sidebar_hide_name": True,
+    "source_repository": "https://github.com/jmorris335/ConstraintHg",
+    "source_branch": "main",
+    "source_directory": "docs/source",
+}
+templates_path = ['_templates']
+
+redirects = {
+     "constrainthg": "api/index"
+}
 
 def skip(app, what, name, obj, would_skip, options):
     if name == "__init__":
