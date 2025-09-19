@@ -1,4 +1,4 @@
-Hypergraph Module
+Hypergraph
 =================
 
 Pathfinder Class
