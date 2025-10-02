@@ -232,7 +232,7 @@ class TNode:
             else:
                 out += f'={self.value}'[:self.max_display_length]
         out += f', index={self.index}'
-        if self.cost is not None:
+        if self.cost is not None and self.cost != 0:
             out += f', cost={self.cost:.4g}'
         return out
 
