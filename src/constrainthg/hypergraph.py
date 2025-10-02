@@ -26,11 +26,13 @@ import logging
 import itertools
 from enum import Enum
 
+__all__ = ['Hypergraph', 'Node', 'Edge', 'TNode']
+
 logger = logging.getLogger('constrainthg')
 
 
 # Helper functions
-def append_to_dict_list(d: dict, key, val):
+def _append_to_dict_list(d: dict, key, val):
     """Appends the value to a dictionary where the dict.values are
     lists."""
     if key not in d:
@@ -39,7 +41,7 @@ def append_to_dict_list(d: dict, key, val):
     return d
 
 
-def make_list(val) -> list:
+def _make_list(val) -> list:
     """Ensures that the value is a list, or else a list containing the
     value."""
     if isinstance(val, list):
@@ -52,7 +54,7 @@ def make_list(val) -> list:
         return [val]
 
 
-def make_set(val) -> list:
+def _make_set(val) -> list:
     """Ensures that the value is a set, or else a set containing the
     value."""
     if isinstance(val, set):
@@ -295,8 +297,8 @@ class Node:
         self.description = description
         self.units = units
         self.is_constant = static_value is not None
-        self.super_nodes = set() if super_nodes is None else make_set(super_nodes)
-        self.sub_nodes = set() if sub_nodes is None else make_set(sub_nodes)
+        self.super_nodes = set() if super_nodes is None else _make_set(super_nodes)
+        self.sub_nodes = set() if sub_nodes is None else _make_set(sub_nodes)
         for sup_node in self.super_nodes:
             if not isinstance(sup_node, tuple):
                 sup_node.sub_nodes.add(self)
@@ -465,7 +467,7 @@ class Edge:
         eps = []
         if inputs is None:
             return eps
-        inputs = make_list(inputs)
+        inputs = _make_list(inputs)
         for ep in inputs:
             if isinstance(ep, EdgeProperty):
                 eps.append(ep)
@@ -544,7 +546,7 @@ class Edge:
             via = self.via
         if isinstance(source_nodes, dict):
             return self.identify_labeled_source_nodes(source_nodes, rel, via)
-        source_nodes = make_list(source_nodes)
+        source_nodes = _make_list(source_nodes)
         return self.identify_unlabeled_source_nodes(source_nodes, rel, via)
 
     def identify_unlabeled_source_nodes(self, source_nodes: list,
@@ -719,7 +721,7 @@ class Edge:
         node_label = self.get_relevant_node_label(t)
         if self.check_tnode_already_found(t, node_label):
             return False
-        append_to_dict_list(self.found_tnodes, node_label, t)
+        _append_to_dict_list(self.found_tnodes, node_label, t)
         return True
 
     def get_relevant_node_label(self, t: TNode) -> str:
@@ -1035,6 +1037,13 @@ class Hypergraph:
         )
         self.union(new_hg, self)
         return new_hg
+    
+    def __str__(self) -> str:
+        """Prints a short list of the Hypergraph."""
+        out = 'Hypergraph with'
+        out += f' {len(self.nodes)} nodes'
+        out += f'and {len(self.edges)} edges'
+        return out
 
     def check_if_logger_setup(self) -> bool:
         """Checks if a Handler beyond the NullHandler was created for
@@ -1229,8 +1238,8 @@ class Hypergraph:
             A list of enumerated types that are used to configure the
             edge.
         """
-        source_nodes, source_inputs = self.get_nodes_and_identifiers(sources)
-        target_nodes, target_inputs = self.get_nodes_and_identifiers([target])
+        source_nodes, source_inputs = self._get_nodes_and_identifiers(sources)
+        target_nodes, target_inputs = self._get_nodes_and_identifiers([target])
         label = self.request_edge_label(label, source_nodes + target_nodes)
         edge = Edge(label, source_inputs, target_nodes[0],
                     rel, via, index_via, weight,
@@ -1269,7 +1278,7 @@ class Hypergraph:
             a.solved_tnodes = list(a_tns)
         return a
 
-    def get_nodes_and_identifiers(self, nodes):
+    def _get_nodes_and_identifiers(self, nodes):
         """Helper function for getting a list of nodes and their
         identified argument format for various input types."""
         if isinstance(nodes, dict):
@@ -1284,7 +1293,7 @@ class Hypergraph:
                 inputs[key] = node
             return node_list, inputs
 
-        nodes = make_list(nodes)
+        nodes = _make_list(nodes)
         node_list = [self.insert_node(n) for n in nodes]
         inputs = [self.get_node(node) for node in nodes
                   if not isinstance(node, tuple)]
@@ -1417,13 +1426,13 @@ class Hypergraph:
         except KeyError:
             msg = f'Target node {str(target)} not found in Hypergraph.'
             raise KeyError(msg)
-        target_tnode = self.print_paths_helper(target_node)
+        target_tnode = self._print_paths_helper(target_node)
         out = target_tnode.print_tree()
         if to_print:
             print(out)
         return out
 
-    def print_paths_helper(self, node: Node, join_status='none',
+    def _print_paths_helper(self, node: Node, join_status='none',
                            trace: list=None) -> TNode:
         """Recursive helper to print all paths to the target node."""
         if isinstance(node, tuple):
@@ -1441,7 +1450,7 @@ class Hypergraph:
             for i, child in enumerate(edge.source_nodes.values()):
                 c_join_status = self.get_join_status(i, len(edge.source_nodes))
                 c_trace = t.trace + [(t, edge)]
-                c_tnode = self.print_paths_helper(child, c_join_status, c_trace)
+                c_tnode = self._print_paths_helper(child, c_join_status, c_trace)
                 if c_tnode is None:
                     continue
                 child_cost += c_tnode.cost if c_tnode.cost is not None else 0.0
@@ -1450,7 +1459,12 @@ class Hypergraph:
 
         t.cost = min(branch_costs) if len(branch_costs) > 0 else 0.
         return t
-
+    
+    def print_nodes(self) -> str:
+        out = 'Nodes in Hypergraph:'
+        out += ''.join([f'\n - {n}' for n in self.nodes.values()])
+        return out
+        
     def edge_in_cycle(self, edge: Edge, t: TNode):
         """Returns true if the edge is part of a cycle in the tree rooted at
         the TNode."""

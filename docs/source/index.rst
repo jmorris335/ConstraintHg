@@ -5,22 +5,41 @@
    :alt: ConstraintHg
    :align: center
 
+.. toctree::
+   :maxdepth: 4
+   :caption: Software
+   :hidden:
+   :includehidden:
+
+   quickstart
+   Tutorial <constrainthg_intro>
+   API <api/index>
+   about
+   Demos <demos>
+   Repository <https://github.com/jmorris335/ConstraintHg>
+
+.. toctree::
+   :caption: Constraint Hypergraphs
+   :hidden:
+
+   Overview <chg_overview>
+   Guide to CHGs <chg_intro>
+   research
+
+.. include:: ../../README.md
+   :start-after: ## About
+   :end-before: ## Uses
+
+The package has two main components: an interface for building a constraint hypergraph (CHG), and algorithms for simulating the CHG. Examples of both of these are given in the links below.
+
 Get Started
 -----------
 
-Use `PIP <https://pypi.org/project/constrainthg/>`_ to install ConstraintHg into your Python environment::
+.. include:: quickstart.rst
+   :start-after: .. start install
+   :end-before: .. end install
 
-   pip install constrainthg
-
-From there you'll want to import the library into your Python script. 
-This is a pretty typical method to use:
-
-.. code-block:: python
-
-   from constrainthg.hypergraph import Node, Hypergraph
-   import constrainthg.relations as R
-
-For a walkthrough, check out the demonstration below!
+For a walkthrough, check out the `tutorial <constrainthg_intro>`_ or `demonstrations <demos>`_
 
 Quick Links
 -----------
@@ -37,14 +56,6 @@ Repository: `<https://github.com/jmorris335/ConstraintHg>`_
 PyPI Package Listing: `<https://pypi.org/project/constrainthg/>`_
    Listing on the Python Package Index
 
-
-API Documentation
------------------
-
-.. toctree::
-   :maxdepth: 2
-
-   constrainthg
 
 
 :ref:`genindex` \| :ref:`modindex` \| :ref:`Search <search>`
