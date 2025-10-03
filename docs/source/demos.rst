@@ -22,6 +22,9 @@ Note that many simple examples are available in the
 `Pendulum <https://github.com/jmorris335/ConstraintHg/blob/main/demos/demo_pendulum.py>`_
     Demonstrates model selection.
 
+`Double Pendulum <https://github.com/jmorris335/DrivenPendulum>`_
+    Demonstrates more complicated behavioral descriptions and assumptions.
+
 `Powder Bed Fusion Additive Manufacturing Machine <https://github.com/jmorris335/Powder-Based-Fusion-Digital-Twin>`_
     Demonstrates interoperability between different part models.
 
