@@ -6,7 +6,7 @@ Demonstrations
     
     Simple Demo <simple_demo>
     Pendulum <https://github.com/jmorris335/ConstraintHg/blob/main/demos/demo_pendulum.py>
-    Double Pendulum <https://github.com/jmorris335/DrivenPendulum>`
+    Double Pendulum <https://github.com/jmorris335/DrivenPendulum>
     Microgrid <https://github.com/jmorris335/MicrogridHg>
     Crankshaft <https://github.com/jmorris335/tool-interoperability-scripts/tree/main>
     3D Printer <https://github.com/jmorris335/Powder-Based-Fusion-Digital-Twin>
