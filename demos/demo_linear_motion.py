@@ -4,19 +4,45 @@ import constrainthg.relations as R
 hg = Hypergraph()
 
 # Nodes
-v = Node('v', 1.3)
-del_t = Node('time step', 1.0)
-del_x = Node('delta x')
-x = Node('x')
-x0 = Node('x_0', 0.0)
-i = Node('i')
-xn = Node('x_n')
+velocity = Node('velocity', description='constant velocity')
+delta_t = Node('delta_t', description='time step')
+delta_x = Node('delta_x', description='distance moved per step')
+x = Node('x', description='current position')
+xn = Node('x_n', description='final position')
+n = Node('n', description='maximum index to stop on')
 
-hg.add_edge([v, del_t], del_x, R.Rmultiply, label='vel*delta_t -> delta_x')
-hg.add_edge([x, del_x], x, R.Rsum, label='x_i+delta_x -> x_i')
-hg.add_edge({'s1': x, 's2':('s1', 'index')}, xn, R.equal('s1'), via=R.geq('s2', 4), label='x_i, i -> x_n')
-hg.add_edge(x0, x, R.Rfirst, label='x0 -> x')
+# Edges
+hg.add_edge(
+    sources=[velocity, delta_t],
+    target=delta_x,
+    rel=R.Rmultiply,
+    label='vel*delta_t -> delta_x',
+)
+hg.add_edge(
+    sources=[x, delta_x],
+    target=x,
+    rel=R.Rsum,
+    index_offset=1,
+    label='x_i+delta_x -> x_i',
+)
+hg.add_edge(
+    sources={'x': x, 'i': ('x', 'index'), 'n': n},
+    target=xn,
+    rel=R.Rfirst,
+    via=lambda i, n, **kw : i >= n,
+    label='x_i, i -> x_n',
+)
 
-hg.print_paths(xn)
+# Show model structure
+print(hg)
+print(hg.print_paths(xn))
 
-hg.solve(xn, to_print=True)
+# Simulate
+inputs = {
+    x: 0.0,
+    n: 4,
+    velocity: 1.3,
+    delta_t: 1.0,
+}
+
+hg.solve(xn, inputs=inputs, to_print=True)
