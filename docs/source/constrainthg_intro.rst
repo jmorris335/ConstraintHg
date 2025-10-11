@@ -2,7 +2,7 @@
 Getting Started with ConstraintHg
 =================================
 
-This page introduces the ConstraintHg package. For the theory of constraint hypergraphs, see the `Overview <https://github.com/jmorris335/ConstraintHg/wiki/Overview>`_ page.
+This page introduces the ConstraintHg package. For the theory of constraint hypergraphs, see the `Overview <chg_overview>`_ page.
 
 Tutorial
 ========
@@ -49,7 +49,7 @@ In the above we also defined some intermediate notes, these are variables that d
 Edges
 -----
 
-Each edge in a constraint hypergraph maps the values of its source set to the value of its target node. Mathematically this is just function mapping, though you can think of it as assigning a value of a node to every ordered pair of another set of variables. For example, given nodes :math:`A, B \coloneq \lbrace 1, 2 \rbrace`, and :math:`C \coloneq \lbrace -1, 0, 1 \rbrace`, we could define a hyperedge such that:
+Each edge in a constraint hypergraph maps the values of its source set to the value of its target node. Mathematically this is just function mapping, though you can think of it as assigning a value of a node to every ordered pair of another set of variables. For example, given nodes :math:`A, B := \lbrace 1, 2 \rbrace`, and :math:`C := \lbrace -1, 0, 1 \rbrace`, we could define a hyperedge such that:
 
 ======  ======  ======
  **A**   **B**   **C**
@@ -65,17 +65,15 @@ Note that every possible pair :math:`A` and :math:`B` need to be mapped to a cor
 .. code-block:: python
 
     def subtract_A_from_B(A, B, *args, **kwargs):
-    return A - B
+        return A - B
 
 To simplify coding, many relationships with the proper format have been specified in the `relations.py <https://github.com/jmorris335/ConstraintHg/blob/main/src/constrainthg/relations.py>`_ module. These are imported into the script with `import constrainthg.relations as R`, and then called as `R.Rsubtract` for example. We'll use mostly these provided relations in the demo, but we will need one custom function for the Eulerian integration. Let's define it now so we can pass it later on:
 
 .. code-block:: python
 
-    def integrate(s1, s2, s3, **kwargs):
-        """First order Euler integrator, where s3 is the timestep."""
-        return s1 * s3 + s2
-
-*Note that the keywords are `s1`, `s2`, etc. The "s" stands for source, as in "source node one". This is the default keyword scheme. Although you can define you own naming scheme in most cases, the documentation uses this convention.*
+    def integrate(step, slope, initial_val, **kwargs):
+        """First order Euler integrator."""
+        return step * slope + initial_val
 
 Returning to the pendulum, let's put in some of the more simple edges. First we need to make the hypergraph:
 
@@ -105,9 +103,9 @@ Normal constraint networks do not permit cycles, and for good reason. A cycle in
     :align: center
     :name: chg_simple
 
-    A simple hypergraph explicitly mapping out the relationships between variables
+    *A simple hypergraph explicitly mapping out the relationships between variables*
 
-But it's not difficult to recognize a more succinct relationship: :math:`x_{i+1} = x_i + v\Delta{}t`. But how do we add the variables :math:`x_i` and :math:`x_{i+1}` to the hypergraph? The trick is to use cycles. Cycles enable arbitrary indexing of a variable, allowing us to express these recursive type expressions without have to explicitly map out every singe instance of a variable, as shown in `Figure 2 <chg_nonsimple>`. 
+But it's not difficult to recognize a more succinct relationship: :math:`x_{i+1} = x_i + v\Delta{}t`. But how do we add the variables :math:`x_i` and :math:`x_{i+1}` to the hypergraph? The trick is to use cycles. Cycles enable arbitrary indexing of a variable, allowing us to express these recursive type expressions without have to explicitly map out every single instance of a variable, as shown in `Figure 2 <chg_nonsimple>`. 
 
 .. figure:: https://github.com/user-attachments/assets/cb8387cc-e005-4ed9-9247-2599f76f323b
     :alt: Non-simple CHG with a cycle
@@ -115,9 +113,9 @@ But it's not difficult to recognize a more succinct relationship: :math:`x_{i+1}
     :align: center
     :name: chg_nonsimple
     
-    A non-simple hypergraph with a cycle
+    *A non-simple hypergraph with a cycle*
 
-Though useful to the point of being essential to a constraint hypergraph's Cycles also cause significant technical problems that have to be addressed. The first is that we need a way to identify which instance of a variable is being referenced in the graph, because :math:`x_1` might be related to :math:`x_0`, but :math:`x_{308}` is not! So we introduce a *index* that allows us to note which version of a variable we're dealing with. ConstraintHg will keep track of indices for us, but whenever we have a cycle (where a variable becomes dependent upon itself) we need to manually indicate the index to employ. 
+The ability to represent the graph with a cycle Cycles also cause significant technical problems that have to be addressed. The first is that we need a way to identify which instance of a variable is being referenced in the graph, because :math:`x_1` might be related to :math:`x_0`, but :math:`x_{308}` is not! So we introduce a *index* that allows us to note which version of a variable we're dealing with. ConstraintHg will keep track of indices for us, but whenever we have a cycle (where a variable becomes dependent upon itself) we need to manually indicate the index to employ. 
 
 This occurs in the pendulum when we integrate the values (refer to the last two equations given at the beginning). In these cases, we have to indicate that the acceleration :math:`\alpha` being solved for by the model is really :math:`alpha_{i+1}`. The way to do this is supplying the ``index_offset`` parameter to the ``add_edge`` function call:
 
@@ -192,7 +190,7 @@ Up to know the hypergraph we have made looks something like this (with intermedi
     :align: center
     :name: chg_pend
     
-    Pendulum hypergraph
+    *Pendulum hypergraph*
 
 The astute reader might have noticed that we have not added damping to the hypergraph yet. That's not because we don't know how, the edge is simple to add:
 
@@ -237,6 +235,6 @@ If you solve this graph, the solver will have to iterate through the cycle hundr
     :align: center
     :name: chg_simulation
 
-    Results of simulation solving for settling time of damped pendulum.
+    *Results of simulation solving for settling time of damped pendulum.*
 
 :doc:`Home </index>` \| :ref:`genindex` \| :ref:`Search <search>`
