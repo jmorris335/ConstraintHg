@@ -16,6 +16,8 @@ Constraint hypergraphs are composed of nodes and edges. Each node represents a s
 
 Constraint hypergraphs are *hyper*-graphs, meaning that these relationships can involve multiple variables. The framework allows that edges may have many variables in their source set (or domain), which together constrain a single variable as a target (or codomain). For instance, given three variables :math:`A`, :math:`B`, and :math:`C`, we could define an edge stipulating that :math:`A + B = C`. This edge declares that every value in :math:`C` is constrained to be the sum of the values of :math:`A` and :math:`B`. This is a hyperedge with :math:`\lbrace A, B \rbrace` as its source set and :math:`C` as its target.
 
+.. _pendulum_example:
+
 First example
 ================
 
@@ -27,7 +29,7 @@ It helps to have a basic example to demonstrate the functionality of a constrain
     :align: center
     :name: pend_fbd
 
-    Pendulum free body diagram
+    *Pendulum free body diagram*
 
 The angular acceleration (:math:`\alpha`) of the pendulum is given as :math:`\alpha = -\frac{g}{m}\sin\theta`. This is a relationship, or in other words a constraint–the values of :math:`\alpha` are determined by the combined values of :math:`g`, :math:`m`, and :math:`\theta`. We could put these all into a single edge, though it's better practice to break them up into many edges where each edge represents a single operation. This results with more edges, but this allows us to make connections with intermediate variables that we might otherwise hide. The hypergraph is shown in :ref:`Figure 2 <pend_simple>`, with these intermediate nodes in grey. A constraint hypergraph represents all the knowledge known about a system. In this case, the only thing we know about our pendulum is the original equation, though as seen in :ref:`Figure 2 <pend_simple>` we've broken that algebraic expression into 4 different relationships. 
 
@@ -37,7 +39,7 @@ The angular acceleration (:math:`\alpha`) of the pendulum is given as :math:`\al
     :align: center
     :name: pend_simple
 
-    Constraint hypergraph for a simple pendulum
+    *Constraint hypergraph for a simple pendulum*
 
 However, we can describe more relationships in the system. For instance, if we know the damping coefficient :math:`c` and the angular velocity :math:`\omega` for the pendulum, then we can expand the initial equation to say that :math:`\alpha = -\frac{g}{m}\sin\theta - c\omega`. But before we add this new relationship to the graph, we should note that many of the variables used in the second equation are already in the graph (as shown in :ref:`Figure 2 <pend_simple>`). The solution is to add new edges to the preexisting variables, so that we don't have duplicate nodes in the final hypergraph. The expanded hypergraph is shown in :ref:`Figure 3 <pend_damping>`.
 
@@ -47,7 +49,7 @@ However, we can describe more relationships in the system. For instance, if we k
     :align: center
     :name: pend_damping
 
-    Expanded constraint hypergraph for a pendulum with damping
+    *Expanded constraint hypergraph for a pendulum with damping*
 
 Take note that the :math:`\alpha` node in :ref:`Figure 3 <pend_damping>` has two edges leading to it, showing that there are two possible ways to constrain its values. This is a quirk of constraint hypergraphs that permits competing constraints–a normal constraint network would not allow a variable to be related by two different, overlapping constraints. But in this case by allowing the dual relationships we have indicated that there are at least two possible models that can be used to solve for :math:`\alpha` (in this case one with and one without damping). During simulation, if we have a damping coefficient, the solver has to select which model will be active at any given time. 
 

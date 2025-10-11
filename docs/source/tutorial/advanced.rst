@@ -1,2 +1,9 @@
 Advanced Topics
 ===============
+
+Logging
+-------
+
+Complexity
+----------
+

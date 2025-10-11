@@ -70,7 +70,11 @@ def _make_set(val) -> list:
 class TNode:
     """A basic tree node for printing tree structures."""
     class conn:
-        """A class of connectors used for indicating child nodes."""
+        """A class of connectors used for indicating child nodes.
+        
+        .. _conn_class:
+        
+        """
         elbow = "└──"
         pipe = "│  "
         tee = "├──"
@@ -990,6 +994,8 @@ class Hypergraph:
                  logging_level=None, memory_mode: bool=False):
         """Initialize a Hypergraph.
 
+        .. _hypergraph_init:
+
         Parameters
         ----------
         no_weights : bool, default=False
@@ -1196,6 +1202,8 @@ class Hypergraph:
                  weight: float=1.0, label: str=None, index_offset: int=0,
                  disposable=None, edge_props=None):
         """Adds an edge to the hypergraph.
+
+        .. _meth_add_edge:
 
         Parameters
         ----------

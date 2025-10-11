@@ -15,8 +15,16 @@ Tutorial Steps
 
    setup 
    modeling
+   cycles
    simulation
    viability
-   cycles
    advanced
+
+.. figure:: https://github.com/user-attachments/assets/c5a77507-bdca-432a-8d3d-b881bec5f26e
+    :alt: Pendulum free body diagram
+    :width: 200px
+    :align: center
+    :name: pend_fbd_intro
+
+    *Free body diagram of a planar pendulum.*
 
