@@ -1050,7 +1050,7 @@ class Hypergraph:
         """Prints a short list of the Hypergraph."""
         out = 'Hypergraph with'
         out += f' {len(self.nodes)} nodes'
-        out += f'and {len(self.edges)} edges'
+        out += f' and {len(self.edges)} edges'
         return out
 
     def check_if_logger_setup(self) -> bool:
