@@ -1331,6 +1331,8 @@ class Hypergraph:
         """Runs a BFS search to identify the first valid solution for
         `target`.
 
+        .. _solve_method:
+
         Parameters
         ----------
         target : Node | str

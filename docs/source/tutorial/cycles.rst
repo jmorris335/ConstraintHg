@@ -81,6 +81,6 @@ In the above example, :math:`F`'s value gets updated everytime we calculate :mat
 
 .. code-block:: python
 
-    hg.addEdge({'F': F}, alpha, R.Rmean, label='F->alpha', index_offset=1, disposable=['F'])
+    hg.add_edge({'F': F}, alpha, R.Rmean, label='F->alpha', index_offset=1, disposable=['F'])
 
 To set a condition for exiting a cycle requires an edge that is only followed for *some* values of it's input source. This is called conditional viability. You can learn more about this :doc:`here <viability>` or by following the navigation below. Otherwise, jump to :doc:`simulation </tutorial/simulation>`.
