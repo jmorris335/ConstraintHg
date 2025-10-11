@@ -1,12 +1,17 @@
 Hypergraph
 =================
 
+.. _pathfinder_class:
+
 Pathfinder Class
 ***********************************
 .. autoclass:: constrainthg.hypergraph.Pathfinder
    :members:
    :undoc-members:
    :show-inheritance:
+
+
+.. _hypergraph_class:
 
 Hypergraph Class
 ***********************************

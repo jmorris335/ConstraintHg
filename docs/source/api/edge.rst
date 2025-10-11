@@ -8,6 +8,8 @@ EdgeProperty Class
    :undoc-members:
    :show-inheritance:
 
+.. _edge_class:
+
 Edge Class
 ***********************************
 .. autoclass:: constrainthg.hypergraph.Edge

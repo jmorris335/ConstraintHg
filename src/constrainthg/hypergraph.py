@@ -648,15 +648,17 @@ class Edge:
 
         Process
         -------
-        1. Get an identifier from the disposal list
-        2. Get the label for the source node corresponding to the
-        identifier
+
+        1. Get an identifier from the disposal list  
+        2. Get the label for the source node corresponding to the 
+           identifier  
         3. Find the tnode used in the solution (from source_tnodes) with
-        the matching node_label
+           the matching node_label  
         4. Find the set of found_tnodes from the edge corresponding to
-        the node label
+           the node label  
         5. Remove the tnode in found_tnodes with the same index as the
-        solved tnode
+           solved tnode  
+
         """
         if self.disposable is not None:
             count = 0
