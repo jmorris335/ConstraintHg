@@ -16,8 +16,8 @@ Tutorial Steps
    setup 
    modeling
    cycles
-   simulation
    viability
+   simulation
    advanced
 
 .. figure:: https://github.com/user-attachments/assets/c5a77507-bdca-432a-8d3d-b881bec5f26e

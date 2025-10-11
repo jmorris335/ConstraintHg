@@ -1,15 +1,22 @@
-from constrainthg.hypergraph import Hypergraph, Node
+"""
+This script demonstrates a basic cycle, and using the index of a node to
+break the cycle. The system being modeled is a body moving at constant
+velocity, where we want to estimate the position of the body after ``n``
+seconds.
+"""
+
+from constrainthg.hypergraph import Hypergraph
 import constrainthg.relations as R
 
 hg = Hypergraph()
 
 # Nodes
-velocity = Node('velocity', description='constant velocity')
-delta_t = Node('delta_t', description='time step')
-delta_x = Node('delta_x', description='distance moved per step')
-x = Node('x', description='current position')
-xn = Node('x_n', description='final position')
-n = Node('n', description='maximum index to stop on')
+velocity = hg.add_node('velocity', description='constant velocity')
+delta_t = hg.add_node('delta_t', description='time step')
+delta_x = hg.add_node('delta_x', description='distance moved per step')
+x = hg.add_node('x', description='current position')
+xn = hg.add_node('x_n', description='final position')
+n = hg.add_node('n', description='maximum index to stop on')
 
 # Edges
 hg.add_edge(
