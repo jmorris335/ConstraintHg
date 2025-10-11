@@ -367,6 +367,8 @@ class Edge:
         """Creates a new `Edge` object. This should generally be called
         from a Hypergraph object using the Hypergraph.addEdge method.
 
+        .. _edge_init_method:
+
         Parameters
         ----------
         label : str

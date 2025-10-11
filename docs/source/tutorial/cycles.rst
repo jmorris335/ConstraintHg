@@ -49,6 +49,9 @@ Note that the solver found the cycle, and highlighted it in the output.
 Problems with Cycles
 --------------------
 
+Representing Cycles
+___________________
+
 Representing cycles causes significant technical problems that have to be addressed. The first is that we need a way to identify which instance of a variable is being referenced in the graph, because :math:`x_1` might be related to :math:`x_0`, but :math:`x_{308}` is not! To do we introduce a **index** that allows us to note which version of a variable we're dealing with. ConstraintHg will keep track of indices for us, but whenever we have a cycle (where a variable becomes dependent upon itself) we need to manually indicate the index to employ.
 
 This occurs in the pendulum when we integrate the values (refer to the last two equations given at the beginning). In these cases, we have to indicate that the acceleration :math:`\alpha` being solved for by the model is really :math:`alpha_{i+1}`. The way to do this is supplying the ``index_offset`` parameter to the ``add_edge`` function call. Go ahead and add ``index_offset=1`` to the last edge in your script, so that the line looks like this:
@@ -60,5 +63,24 @@ This occurs in the pendulum when we integrate the values (refer to the last two 
 This indicates that the node `alpha` is constrained to be the value of the node `F` and that whenever this constraint is applied the index of `alpha` should be increased by one.
 
 .. important:: To use a cycle, the solver needs a condition for exiting the cycle.
+
+.. _cycle_complexity:
+
+Cycle Complexity
+________________
+
+Cycles can lead to highly complex simulations. Every iteration of a cycle forms it's own path to an output, an includes all the previous paths as divergent possibilities. This means that the number of paths in a hypergraph grows factorially as a cycle is iterated over.
+
+This can lead to dramatic slow downs, to the point of making a system unsolveable. However, typically when solving a cycle we only want to consider the most recently solved version of a node. So for instance, we want to consider the relationship :math:`\alpha_{i+1} = -\frac{g}{l}\sin\theta_i`, but not :math:`\alpha_{i+1} = -\frac{g}{l}\sin\theta_{i-1}` or :math:`\alpha_{i+1} = -\frac{g}{l}\sin\theta_{i-2}`, etc.
+
+The solution is to tell the solver to disregard all previous solutions once a valid one has been found. So once :math:`\theta_{i-1}` is used to solve for :math:`\alpha_{i}`, we mark it as used and don't treat it as a possible path for solving for :math:`\alpha_{i+1}`. This prunes back paths as we utilize them, drastically reducing the search space of the cycle.
+
+To mark a node as disregardable we use the :ref:`disposable <edge_init_method>` argument. The ``disposable`` argument is a list of source nodes whose value might increment in a cycle. The values in the list should be the keys for the source node dict passed to the edge--which means that using the disposable argument requires source nodes to be passed to the edge in a dictionary.
+
+In the above example, :math:`F`'s value gets updated everytime we calculate :math:`-\frac{g}{l}\sin\theta`. So we want to dispose of :math:`F` everytime we set it equal to :math:`\alpha`. To do this we write:
+
+.. code-block:: python
+
+    hg.addEdge({'F': F}, alpha, R.Rmean, label='F->alpha', index_offset=1, disposable=['F'])
 
 To set a condition for exiting a cycle requires an edge that is only followed for *some* values of it's input source. This is called conditional viability. You can learn more about this :doc:`here <viability>` or by following the navigation below. Otherwise, jump to :doc:`simulation </tutorial/simulation>`.
