@@ -99,28 +99,49 @@ hg.add_edge({'s1':dest_height, 's2':height}, error, R.Rsubtract,
 
 ## Motor controller relationships
 hg.add_edge([KP, error], P, R.Rmultiply)
-hg.add_edge({'s1': KI,
-             's2': error, 's5': ('s2', 'index'),
-             's3': I, 's6': ('s3', 'index'),
-             's4': step}, I, R.mult_and_sum(['s1', 's2', 's4'], 's3'),
-            via=lambda s5, s6, **kwargs : s5 == s6 + 1)
-hg.add_edge({'s1': error, 's5': ('s1', 'index'),
-             's2': alpha,
-             's3': error_f, 's6': ('s3', 'index')}, error_f, Rlowpassfilter, 
-            label='low_pass_filter->error_f',
-            via=lambda s5, s6, **kwargs : s5 == s6 + 1)
+hg.add_edge(
+    {'s1': KI,
+     's2': error,
+     's3': I,
+     's4': step},
+    target=I,
+    rel=R.mult_and_sum(['s1', 's2', 's4'], 's3'),
+    index_via=lambda s2, s3, **kw : s2 == s3 + 1,
+    disposable=['s1', 's2', 's3'],
+)
+hg.add_edge(
+    {'s1': error,
+     's2': alpha,
+     's3': error_f},
+    target=error_f,
+    rel=Rlowpassfilter, 
+    label='low_pass_filter->error_f',
+    index_via=lambda s1, s3, **kw : s1 == s3 + 1,
+    edge_props=['DISPOSE_ALL'],
+)
 hg.add_edge(error_f, error_f_prev, R.Rmean)
-hg.add_edge({'s1':error_f, 's3': ('s1', 'index'),
-             's2':error_f_prev, 's4': ('s2', 'index')}, 'error_f_diff', R.Rsubtract,
-            via=lambda s3, s4, **kwargs : s3 == s4 + 1)
+hg.add_edge(
+    {'s1':error_f,
+     's2':error_f_prev},
+    target='error_f_diff',
+    rel=R.Rsubtract,
+    index_via=lambda s1, s2, **kw : s1 == s2 + 1,
+    edge_props=['DISPOSE_ALL'],
+)
 hg.add_edge({'s1':'error_f_diff', 's2':step}, 'error_derivative', R.Rdivide)
-hg.add_edge([KD, 'error_derivative'], D, R.Rmultiply, label='KD,error_f_diff->D')
+hg.add_edge(
+    [KD, 'error_derivative'],
+    target=D,
+    rel=R.Rmultiply,
+    edge_props='DISPOSE_ALL',
+    label='KD,error_f_diff->D',
+)
 # hg.add_edge({'s1': KD,
 #              's2': error_f, 's3': ('s2', 'index'),
 #              's4': error_f_prev, 's5': ('s4', 'index')}, D, R.Rmultiply,
 #             label='(KD, error_f, error_f_prev)->D',
 #             via=lambda s3, s5, **kwargs : s3 == s5 + 1)
-hg.add_edge([P, I, D], pid_input, R.Rsum, label='PID', edge_props='LEVEL')
+hg.add_edge([P, I, D], pid_input, R.Rsum, label='PID', edge_props=['LEVEL', 'DISPOSE_ALL'])
 hg.add_edge([pid_input, min_pid], 'const_min_input', R.Rmax)
 hg.add_edge(['const_min_input', max_pid], u, R.Rmin)
 
@@ -130,20 +151,47 @@ hg.add_edge(height_0, height, R.Rmean)
 hg.add_edge([mu_pass_m, occupancy], pass_m, R.Rmultiply)
 hg.add_edge([pass_m, empty_m, counterweight], mass, R.Rsum)
 hg.add_edge([g, mass], '/gm', R.Rmultiply, label='(g,mass)->/gm')
-hg.add_edge({'s1': damping_coef, 's2':vel}, damping, R.Rmultiply, label='(c,vel,F)->damping')
 hg.add_edge(damping, 'neg damping', R.Rnegate)
-hg.add_edge([u, '/gm', 'neg damping'], F, R.Rsum, label='(u,/gm,-damping)->F', edge_props='LEVEL')
-hg.add_edge({'s1':F,'s2':mass}, acc, R.Rdivide, label='(F,mass)->acc', edge_props='LEVEL', index_offset=1)
-hg.add_edge({'s1': acc, 's4': ('s1', 'index'),
-             's2': vel, 's5': ('s2', 'index'),
-             's3': step,}, vel, R.mult_and_sum(['s1', 's3'], 's2'),
-            label='(acc,vel,step)->vel',
-            via=lambda s4, s5, **kwargs: s4 == s5 + 1)
-hg.add_edge({'s1': vel, 's4': ('s1', 'index'),
-             's2': height, 's5': ('s2', 'index'),
-             's3': step,}, height, R.mult_and_sum(['s1', 's3'], 's2'),
-            label='(vel,height,step)->height',
-            via=lambda s4, s5, **kwargs: s4 == s5 + 1)
+hg.add_edge(
+    {'s1': damping_coef, 's2':vel},
+    target=damping,
+    rel=R.Rmultiply,
+    label='(c,vel,F)->damping',
+)
+hg.add_edge(
+    [u, '/gm', 'neg damping'],
+    target=F,
+    rel=R.Rsum,
+    label='(u,/gm,-damping)->F',
+    edge_props=['LEVEL', 'DISPOSE_ALL']
+)
+hg.add_edge(
+    {'s1':F,'s2':mass},
+    target=acc,
+    rel=R.Rdivide,
+    label='(F,mass)->acc',
+    edge_props=['LEVEL', 'DISPOSE_ALL'],
+    index_offset=1,
+)
+hg.add_edge(
+    {'s1': acc,
+     's2': vel,
+     's3': step,},
+    target=vel,
+    rel=R.mult_and_sum(['s1', 's3'], 's2'),
+    label='(acc,vel,step)->vel',
+    index_via=lambda s1, s2, **kw : s1 == s2 + 1,
+)
+hg.add_edge(
+    {'s1': vel,
+     's2': height,
+     's3': step},
+    target=height,
+    rel=R.mult_and_sum(['s1', 's3'], 's2'),
+    label='(vel,height,step)->height',
+    index_via=lambda s1, s2, **kw : s1 == s2 + 1,
+    disposable=['s1', 's2'],
+)
 
 # Discrete Event Simulation (DES) and passengers
 boarding_edge = Edge('boarding edge', {}, boarding, R.Rsum, edge_props='LEVEL')
@@ -205,5 +253,5 @@ t = hg.solve("final value", inputs, to_print=False, search_depth=10000,
 print(t)
 
 # Visualize results
-plotTimeValues([height, occupancy, error], 
-               t.values, step.static_value, title='Hybrid Elevator Simulation')
+# plotTimeValues([height, occupancy, error], 
+#                t.values, step.static_value, title='Hybrid Elevator Simulation')
