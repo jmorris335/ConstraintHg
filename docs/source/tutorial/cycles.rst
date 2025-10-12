@@ -71,7 +71,23 @@ ________________
 
 Cycles can lead to highly complex simulations. Every iteration of a cycle forms it's own path to an output, an includes all the previous paths as divergent possibilities. This means that the number of paths in a hypergraph grows factorially as a cycle is iterated over.
 
-This can lead to dramatic slow downs, to the point of making a system unsolveable. However, typically when solving a cycle we only want to consider the most recently solved version of a node. So for instance, we want to consider the relationship :math:`\alpha_{i+1} = -\frac{g}{l}\sin\theta_i`, but not :math:`\alpha_{i+1} = -\frac{g}{l}\sin\theta_{i-1}` or :math:`\alpha_{i+1} = -\frac{g}{l}\sin\theta_{i-2}`, etc.
+This can lead to dramatic chokepoints, to the point of making a system unsolveable. Every time the solver goes around the cycle it will have to consider all the previously solved values for :math:`\alpha`. Each of these values represents a unique path through the graph that must be advanced by the solver--after all, the solver doesn't know which one of these paths will wind up being the one that ends up solving for the final node. However, because of the way we have our model set up, each value for :math:`\alpha` gets used to solve for a new value of :math:`\theta` and :math:`\omega`, creating new paths, each of which will result in the generation of two new values of :math:`\alpha`. If you do an analysis, the bifurcation results in the creation of :math:`n_i = n_{i-1}(n_{i-1} + 1)` new paths for every :math:`i`-th cycle we iterate through. The number of paths at each cycle are shown in the following table:
+
+===========   ===========
+ :math:`i`     Paths (n)
+===========   ===========
+    0             1 
+    1             2 
+    2             6 
+    3             42 
+    4            1,806 
+    5          3,263,442 
+    6          10,650,056,950,806
+===========   ===========
+
+This isn't just exponential growth, it's factorial exponential growth, growing in complexity so quickly that after just 8 cycles it outnumbers the number of atoms in the universe. Clearly this is untenable. However, we know that the vast majority of these branches are not going to be part of valid search path. Our solution to handling this complexity is to add additional information that helps the solver tame the expanding search space.
+
+Typically when solving a cycle we only want to consider the most recently solved version of a node. So for instance, we want to consider the relationship :math:`\alpha_{i+1} = -\frac{g}{l}\sin\theta_i`, but not :math:`\alpha_{i+1} = -\frac{g}{l}\sin\theta_{i-1}` or :math:`\alpha_{i+1} = -\frac{g}{l}\sin\theta_{i-2}`, etc.
 
 The solution is to tell the solver to disregard all previous solutions once a valid one has been found. So once :math:`\theta_{i-1}` is used to solve for :math:`\alpha_{i}`, we mark it as used and don't treat it as a possible path for solving for :math:`\alpha_{i+1}`. This prunes back paths as we utilize them, drastically reducing the search space of the cycle.
 
