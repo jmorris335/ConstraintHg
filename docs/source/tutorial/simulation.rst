@@ -124,10 +124,16 @@ The astute reader might have noticed that we have not added damping to the hyper
 
 .. code-block:: python
 
-    hg.add_edge({'s1':F, 's2':'beta2'}, alpha, R.Rsubtract, 
-            label='(F, b2)->alpha', edge_props='LEVEL', index_offset=1)
+    hg.add_edge(
+        sources={'s1': F, 's2': 'beta2'},
+        target=alpha,
+        rel=R.Rsubtract,
+        edge_props=['LEVEL', 'DISPOSE_ALL'],
+        index_offset=1,
+        label='(F, b2)->alpha',
+    )
 
-.. Hint:: Use the `edge_props` attribute as shorthand to set a viability condition that the indexes of all source nodes should be equivalent.
+.. Hint:: Use the `edge_props` :ref:`attribute <edge_prop_class>` as shorthand to set a viability condition that the indexes of all source nodes should be equivalent (``LEVEL``) and all nodes should be disposed (``DISPOSE_ALL``).
 
 This gives us competing models: two different ways to solve for :math:`\alpha`. The pathfinding algorithm deals with this by treating both branches as viable, so that the path with the minimum cost will be returned as the optimum simulation. We haven't assigned edge weights, so this means the path with the least number of steps would be the one returned. To get our model to use our damping relationship, we can either comment out the other edge (with the label ``F->alpha``), or we can give that edge a very high weighting to make it more expensive to traverse. To do that, write:
 
@@ -147,14 +153,18 @@ Because we added the disposable tag, our solver can handle the complexity of the
 
 .. code-block:: python
 
-    theta_tnode = hg.solve(theta, min_index=170)
-    thetas, omegas = theta_tnode.values['theta'], theta_tnode.values['omega']
-    time = hg.solve(time, min_index=170).values['time']
+    theta = hg.solve(theta, min_index=100)
+    thetas, omegas = theta.values['theta'], theta.values['omega']
+    time = hg.solve(time, min_index=100).values['time']
 
     import matplotlib.pyplot as plt
     length = min(len(time), len(thetas), len(omegas))
     plt.plot(time[:length], thetas[:length])
     plt.plot(time[:length], omegas[:length])
+    plt.legend(['theta', 'omega'])
+    plt.xlabel('Time (s)')
+    plt.ylabel('Rad, Rad/s')
+    plt.title('Pendulum Simulation')
     plt.show()
 
 .. figure:: https://github.com/user-attachments/assets/217ed55a-7ed3-41d2-a8ae-77f039f4c540
@@ -284,7 +294,7 @@ For example, we might have trouble with our integration. We can debug the system
 
 .. code-block:: python
 
-    alpha_tnode = hg.solve(theta, min_index=2, logging_level=12, debug_edges=['(alpha, omega, t)->omega'])
+    theta_tnode = hg.solve(theta, min_index=2, logging_level=12, debug_edges=['(alpha, omega, t)->omega'])
 
 Note that set the logging_level to 12 (DEBUG + 2). This keeps the log from printing every edge. Instead, it will only log debugging information for our passed edge. The resulting log is::
 
@@ -313,7 +323,7 @@ We could also debug a certain node, say ``alpha``:
 
 .. code-block:: python
 
-    alpha_tnode = hg.solve(theta, min_index=2, logging_level=12, debug_nodes=['alpha'])
+    theta_tnode = hg.solve(theta, min_index=2, logging_level=12, debug_nodes=['alpha'])
 
 This prints the following log::
 

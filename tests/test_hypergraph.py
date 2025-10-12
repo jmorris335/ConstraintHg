@@ -45,7 +45,7 @@ class TestHypergraphBehavior():
         hg.add_edge('H', 'J', R.Rincrement)
         hg.add_edge('H', 'G', R.Rincrement)
         hg.add_edge('H', 'T', R.Rincrement)
-        # hg.addEdge('G', 'T', R.Rincrement)
+        # hg.add_edge('G', 'T', R.Rincrement)
         t = hg.solve('T', {'A': 1})
         assert t.value == 6
         assert t.cost == 5

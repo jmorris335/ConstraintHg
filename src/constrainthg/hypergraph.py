@@ -345,6 +345,8 @@ class EdgeProperty(Enum):
     that can be passed during setup. Used as shorthand for common
     configurations.
 
+    .. _edge_prop_class:
+
     Members
     -------
     LEVEL : 1
@@ -365,7 +367,7 @@ class Edge:
                  weight: float=1.0, index_offset: int=0, disposable: list=None,
                  edge_props: EdgeProperty=None):
         """Creates a new `Edge` object. This should generally be called
-        from a Hypergraph object using the Hypergraph.addEdge method.
+        from a Hypergraph object using the Hypergraph.add_edge method.
 
         .. _edge_init_method:
 

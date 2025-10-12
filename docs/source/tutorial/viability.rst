@@ -78,22 +78,36 @@ Add the following lines to your script:
 .. code-block:: python
 
     hg.add_edge(
-        {'s1': alpha,'s2': omega,'s3': time_step}, 
+        sources={'slope': alpha, 'initial_val': omega, 'step': time_step},
         target=omega,
-        rel=integrate, 
-        index_via=lambda s1, s2, s3, **kw: s1 - 1 == s2,
-        disposable=['s1', 's2'],
-        label='(alpha, omega, t)->omega',
-    )
-    hg.add_edge(
-        {'s1': omega,'s2': theta,'s3': time_step}, 
-        target=theta, 
-        rel=integrate, 
-        index_via=lambda s1, s2, s3, **kw: s1 - 1 == s2,
-        disposable=['s1', 's2'],
-        label='(omega, theta, t)->theta',
+        rel=Rintegrate,
+        index_via=lambda slope, initial_val, **kw: slope - 1 == initial_val,
+        disposable=['slope', 'intial_val'],
+        label='(alpha, omega, time_step)->omega',
     )
 
-.. note:: Note that we dispose of ``s1`` and ``s2`` because those indices are constantly changing, as discussed in the :ref:`previous step <cycle_complexity>`. The time step (``s3``), on the other hand, is a constant value, so we shouldn't dispose of it.
+    hg.add_edge(
+        sources={'slope': omega, 'initial_val': theta, 'step': time_step},
+        target=theta,
+        rel=Rintegrate,
+        index_via=lambda slope, initial_val, **kw: slope - 1 == initial_val,
+        disposable=['slope', 'intial_val'],
+        label='(omega, theta, time_step)->theta',
+    )
+
+.. note:: Note that we dispose of ``slope`` and ``initial_val`` because those indices are constantly changing, as discussed in the :ref:`previous step <cycle_complexity>`. The time step, on the other hand, is a constant value, so we shouldn't dispose of it.
+
+We also need to add a similar edge for time. Time updates on its own loop, and therefore needs its own index_offest. Add the following edge to your script:
+
+.. code-block:: python
+
+    hg.add_edge(
+        sources={'time': time, 'step': time_step},
+        target=time,
+        rel=R.Rsum,
+        index_offset=1,
+        disposable=['time'],
+        label='(time,step)->time'
+    )
 
 With the full loop, we're ready to simulate our hypergraph. To do so, click :doc:`here </tutorial/simulation>` or use the navigation below.

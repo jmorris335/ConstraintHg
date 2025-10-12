@@ -30,19 +30,20 @@ The constraint hypergraph has several variables which we'll want to include in o
 
 .. code-block:: python
 
-    g = hg.add_node("gravity", -10)
-    r = hg.add_node("radius", 0.5)
-    theta0 = hg.add_node("theta0", 3.14159/6)
-    theta = hg.add_node("theta")
-    d_theta = hg.add_node("delta theta")
-    s_theta = hg.add_node("sine theta")
-    F = hg.add_node("gravitational force")
-    omega0 = hg.add_node("omega0", 0.0)
-    omega = hg.add_node("omega")
-    d_omega = hg.add_node("delta omega")
-    c = hg.add_node("damping coeff", 1.5)
-    alpha = hg.add_node("alpha")
-    time_step = hg.add_node("time_step", .03)
+    g = hg.add_node(Node('gravity', -10))
+    r = hg.add_node(Node('radius', 0.5))
+    theta0 = hg.add_node(Node('theta0', 3.14159/6))
+    theta = hg.add_node(Node('theta'))
+    d_theta = hg.add_node(Node('delta theta'))
+    s_theta = hg.add_node(Node('sine theta'))
+    F = hg.add_node(Node('gravitational force'))
+    omega0 = hg.add_node(Node('omega0', 0.0))
+    omega = hg.add_node(Node('omega'))
+    d_omega = hg.add_node(Node('delta omega'))
+    c = hg.add_node(Node('damping coeff', 1.5))
+    alpha = hg.add_node(Node('alpha'))
+    time_step = hg.add_node(Node('time_step', .03))
+    time = Node('time', 0.)
 
 The ``hg.add_node()`` method returns a :ref:`Node <node_class>` object, which we can use later to set up the edges in the graph.
 
@@ -74,21 +75,56 @@ To simplify coding, many relationships with the proper format have been specifie
 
 .. code-block:: python
 
-    def integrate(step, slope, initial_val, **kwargs):
-        """First order Euler integrator."""
+    def Rintegrate(step, slope, initial_val, *args, **kwargs):
+        """First order Eulerian integrator."""
         return step * slope + initial_val
 
-Returning to the pendulum, let's put in some of the more simple edges. The main method here is :ref:`Hypergraph.add_edge <meth_add_edge>`, whose syntax is ``add_edge([<node1>, <node2>, ...], <target_node>, <relation>, <label>)``. You can also pass specific keyword arguments by passing a dictionary of source nodes rather than a list, this allows you to reference the nodes by the passed keywords in the constraint method. The ``label`` is an optional string ID that helps us uniquely identify the edge.
+Returning to the pendulum, let's put in some of the more simple edges. The main method here is :ref:`Hypergraph.add_edge <meth_add_edge>`. The required arguments for ```add_edge``` are the source nodes (``sources``), the target node (``target``), and the relation (``rel``). Nodes, whether sources or targets, can be passed as a string or a full :ref:`Node <node_class>` object. For the ``add_edge`` method, the source nodes can be a single node, a list, or a dictionary of key : string/node pairs (this allows you to reference the nodes by the passed keywords in the constraint method). The relation is a method used for calculating the target node value. Another argument, ``label``, is an optional string ID that helps us uniquely identify the edge.
 
 .. code-block:: python
 
-    hg.add_edge(theta0, theta, R.Rmean, label='theta0->theta')
-    hg.add_edge(omega0, omega, R.Rmean, label='omega0->omega')
-    hg.add_edge({'s1': g, 's2': r}, 'g/r', R.Rdivide, label='(g,r)->b1') #dictionary of source nodes ensures 'g' is the numerator.
-    hg.add_edge(theta, s_theta, R.Rsin, label='theta->sine')
-    hg.add_edge([s_theta, 'g/r'], F, R.Rmultiply, label='(sine, b1)->F')
-    hg.add_edge([omega, c], 'beta2', R.Rmultiply, label='(omega, c)->b2')
-    hg.add_edge(F, alpha, R.Rmean, label='F->alpha')
+    hg.add_edge(
+        sources=theta0,
+        target=theta,
+        rel=R.Rmean,
+        label='theta0->theta',
+    )
+    hg.add_edge(
+        sources=omega0,
+        target=omega,
+        rel=R.Rmean,
+        label='omega0->omega',
+    ) 
+    hg.add_edge(
+        sources={'s1': g, 's2': r}, #dictionary of source nodes ensures 'g'is the numerator,
+        target='g/r',
+        rel=R.Rdivide,
+        label='(g,r)->b1',
+    )
+    hg.add_edge(
+        sources=theta,
+        target=s_theta,
+        rel=R.Rsin,
+        label='theta->sine',
+    )
+    hg.add_edge(
+        sources={'s_theta': s_theta, 'g/r': 'g/r'},
+        target=F,
+        rel=R.Rmultiply,
+        label='(sine, b1)->F',
+    )
+    hg.add_edge(
+        sources={'omega': omega, 'c': c},
+        target='beta2',
+        rel=R.Rmultiply,
+        label='(omega, c)->b2',
+    )
+    hg.add_edge(
+        sources={'F': F},
+        target=alpha,
+        rel=R.equal('F'),
+        label='F->alpha',
+    )
 
 Printing
 --------

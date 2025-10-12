@@ -58,7 +58,13 @@ This occurs in the pendulum when we integrate the values (refer to the last two 
 
 .. code-block:: python
 
-    hg.addEdge(F, alpha, R.Rmean, label='F->alpha', index_offset=1)
+    hg.add_edge(
+        sources={'F': F},
+        target=alpha,
+        rel=R.equal('F'),
+        index_offset=1, # <- Add this line in
+        label='F->alpha',
+    )
 
 This indicates that the node `alpha` is constrained to be the value of the node `F` and that whenever this constraint is applied the index of `alpha` should be increased by one.
 
@@ -97,6 +103,13 @@ In the above example, :math:`F`'s value gets updated everytime we calculate :mat
 
 .. code-block:: python
 
-    hg.add_edge({'F': F}, alpha, R.Rmean, label='F->alpha', index_offset=1, disposable=['F'])
+    hg.add_edge(
+        sources={'F': F},
+        target=alpha,
+        rel=R.equal('F'),
+        index_offset=1,
+        disposable=['F'], # <- add this line in
+        label='F->alpha',
+    )
 
 To set a condition for exiting a cycle requires an edge that is only followed for *some* values of it's input source. This is called conditional viability. You can learn more about this :doc:`here <viability>` or by following the navigation below. Otherwise, jump to :doc:`simulation </tutorial/simulation>`.
