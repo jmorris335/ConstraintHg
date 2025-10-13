@@ -114,8 +114,20 @@ hg.add_edge(
     index_offset=1,
     label='(height,gap,height_tol)->current floor',
 )
-hg.add_edge([gap, floor], floor_height, R.Rmultiply)
-hg.add_edge([gap, destination], dest_height, R.Rmultiply)
+hg.add_edge(
+    sources={'gap':gap, 'floor':floor},
+    target=floor_height,
+    rel=R.Rmultiply,
+    disposable=['floor'],
+    label='calc current floor height',
+)
+hg.add_edge(
+    sources={'gap':gap, 'floor':destination},
+    target=dest_height,
+    rel=R.Rmultiply,
+    disposable=['floor'],
+    label='calc current floor height',
+)
 hg.add_edge(
     sources={'s1':dest_height, 's2':height},
     target=error,
@@ -125,21 +137,21 @@ hg.add_edge(
 )
 
 ## Motor controller relationships
-hg.add_edge([KP, error], P, R.Rmultiply)
+hg.add_edge({'KP': KP, 'error': error}, P, R.Rmultiply, disposable=['error'])
 hg.add_edge(
     sources={'s1': KI, 's2': error, 's3': I, 's4': step},
     target=I,
     rel=R.mult_and_sum(['s1', 's2', 's4'], 's3'),
     index_via=lambda s2, s3, **kw : s2 == s3 + 1,
-    disposable=['s1', 's2', 's3'],
+    disposable=['s2', 's3'],
 )
 hg.add_edge(
     sources={'s1': error, 's2': alpha, 's3': error_f},
     target=error_f,
     rel=Rlowpassfilter, 
-    label='low_pass_filter->error_f',
     index_via=lambda s1, s3, **kw : s1 == s3 + 1,
-    edge_props=['DISPOSE_ALL'],
+    disposable=['s1', 's3'],
+    label='low_pass_filter->error_f',
 )
 hg.add_edge(error_f, error_f_prev, R.Rmean)
 hg.add_edge(
@@ -153,12 +165,13 @@ hg.add_edge(
     sources={'s1':'error_f_diff', 's2':step},
     target='error_derivative',
     rel=R.Rdivide,
+    disposable=['s1'],
 )
 hg.add_edge(
-    sources=[KD, 'error_derivative'],
+    sources={'KD': KD, 'error': 'error_derivative'},
     target=D,
     rel=R.Rmultiply,
-    edge_props='DISPOSE_ALL',
+    disposable=['error'],
     label='KD,error_f_diff->D',
 )
 hg.add_edge(
@@ -166,6 +179,7 @@ hg.add_edge(
     target=D,
     rel=R.Rmultiply,
     index_via=lambda s2, s3, **kw : s2 == s3 + 1,
+    disposable=['s2', 's3'],
     label='(KD, error_f, error_f_prev)->D',
 )
 hg.add_edge(
@@ -175,15 +189,43 @@ hg.add_edge(
     edge_props=['LEVEL', 'DISPOSE_ALL'],
     label='PID',
 )
-hg.add_edge([pid_input, min_pid], 'const_min_input', R.Rmax)
-hg.add_edge(['const_min_input', max_pid], u, R.Rmin)
+hg.add_edge(
+    sources={'pid': pid_input, 'min': min_pid},
+    target='const_min_input',
+    rel=R.Rmax,
+    disposable=['pid'],
+    label='apply_lower_bound_to_u',
+)
+hg.add_edge(
+    sources={'pid': 'const_min_input', 'max': max_pid},
+    target=u,
+    rel=R.Rmin,
+    disposable=['pid'],
+    label='apply_upper_bound_to_u',
+)
 
 ## Forces
 hg.add_edge(v_0, vel, R.Rmean)
 hg.add_edge(height_0, height, R.Rmean)
-hg.add_edge([mu_pass_m, occupancy], pass_m, R.Rmultiply)
-hg.add_edge([pass_m, empty_m, counterweight], mass, R.Rsum)
-hg.add_edge([g, mass], '/gm', R.Rmultiply, label='(g,mass)->/gm')
+hg.add_edge(
+    sources={'mu': mu_pass_m, 'occ': occupancy},
+    target=pass_m,
+    rel=R.Rmultiply,
+    disposable=['occ'],
+)
+hg.add_edge(
+    sources={'pass_m': pass_m, 'empty_m': empty_m, 'c_weight': counterweight},
+    target=mass,
+    rel=R.Rsum,
+    disposable=['pass_m'],
+)
+hg.add_edge(
+    sources={'g': g, 'm': mass},
+    target='/gm',
+    rel=R.Rmultiply,
+    disposable=['m'],
+    label='(g,mass)->/gm',
+)
 hg.add_edge(damping, 'neg damping', R.Rnegate)
 hg.add_edge(
     sources={'s1': damping_coef, 's2':vel},
@@ -223,8 +265,8 @@ hg.add_edge(
 )
 
 # Discrete Event Simulation (DES) and passengers
-boarding_edge = Edge('boarding edge', {}, boarding, R.Rsum, edge_props='LEVEL')
-exiting_edge = Edge('exiting edge', {}, exiting, R.Rsum, edge_props='LEVEL')
+boarding_edge = Edge('boarding edge', {}, boarding, R.Rsum, edge_props=['LEVEL', 'DISPOSE_ALL'])
+exiting_edge = Edge('exiting edge', {}, exiting, R.Rsum, edge_props=['LEVEL', 'DISPOSE_ALL'])
 
 def addPerson(label: str, goal_floor: int, start_floor: int, person_is_on: bool=False):
     """Adds a person to the model."""
@@ -292,31 +334,31 @@ debug_edges = {'(acc,vel,step)->vel'}
 t = hg.solve(
     target=height,
     inputs=inputs,
-    min_index=100,
+    min_index=5,
     to_print=False,
-    search_depth=10000,
+    search_depth=500,
+    logging_level=10,
     # debug_nodes=debug_nodes,
     # debug_edges=debug_edges,
 )
 print(t)
 
 # Visualize results
-nodes = [height, occupancy, error]
-times = hg.solve(time, min_index=100).values['time']
-found_value = t.values
-title='Hybrid Elevator Simulation'
-dashes = ['--', ':', '-.']
-legend = []
+# nodes = [height, occupancy, error]
+# times = hg.solve(time, min_index=len(t.values['height'])).values['time']
+# title='Hybrid Elevator Simulation'
+# dashes = ['--', ':', '-.']
+# legend = []
 
-for node in nodes:
-    dash = dashes[nodes.index(node) % len(dashes)]
-    legend_label = node.label + f', ({node.units})' if node.units is not None else ''
-    values = t.values[node.label]
-    plt.plot(times[:len(values)], values[:len(times)], 'k', lw=2, linestyle=dash) 
-    legend.append(legend_label)
+# for node in nodes:
+#     dash = dashes[nodes.index(node) % len(dashes)]
+#     legend_label = node.label + f', ({node.units})' if node.units is not None else ''
+#     values = t.values[node.label]
+#     plt.plot(times[:len(values)], values[:len(times)], 'k', lw=2, linestyle=dash) 
+#     legend.append(legend_label)
 
-plt.legend(legend)
-plt.ylabel('Variables')
-plt.xlabel('Time (s)')
-plt.title('Hybrid Elevator Simulation')
-plt.show()
+# plt.legend(legend)
+# plt.ylabel('Variables')
+# plt.xlabel('Time (s)')
+# plt.title('Hybrid Elevator Simulation')
+# plt.show()
