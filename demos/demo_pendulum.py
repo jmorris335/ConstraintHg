@@ -1,13 +1,33 @@
+"""
+This script shows a hypergraph of a planar pendulum, following along 
+with the tutorial for the `online documentation <https://constrainthg.readthedocs.io/en/latest/tutorial/tutorial.html`_.
+
+The demonstration walks through several properties of ConstraintHg, 
+including:
+1. Initializing a hypergraph
+2. Adding nodes
+3. Defining custom relations
+4. Adding edges to the hypergraph
+5. Working with cycles
+6. Conditional viability (``via`` and ``index_via`` statements)
+7. Disposing nodes
+8. Path printing
+9. General simulation
+10. Extracting results
+"""
+
 from constrainthg.hypergraph import Hypergraph, Node
 import constrainthg.relations as R
 
-# Define hypergraph
+########################################################################
+# 1. Initialize hypergraph
+########################################################################
 hg = Hypergraph()
 
-#########################
-### Nodes ###############
-#########################
 
+########################################################################
+# 2. Add variables (nodes) to the hypergraph
+########################################################################
 g = hg.add_node(Node('gravity', -10))
 r = hg.add_node(Node('radius', 0.5))
 theta0 = hg.add_node(Node('theta0', 3.14159/6))
@@ -23,18 +43,17 @@ alpha = hg.add_node(Node('alpha'))
 time_step = hg.add_node(Node('time_step', .03))
 time = Node('time', 0.)
 
-##########################
-### Relations ############
-##########################
 
+########################################################################
+# 3. Define custom relationships
+########################################################################
 def Rintegrate(step, slope, initial_val, *args, **kwargs):
     """First order Eulerian integrator."""
     return step * slope + initial_val
 
-##########################
-### Edges ################
-##########################
-
+########################################################################
+# 4. Add relations (edges) to the hypergraph
+########################################################################
 hg.add_edge(
     sources=theta0,
     target=theta,
@@ -84,6 +103,9 @@ hg.add_edge(
     label='(omega, c)->b2',
 )
 
+########################################################################
+# 5. This edge is where the index offset is applied in the single cycle
+########################################################################
 hg.add_edge(
     sources={'F': F},
     target=alpha,
@@ -93,6 +115,7 @@ hg.add_edge(
     # weight=100,
     label='F->alpha',
 )
+
 
 # This path adds damping to the model. It competes with the simple pendulum edge.
 # hg.add_edge(
@@ -104,6 +127,10 @@ hg.add_edge(
 #     label='(F, b2)->alpha',
 # )
 
+########################################################################
+# 6. The ``index_via`` method indicates edges that are only valid for
+#    certain indices of the source nodes
+########################################################################
 hg.add_edge(
     sources={'slope': alpha, 'initial_val': omega, 'step': time_step},
     target=omega,
@@ -113,6 +140,10 @@ hg.add_edge(
     label='(alpha, omega, time_step)->omega',
 )
 
+########################################################################
+# 7. Use a disposal argumenbt to only work with the latest index of a
+#    node
+########################################################################
 hg.add_edge(
     sources={'slope': omega, 'initial_val': theta, 'step': time_step},
     target=theta,
@@ -142,13 +173,16 @@ hg.add_edge(
     label='calc_resting_theta',
 )
 
-############################
-### Simulate ###############
-############################
 
 def main():
-    # print(hg.print_paths(alpha))
+########################################################################
+# 8. This prints all ways (paths) for calculating alpha
+########################################################################
+    print(hg.print_paths(alpha))
 
+########################################################################
+# 9. General simulation returns a recursive tree of the simulation path
+########################################################################
     output_tnode = hg.solve(
         target='theta',
         min_index=100,
@@ -159,10 +193,10 @@ def main():
     # print(output_tnode.print_tree())
     # plot()
 
-############################
-### Plot ###################
-############################
-
+########################################################################
+# 10. You can extract the results of the simulation from the TNode
+#     returned by ``Hypergraph.solve``, and plot them if desired.
+########################################################################
 def plot():
     """Optional function for visualizing output."""
     theta = hg.solve(theta, min_index=100)

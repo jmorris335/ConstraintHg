@@ -1,3 +1,13 @@
+"""
+This script demonstrates a constraint hypergraph for a more complex
+system. The elevator consists of three subsystems: a PID controller that
+determines the elevator's motor output, the actual carriage dynamics, and
+a discrete-event simulation of passengers entering the system.
+
+A visual overview of the hypergraph is available
+`here <https://github.com/jmorris335/ElevatorHypergraph>`_
+"""
+
 from constrainthg.hypergraph import Hypergraph, Node, Edge, TNode
 import constrainthg.relations as R
 
@@ -57,7 +67,7 @@ is_on = hg.add_node(Node('is_on', description='true if passenger is on carriage'
 boarding = hg.add_node(Node('num boarding', description='number of persons boarding the carriage', units='persons'))
 exiting = hg.add_node(Node('num exiting', description='number of persons exiting the carriage', units='persons'))
 
-# Custom relationships
+# Custom relationships used to build edges
 def Rlowpassfilter(s1, s2, s3, **kwargs):
     """Filters s1, where s2 is the filter constant and s3 is previous
     filtered values.
