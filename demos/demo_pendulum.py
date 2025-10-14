@@ -146,31 +146,39 @@ hg.add_edge(
 ### Simulate ###############
 ############################
 
-# print(hg.print_paths(alpha))
+def main():
+    # print(hg.print_paths(alpha))
 
-output_tnode = hg.solve(
-    target='theta',
-    min_index=100,
-    # logging_level=10,
-    # debug_edges=['(alpha, omega, t)->omega'],
-)
-print(output_tnode)
-# print(output_tnode.print_tree())
+    output_tnode = hg.solve(
+        target='theta',
+        min_index=100,
+        # logging_level=10,
+        # debug_edges=['(alpha, omega, t)->omega'],
+    )
+    print(output_tnode)
+    # print(output_tnode.print_tree())
+    # plot()
 
 ############################
 ### Plot ###################
 ############################
 
-theta = hg.solve(theta, min_index=100)
-thetas, omegas = theta.values['theta'], theta.values['omega']
-time = hg.solve(time, min_index=100).values['time']
+def plot():
+    """Optional function for visualizing output."""
+    theta = hg.solve(theta, min_index=100)
+    thetas, omegas = theta.values['theta'], theta.values['omega']
+    time = hg.solve(time, min_index=100).values['time']
 
-import matplotlib.pyplot as plt
-length = min(len(time), len(thetas), len(omegas))
-plt.plot(time[:length], thetas[:length])
-plt.plot(time[:length], omegas[:length])
-plt.legend(['theta', 'omega'])
-plt.xlabel('Time (s)')
-plt.ylabel('Rad, Rad/s')
-plt.title('Pendulum Simulation')
-plt.show()
+    import matplotlib.pyplot as plt
+    length = min(len(time), len(thetas), len(omegas))
+    plt.plot(time[:length], thetas[:length])
+    plt.plot(time[:length], omegas[:length])
+    plt.legend(['theta', 'omega'])
+    plt.xlabel('Time (s)')
+    plt.ylabel('Rad, Rad/s')
+    plt.title('Pendulum Simulation')
+    plt.show()
+
+
+if __name__ == '__main__':
+    main()

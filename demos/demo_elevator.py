@@ -1,4 +1,4 @@
-from constrainthg.hypergraph import Hypergraph, Node, Edge
+from constrainthg.hypergraph import Hypergraph, Node, Edge, TNode
 import constrainthg.relations as R
 
 import matplotlib.pyplot as plt #For visualization, not necessary for simulation
@@ -8,12 +8,12 @@ hg = Hypergraph()
 # Nodes
 ## Nodes (variables) for elevator stops
 floor = hg.add_node(Node('floor', description='the number of a floor', units='floor'))
-destination = hg.add_node(Node('destination floor', super_nodes=[floor], description='floor number of destination', units='floor'))
-curr_floor = hg.add_node(Node('current floor', super_nodes=[floor], description='current_floor', units='floor'))
-gap = hg.add_node(Node('interfloor height', 10., description='height of a single floor', units='m'))
-floor_height = hg.add_node(Node('height of floor', description='the height of a given floor', units='m'))
-dest_height = hg.add_node(Node('destination height', super_nodes=[floor_height], description='the height of the destination floor', units='m'))
-height_tolerance = hg.add_node(Node('height tolerance', 10, description='tolerance on measuring height', units='m'))
+destination_floor = hg.add_node(Node('destination_floor', super_nodes=[floor], description='floor number of destination', units='floor'))
+current_floor = hg.add_node(Node('current_floor', super_nodes=[floor], description='current_floor', units='floor'))
+gap = hg.add_node(Node('gap', 10., description='height of a single floor', units='m'))
+floor_height = hg.add_node(Node('floor_height', description='the height of a given floor', units='m'))
+dest_height = hg.add_node(Node('destination_height', super_nodes=[floor_height], description='the height of the destination floor', units='m'))
+height_tolerance = hg.add_node(Node('height_tolerance', 10, description='tolerance on measuring height', units='m'))
 
 ## Nodes for motor controller
 error = hg.add_node(Node('error', description='difference beetween destination and current position', units='m'))
@@ -108,25 +108,25 @@ hg.add_edge(
 ## Hybrid connection relationships
 hg.add_edge(
     sources={'s1': height, 's2': gap, 's3': height_tolerance},
-    target=curr_floor, 
+    target=current_floor, 
     rel=R.Rfloor_divide,
     via=lambda s1, s2, s3, **kwargs : abs(s1 % s2) < s3,
     index_offset=1,
     label='(height,gap,height_tol)->current floor',
 )
 hg.add_edge(
-    sources={'gap':gap, 'floor':floor},
+    sources={'gap': gap, 'floor': current_floor},
     target=floor_height,
     rel=R.Rmultiply,
     disposable=['floor'],
-    label='calc current floor height',
+    label='calc_current_floor_height',
 )
 hg.add_edge(
-    sources={'gap':gap, 'floor':destination},
+    sources={'gap':gap, 'floor':destination_floor},
     target=dest_height,
     rel=R.Rmultiply,
     disposable=['floor'],
-    label='calc current floor height',
+    label='calc destination floor height',
 )
 hg.add_edge(
     sources={'s1':dest_height, 's2':height},
@@ -161,19 +161,19 @@ hg.add_edge(
     index_via=lambda s1, s2, **kw : s1 == s2 + 1,
     edge_props=['DISPOSE_ALL'],
 )
-hg.add_edge(
-    sources={'s1':'error_f_diff', 's2':step},
-    target='error_derivative',
-    rel=R.Rdivide,
-    disposable=['s1'],
-)
-hg.add_edge(
-    sources={'KD': KD, 'error': 'error_derivative'},
-    target=D,
-    rel=R.Rmultiply,
-    disposable=['error'],
-    label='KD,error_f_diff->D',
-)
+# hg.add_edge(
+#     sources={'s1':'error_f_diff', 's2':step},
+#     target='error_derivative',
+#     rel=R.Rdivide,
+#     disposable=['s1'],
+# )
+# hg.add_edge(
+#     sources={'KD': KD, 'error': 'error_derivative'},
+#     target=D,
+#     rel=R.Rmultiply,
+#     disposable=['error'],
+#     label='KD,error_f_diff->D',
+# )
 hg.add_edge(
     sources={'s1': KD, 's2': error_f, 's3': error_f_prev},
     target=D,
@@ -252,8 +252,9 @@ hg.add_edge(
     sources={'s1': acc, 's2': vel, 's3': step,},
     target=vel,
     rel=R.mult_and_sum(['s1', 's3'], 's2'),
-    label='(acc,vel,step)->vel',
     index_via=lambda s1, s2, **kw : s1 == s2 + 1,
+    disposable=['s1', 's2'],
+    label='(acc,vel,step)->vel',
 )
 hg.add_edge(
     sources={'s1': vel, 's2': height, 's3': step},
@@ -277,24 +278,27 @@ def addPerson(label: str, goal_floor: int, start_floor: int, person_is_on: bool=
     is_exiting = hg.add_node(Node(f'{label} is exiting', description=f'true if passenger {label} is exiting carriage'))
 
     hg.add_edge(
-        sources={'s1': curr_floor, 's2':onX, 's3':startX, 's4':goalX},
+        sources={'s1': current_floor, 's2':onX, 's3':startX, 's4':goalX},
         target=onX,
         rel=Rset_status,
-        label=f'(curr_floor,{label}:is_on,start,goal)->{label} is on',
         index_via=lambda s1, s2, **kw : s1 == s2 + 1,
+        disposable=['s1', 's2'],
+        label=f'(curr_floor,{label}:is_on,start,goal)->{label} is on',
     )
     hg.add_edge(
-        sources={'s1': curr_floor, 's2':onX, 's3':startX, 's4':goalX},
+        sources={'s1': current_floor, 's2':onX, 's3':startX, 's4':goalX},
         target=is_boarding,
         rel=Ris_boarding,
         index_via=lambda s1, s2, **kw : s1 == s2 + 1,
+        disposable=['s1', 's2'],
         label=f'(curr_floor,{label}:is_on,start,goal)->{label} is boarding',
     )
     hg.add_edge(
-        sources={'s1': curr_floor, 's2':onX, 's3':goalX},
+        sources={'s1': current_floor, 's2':onX, 's3':goalX},
         target=is_exiting,
         rel=Ris_exiting,
         index_via=lambda s1, s2, **kw : s1 == s2 + 1,
+        disposable=['s1', 's2'],
         label=f'(curr_floor,{label}:is_on,goal)->{label} is exiting',
     )
     boarding_edge.add_source_node(is_boarding)
@@ -315,50 +319,48 @@ hg.add_edge(
     sources={'s1':occupancy, 's2':boarding, 's3':exiting},
     target=occupancy, 
     rel=lambda s1, s2, s3, **kwargs : s1 + s2 - s3,
-    index_via=lambda s1, s2, s3, **kw : s2== s3 and s2 == s1 + 1,
+    index_via=lambda s1, s2, s3, **kw : s2 == s3 and s2 == s1 + 1,
+    edge_props=['DISPOSE_ALL'],
     label='(occ, boarding, exiting)->occupancy',
 )
 
 # Simulation inputs
 inputs = {
-    curr_floor: 0,
+    current_floor: 0,
     error: 0,
-    destination: 1,
+    destination_floor: 1,
 }
 
-# Debugging options
-debug_nodes = {vel.label}
-debug_edges = {'(acc,vel,step)->vel'}
+def main():
+    t = hg.solve(
+        target=height,
+        inputs=inputs,
+        min_index=100,
+    )
+    print(t)
+    # visualize(t)
 
-# hg.printPaths('final value', toPrint=True)
-t = hg.solve(
-    target=height,
-    inputs=inputs,
-    min_index=5,
-    to_print=False,
-    search_depth=500,
-    logging_level=10,
-    # debug_nodes=debug_nodes,
-    # debug_edges=debug_edges,
-)
-print(t)
+def visualize(t: TNode):
+    """Optional function for ploting results."""
+    nodes = [height, occupancy, error]
+    times = hg.solve(time, min_index=len(t.values['height'])).values['time']
+    title='Hybrid Elevator Simulation'
+    dashes = ['--', ':', '-.']
+    legend = []
 
-# Visualize results
-# nodes = [height, occupancy, error]
-# times = hg.solve(time, min_index=len(t.values['height'])).values['time']
-# title='Hybrid Elevator Simulation'
-# dashes = ['--', ':', '-.']
-# legend = []
+    for node in nodes:
+        dash = dashes[nodes.index(node) % len(dashes)]
+        legend_label = node.label + f', ({node.units})' if node.units is not None else ''
+        values = t.values[node.label]
+        plt.plot(times[:len(values)], values[:len(times)], 'k', lw=2, linestyle=dash) 
+        legend.append(legend_label)
 
-# for node in nodes:
-#     dash = dashes[nodes.index(node) % len(dashes)]
-#     legend_label = node.label + f', ({node.units})' if node.units is not None else ''
-#     values = t.values[node.label]
-#     plt.plot(times[:len(values)], values[:len(times)], 'k', lw=2, linestyle=dash) 
-#     legend.append(legend_label)
+    plt.legend(legend)
+    plt.ylabel('Variables')
+    plt.xlabel('Time (s)')
+    plt.title('Hybrid Elevator Simulation')
+    plt.show()
 
-# plt.legend(legend)
-# plt.ylabel('Variables')
-# plt.xlabel('Time (s)')
-# plt.title('Hybrid Elevator Simulation')
-# plt.show()
+
+if __name__ == '__main__':
+    main()
