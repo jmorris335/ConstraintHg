@@ -36,4 +36,5 @@ jobs:
         flake8 ./src/constrainthg --count --exit-zero --max-complexity=10 --max-line-length=79 --statistics --extend-ignore=E252,E302
     - name: Test with pytest
       run: |
+        pip install constrainthg
         pytest
