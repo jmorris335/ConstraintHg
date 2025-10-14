@@ -40,7 +40,7 @@ hg.add_edge(
     },
     target=xn,
     rel=R.equal('x'), #<- We're just setting xn equal to x
-    via=lambda i, n, **kw : i >= n,
+    via=lambda i, n, **kw : i > n,
     label='x_i, i -> x_n',
 )
 
@@ -52,7 +52,7 @@ print(hg.print_paths(xn))
 inputs = {
     x: 0.0,
     n: 4, #<- Sets the maximum interation of the cycle to break at
-    velocity: 1.3,
+    velocity: 1.5,
     delta_t: 1.0,
 }
 
@@ -60,4 +60,4 @@ hg.solve(xn, inputs=inputs, to_print=True)
 
 # An equivalent way to simulate the system that doesn't require psuedo
 # uses the ``min_index`` argument instead:
-hg.solve(x, inputs=inputs, min_index=4, to_print=True)
+hg.solve(x, inputs=inputs, min_index=5, to_print=True)

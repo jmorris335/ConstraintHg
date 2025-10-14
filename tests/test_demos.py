@@ -27,7 +27,8 @@ class TestDemos():
         """Tests the linear motion demo."""
         stdout = self.run_demo('demo_linear_motion.py')
         assert "├◯─x[CYCLE]" in stdout
-        assert "└──x_n=4, index=4, cost=5" in stdout
+        assert "└──x_n=6, index=5" in stdout
+        assert "└──x=6, index=5" in stdout
 
     def test_elevator(self):
         """Tests the elevator demonstration."""
