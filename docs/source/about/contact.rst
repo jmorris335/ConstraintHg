@@ -10,6 +10,6 @@ The board also features more theoretical discussions, for instance how the softw
 
 .. end contact
 
-You can also reach out to John directly by emailing jhmrrs AT clemson DOT edu, or by contacting him via his `GitHub profile <https://github.com/jmorris335>`_.
+You can also reach out to the developers directly by emailing `constrainthg@gmail.com <mailto:constrainthg@gmail.com>`_.
 
 :ref:`genindex` \| :ref:`modindex` \| :ref:`Search <search>`

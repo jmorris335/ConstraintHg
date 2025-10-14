@@ -177,6 +177,8 @@ Because we added the disposable tag, our solver can handle the complexity of the
 
 .. note:: We solve the hypergraph twice in this example, since time is not part of the simulation path. That means we didn't need to know time to solve for :math:`\theta`.
 
+.. _logging:
+
 Logging
 -------
 
@@ -221,7 +223,7 @@ The level you pass determines how verbose the log output will be. ConstraintHg l
     - Warnings and errors are handled by the logging package (logging.WARNING and logging.ERROR). Note that these will *not* print to `sys.stderr`, though they will normally get raised and returned by the library.
 
 General Debugging
-_________
+_________________
 
 The log will show up in a file named ``constrainthg.log``. Here's an example log for simulating the pendulum at level 10 (DEBUG)::
 
