@@ -29,7 +29,7 @@ ConstraintHg enables the following functionalities:
 
 ### Licensing and Usage
 Author: [John Morris](https://www.people.clemson.edu/jhmrrs/)  
-Contact: Reach out to my GitHub profile ([jmorris335](https://github.com/jmorris335))  
+Contact: Use our [discussion board](https://github.com/jmorris335/ConstraintHg/discussions) or email us at [constrainthg@gmail.com](mailto:constrainthg@gmail.com) 
 Usage: Released under the Apache 2.0 license. This permissive license allows you can use, modify, and distribute this source code as desired (official terms are in the LICENSE file). The main limitations are that you'll need to include a copy of this license as well as the NOTICE file, and you'll have to state your changes. **We'd appreciate hearing if you used this for something helpful. Let us know by contacting us via our [discussion board](https://github.com/jmorris335/ConstraintHg/discussions)!**
 
 ### Install
