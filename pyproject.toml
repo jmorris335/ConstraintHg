@@ -10,7 +10,7 @@ dependencies = [
 ]
 requires-python = ">=3.1"
 authors = [
-  {name = "John Morris", email = "jhmrrs@clemson.edu"},
+  {name = "John Morris", email = "constrainthg@gmail.com"},
 ]
 description = "Kernel for building and simulating constraint hypergraphs."
 readme = "README.md"
