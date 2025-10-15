@@ -16,17 +16,17 @@ description = "Kernel for building and simulating constraint hypergraphs."
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE*"]
-keywords = ["hypergraphs", "systems engineering"]
+keywords = ["hypergraphs", "systems engineering", "modeling", "simulation"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Programming Language :: Python"
 ]
 
 [project.urls]
-Homepage = "https://constrainthg.readthedocs.io/en/latest/"
-Documentation = "https://constrainthg.readthedocs.io/en/latest/constrainthg.html"
-Repository = "https://github.com/jmorris335/ConstraintHg"
-"Bug Tracker" = "https://github.com/jmorris335/ConstraintHg/issues"
+homepage = "https://constrainthg.readthedocs.io/en/latest/"
+documentation = "https://constrainthg.readthedocs.io/en/latest/api/index.html"
+repository = "https://github.com/jmorris335/ConstraintHg"
+issues = "https://github.com/jmorris335/ConstraintHg/issues"
 
 [project.scripts]
 constrainthg-cli = "constrainthg:main_cli"
