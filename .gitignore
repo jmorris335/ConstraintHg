@@ -3,6 +3,7 @@ dev/
 .vscode/
 logs/
 *_stats
+*.log
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -145,3 +146,4 @@ cython_debug/
 
 # Mac Stuff
 *DS_Store
+Icon
