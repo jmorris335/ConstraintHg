@@ -1,6 +1,6 @@
-<h1 align="center">
+<p align="center">
 <img src="https://github.com/jmorris335/ConstraintHg/blob/14d9ea2db0e73d440dd4de1491ba0ffee0233d87/media/logo.svg?raw=true" width="300">
-</h1><br>
+</p>
 
 [![DOI](https://zenodo.org/badge/869248124.svg)](https://doi.org/10.5281/zenodo.15278018)
 [![Read the Docs](https://img.shields.io/readthedocs/constrainthg?link=https%3A%2F%2Fconstrainthg.readthedocs.io%2Fen%2Flatest%2Findex.html)](https://constrainthg.readthedocs.io/en/latest/)
