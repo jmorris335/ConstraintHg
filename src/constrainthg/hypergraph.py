@@ -41,7 +41,7 @@ def _append_to_dict_list(d: dict, key, val):
     return d
 
 
-def _make_list(val) -> list:
+def _enforce_list(val) -> list:
     """Ensures that the value is a list, or else a list containing the
     value."""
     if isinstance(val, list):
@@ -54,7 +54,7 @@ def _make_list(val) -> list:
         return [val]
 
 
-def _make_set(val) -> list:
+def _enforce_set(val) -> list:
     """Ensures that the value is a set, or else a set containing the
     value."""
     if isinstance(val, set):
@@ -301,8 +301,8 @@ class Node:
         self.description = description
         self.units = units
         self.is_constant = static_value is not None
-        self.super_nodes = set() if super_nodes is None else _make_set(super_nodes)
-        self.sub_nodes = set() if sub_nodes is None else _make_set(sub_nodes)
+        self.super_nodes = set() if super_nodes is None else _enforce_set(super_nodes)
+        self.sub_nodes = set() if sub_nodes is None else _enforce_set(sub_nodes)
         for sup_node in self.super_nodes:
             if not isinstance(sup_node, tuple):
                 sup_node.sub_nodes.add(self)
@@ -475,7 +475,7 @@ class Edge:
         eps = []
         if inputs is None:
             return eps
-        inputs = _make_list(inputs)
+        inputs = _enforce_list(inputs)
         for ep in inputs:
             if isinstance(ep, EdgeProperty):
                 eps.append(ep)
@@ -554,20 +554,9 @@ class Edge:
             via = self.via
         if isinstance(source_nodes, dict):
             return self.identify_labeled_source_nodes(source_nodes, rel, via)
-        source_nodes = _make_list(source_nodes)
+        source_nodes = _enforce_list(source_nodes)
         return self.identify_unlabeled_source_nodes(source_nodes, rel, via)
-
-    def identify_unlabeled_source_nodes(self, source_nodes: list,
-                                        rel: Callable, via: Callable) -> dict:
-        """Returns a {str: node} dictionary where each string is the
-        keyword label used in the rel and via methods."""
-        arg_keys = self.get_named_arguments([via, rel])
-        arg_keys = arg_keys.union({f's{i+1}' for i in range(len(source_nodes)
-                                                            - len(arg_keys))})
-
-        out = dict(zip(arg_keys, source_nodes))
-        return out
-
+    
     def identify_labeled_source_nodes(self, source_nodes: dict, rel: Callable,
                                       via: Callable) -> dict:
         """Returns a {str: node} dictionary where each string is the
@@ -586,6 +575,17 @@ class Edge:
             out[arg_key] = source_nodes[sn_key]
             del source_nodes[sn_key]
 
+        return out
+
+    def identify_unlabeled_source_nodes(self, source_nodes: list,
+                                        rel: Callable, via: Callable) -> dict:
+        """Returns a {str: node} dictionary where each string is the
+        keyword label used in the rel and via methods."""
+        arg_keys = self.get_named_arguments([via, rel])
+        arg_keys = arg_keys.union({f's{i+1}' for i in range(len(source_nodes)
+                                                            - len(arg_keys))})
+
+        out = dict(zip(arg_keys, source_nodes))
         return out
 
     def process(self, source_tnodes: list):
@@ -1307,7 +1307,7 @@ class Hypergraph:
                 inputs[key] = node
             return node_list, inputs
 
-        nodes = _make_list(nodes)
+        nodes = _enforce_list(nodes)
         node_list = [self.insert_node(n) for n in nodes]
         inputs = [self.get_node(node) for node in nodes
                   if not isinstance(node, tuple)]
