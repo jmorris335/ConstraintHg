@@ -424,6 +424,7 @@ class Edge:
             A dictionary of alternate node labels if a source node is a
             super set, format: {node_label : List[alt_node_label,]}
         """
+        self.label = label
         self.rel = rel
         self.via = self.via_true if via is None else via
         self.index_via = self.via_true if index_via is None else index_via
@@ -431,7 +432,6 @@ class Edge:
         self.create_found_tnodes_dict()
         self.target = target
         self.weight = abs(weight)
-        self.label = label
         self.index_offset = index_offset
         self.disposable = disposable
         self.edge_props = self.setup_edge_properties(edge_props)
@@ -559,23 +559,36 @@ class Edge:
     
     def identify_labeled_source_nodes(self, source_nodes: dict, rel: Callable,
                                       via: Callable) -> dict:
-        """Returns a {str: node} dictionary where each string is the
-        keyword label used in the rel and via methods."""
-        out = {}
-        arg_keys = self.get_named_arguments([rel, via])
-        arg_keys = arg_keys.union({str(key) for key in source_nodes})
-
-        for arg_key in arg_keys:
-            if len(source_nodes) == 0:
-                return out
+        """Makes best effort to match each relational argument in rel
+        and via with a passed source node. Returns a {str: node}
+        dictionary."""
+        for arg_key in self.get_named_arguments([rel, via]):
             if arg_key in source_nodes:
-                sn_key = arg_key
+                continue
             else:
-                sn_key = list(source_nodes.keys())[0]
-            out[arg_key] = source_nodes[sn_key]
+                sn_key = self.find_mislabeled_source_node(source_nodes, rel, via)
+                msg = f'Argument "{arg_key}" not passed to {self.label}.'
+                if sn_key is None:
+                    logger.warning(msg)
+                    continue
+                msg += f' Supplying "{sn_key}" instead.'
+                logger.warning(msg)
+
+            source_nodes[arg_key] = source_nodes[sn_key]
             del source_nodes[sn_key]
 
-        return out
+        return source_nodes
+    
+    def find_mislabeled_source_node(self, source_nodes: dict,
+                                    rel: Callable, via: Callable) -> str:
+        """Returns the key of the first source nodes whose label is
+        unused for edge processing."""
+        arg_keys = self.get_named_arguments([rel, via])
+        for sn_key in source_nodes:
+            if sn_key in arg_keys:
+                continue
+            return sn_key
+        return None
 
     def identify_unlabeled_source_nodes(self, source_nodes: list,
                                         rel: Callable, via: Callable) -> dict:

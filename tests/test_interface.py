@@ -1,11 +1,12 @@
 from constrainthg.hypergraph import Hypergraph, Node
 from constrainthg import relations as R
 
+import logging
 import pytest
 
 class TestHypergraphInterface:
     def test_pseudonodes(self):
-        "Test pseudonode functionality."
+        """Test pseudonode functionality."""
         hg = Hypergraph()
         hg.add_edge('A', 'B', R.Rfirst, weight=5)
         hg.add_edge({'b':'B', 'b_pseudo':('b', 'index')}, 'Index', R.equal('b_pseudo'))
@@ -182,3 +183,39 @@ class TestHypergraphInterface:
         hg.add_edge('A', 'B', R.Rsum)
         hg.add_edge('B', 'C', R.Rmultiply)
         assert isinstance(str(hg), str)
+
+class TestHypergraphRelationProcessing:
+    def divide(self, top, bottom, *args, **kwargs):
+        return top / bottom
+    
+    def test_argument_reassignment(self):
+        hg = Hypergraph()
+        hg.add_edge({'top':'A', 'denominator':'B'}, 'C', self.divide)
+        C = hg.solve('C', {'A': 16, 'B': 8})
+        assert C.value == 2, "Unfound label(s) not reassigned."
+
+    def test_reassignment_argument_warning(self, caplog):
+        """Tests whether a warning is raised for an reassigned arguments"""
+        with caplog.at_level(logging.WARNING):
+            hg = Hypergraph()
+            hg.add_edge({'top':'A', 'denominator':'B'}, 'C', self.divide, label='EDGE1')
+            try:
+                C = hg.solve('C', {'A': 16, 'B': 8})
+            except:
+                pass
+        
+        msg = 'Argument "bottom" not passed to EDGE1. Supplying "denominator" instead'
+        assert msg in caplog.text, "Warning for reassigned source node not logged."
+
+    def test_unused_argument_warning(self, caplog):
+        """Tests whether a warning is raised for an reassigned arguments"""
+        with caplog.at_level(logging.WARNING):
+            hg = Hypergraph()
+            hg.add_edge({'top':'A'}, 'C', self.divide, label='EDGE1')
+            try:
+                C = hg.solve('C', {'A': 16, 'B': 8})
+            except:
+                pass
+        
+        msg = 'Argument "bottom" not passed to EDGE1.'
+        assert msg in caplog.text, "Warning for unfound source node not logged."
