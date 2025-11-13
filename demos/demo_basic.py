@@ -13,7 +13,7 @@ hg.add_edge(['D', 'E'], 'F', R.Rsum)  # D + E = F
 hg.add_edge('F', 'C', R.Rnegate)      # -F = C
 
 # Print all the possible paths for simulating C
-print(hg.print_paths('C'))
+print(hg.summary('C'))
 
 # Perform two simulations for C from two different sets of inputs
 print("**Inputs A and E**")

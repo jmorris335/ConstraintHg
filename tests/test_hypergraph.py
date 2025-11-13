@@ -145,7 +145,7 @@ class TestHypergraphBehavior():
         hg.add_edge(['A', 'B'], 'T', R.Rsum, via=lambda s1, s2 : min(s1, s2) >= 5)
 
         t = hg.solve('T', {'S1': 1, 'S2': 4})
-        print(t.print_tree())
+        print(t.get_tree())
         assert t.value == 10
         assert t.cost == 6
 

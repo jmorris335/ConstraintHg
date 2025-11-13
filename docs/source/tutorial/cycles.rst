@@ -32,7 +32,7 @@ Cycles enable arbitrary indexing of a variable, allowing us to express these rec
     
     *A non-simple hypergraph with a cycle*
 
-If you call the ``print_paths`` method on the `above constraint hypergraph <https://github.com/jmorris335/ConstraintHg/blob/main/demos/demo_linear_motion.py>`_, you'll get the following output:
+If you print the ``summary`` method on the `above constraint hypergraph <https://github.com/jmorris335/ConstraintHg/blob/main/demos/demo_linear_motion.py>`_, you'll get the following output:
 
 .. code-block::
 

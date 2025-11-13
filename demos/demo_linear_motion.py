@@ -46,7 +46,7 @@ hg.add_edge(
 
 # Show model structure. Note the cycles
 print(hg)
-print(hg.print_paths(xn))
+print(hg.summary(xn))
 
 # Simulate the system.
 inputs = {

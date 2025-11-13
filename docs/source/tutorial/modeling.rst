@@ -137,7 +137,7 @@ Let's start by printing all the possible paths for calculating the angular accel
 
 .. code-block:: python
 
-    print(hg.print_paths(alpha))
+    print(hg.summary(alpha))
 
 You should get the following output in your terminal:
 

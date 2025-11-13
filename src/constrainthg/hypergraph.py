@@ -144,7 +144,7 @@ class TNode:
         self.max_display_length = max_display_length
         self.cost = cost
 
-    def print_conn(self, last=True) -> str:
+    def get_conn(self, last=True) -> str:
         """Selecter function for the connector string on the tree
         print."""
         if last:
@@ -159,15 +159,15 @@ class TNode:
             return self.conn.tee_stop
         return self.conn.tee
 
-    def print_tree(self, last=True, header='',
+    def get_tree(self, last=True, header='',
                    checked_edges: list=None) -> str:
-        """Prints the tree centered at the TNode
+        """Returns the tree centered at the TNode as a str.
 
         Adapted from https://stackoverflow.com/a/76691030/15496939,
         PierreGtch, under CC BY-SA 4.0.
         """
         out = str()
-        out += header + self.print_conn(last) + str(self)
+        out += header + self.get_conn(last) + str(self)
         if checked_edges is None:
             checked_edges = []
         if self.gen_edge_label in checked_edges:
@@ -179,7 +179,7 @@ class TNode:
         for i, child in enumerate(self.children):
             c_header = header + (self.conn.blank if last else self.conn.pipe)
             c_last = i == len(self.children) - 1
-            out += child.print_tree(header=c_header,
+            out += child.get_tree(header=c_header,
                                     last=c_last,
                                     checked_edges=checked_edges)
         return out
@@ -916,7 +916,7 @@ class Pathfinder:
                        f'Exploring {t.node_label}, index: {t.index}, '
                        + 'leading edges: '
                        + ', '.join(str(le) for le in leading_edges)
-                       + f'\n{t.print_tree()}')
+                       + f'\n{t.get_tree()}')
 
         for i, edge in enumerate(leading_edges):
             if edge.label not in self.explored_edges:
@@ -1461,7 +1461,7 @@ class Hypergraph:
             if logging_level is not None:
                 self.set_logging_level(prev_logging_level)
         if to_print:
-            print("No solutions found" if t is None else t.print_tree())
+            print("No solutions found" if t is None else t.get_tree())
         return t
 
     def process_source_nodes(self, inputs):
@@ -1485,20 +1485,21 @@ class Hypergraph:
                           if node.is_constant and node.label not in inputs]
         return constant_nodes
 
-    def print_paths(self, target, to_print: bool=False) -> str:
-        """Prints the hypertree of all paths to the target node."""
+    def summary(self, target, to_print: bool=False) -> str:
+        """Returns a str of the hypertree of all paths to the target
+        node."""
         try:
             target_node = self.get_node(target)
         except KeyError:
             msg = f'Target node {str(target)} not found in Hypergraph.'
             raise KeyError(msg)
-        target_tnode = self._print_paths_helper(target_node)
-        out = target_tnode.print_tree()
+        target_tnode = self._summary_helper(target_node)
+        out = target_tnode.get_tree()
         if to_print:
             print(out)
         return out
 
-    def _print_paths_helper(self, node: Node, join_status='none',
+    def _summary_helper(self, node: Node, join_status='none',
                            trace: list=None) -> TNode:
         """Recursive helper to print all paths to the target node."""
         if isinstance(node, tuple):
@@ -1516,7 +1517,7 @@ class Hypergraph:
             for i, child in enumerate(edge.source_nodes.values()):
                 c_join_status = self.get_join_status(i, len(edge.source_nodes))
                 c_trace = t.trace + [(t, edge)]
-                c_tnode = self._print_paths_helper(child, c_join_status, c_trace)
+                c_tnode = self._summary_helper(child, c_join_status, c_trace)
                 if c_tnode is None:
                     continue
                 child_cost += c_tnode.cost if c_tnode.cost is not None else 0.0

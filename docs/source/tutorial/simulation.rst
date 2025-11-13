@@ -15,7 +15,7 @@ First, make sure that all the nodes are connected to each other correctly by rec
 
 .. code-block:: python
 
-    print(hg.printPaths('theta'))
+    print(hg.summary('theta'))
 
 You should get the following output:
 
@@ -55,7 +55,7 @@ This returns:
 
     alpha=-10, index=2, cost=5
 
-The object returned by ``Hypergraph.solve`` is a :ref:`TNode <tnode_class>`, which stands for tree node. It recursively defines the simulation path ending at :math:`\alpha`, and allows us to trace back out the simulation. For instance, calling ``alpha_tnode.print_tree()`` returns the simulation:
+The object returned by ``Hypergraph.solve`` is a :ref:`TNode <tnode_class>`, which stands for tree node. It recursively defines the simulation path ending at :math:`\alpha`, and allows us to trace back out the simulation. For instance, calling ``alpha_tnode.get_tree()`` returns the simulation:
 
 .. code-block::
 

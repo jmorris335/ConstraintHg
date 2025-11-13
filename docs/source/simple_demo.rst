@@ -37,7 +37,7 @@ We can verify that the hypergraph was made correctly by tracing all possible pat
 
 .. code-block:: python
 
-    print(hg.print_paths('C'))
+    print(hg.summary('C'))
 
 This should give us the following output. Hyperedges are indicated with a `◯`, with the last source separated from other edges with a `●`. ::
 

@@ -178,7 +178,7 @@ def main():
 ########################################################################
 # 8. This prints all ways (paths) for calculating alpha
 ########################################################################
-    print(hg.print_paths(alpha))
+    print(hg.summary(alpha))
 
 ########################################################################
 # 9. General simulation returns a recursive tree of the simulation path
@@ -190,7 +190,7 @@ def main():
         # debug_edges=['(alpha, omega, t)->omega'],
     )
     print(output_tnode)
-    # print(output_tnode.print_tree())
+    # print(output_tnode.get_tree())
     # plot()
 
 ########################################################################
