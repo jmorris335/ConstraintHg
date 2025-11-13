@@ -30,7 +30,6 @@ Notes:
 - Each relationship should have ``*args``, and ``**kwargs`` as its
   arguments and only arguments. Specific keywords referenced in kwargs
   should be ``s1``, ``s2``, ... only.
-
 """
 
 import numpy as np

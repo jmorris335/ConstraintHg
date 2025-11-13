@@ -47,7 +47,7 @@ time = Node('time', 0.)
 ########################################################################
 # 3. Define custom relationships
 ########################################################################
-def Rintegrate(step, slope, initial_val, *args, **kwargs):
+def Rintegrate(step, slope, initial_val):
     """First order Eulerian integrator."""
     return step * slope + initial_val
 
@@ -135,7 +135,7 @@ hg.add_edge(
     sources={'slope': alpha, 'initial_val': omega, 'step': time_step},
     target=omega,
     rel=Rintegrate,
-    index_via=lambda slope, initial_val, **kw: slope - 1 == initial_val,
+    index_via=lambda slope, initial_val: slope - 1 == initial_val,
     disposable=['slope', 'intial_val'],
     label='(alpha, omega, time_step)->omega',
 )
@@ -148,7 +148,7 @@ hg.add_edge(
     sources={'slope': omega, 'initial_val': theta, 'step': time_step},
     target=theta,
     rel=Rintegrate,
-    index_via=lambda slope, initial_val, **kw: slope - 1 == initial_val,
+    index_via=lambda slope, initial_val: slope - 1 == initial_val,
     disposable=['slope', 'intial_val'],
     label='(omega, theta, time_step)->theta',
 )
@@ -168,7 +168,7 @@ hg.add_edge(
     sources={'s1': theta, 's2': omega}, 
     target='resting_theta', 
     rel=R.equal('s1'), 
-    via=lambda s1, s2, *args, **kwargs : max(abs(s1), abs(s2)) < .05,
+    via=lambda s1, s2: max(abs(s1), abs(s2)) < .05,
     edge_props=['LEVEL', 'DISPOSE_ALL'],
     label='calc_resting_theta',
 )

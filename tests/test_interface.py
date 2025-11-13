@@ -185,10 +185,63 @@ class TestHypergraphInterface:
         assert isinstance(str(hg), str)
 
 class TestHypergraphRelationProcessing:
-    def divide(self, top, bottom, *args, **kwargs):
+    def divide(self, top, bottom):
         return top / bottom
     
+    def test_argument_handling(self):
+        """Tests whether methods with different parameter types can be
+        called by the solver."""
+        f_normal = lambda a, b : a + b
+        f_args = lambda *args : sum(args)
+        f_var_args = lambda a, *args : sum(args) + a
+        f_var_kwargs = lambda a, **kwargs : sum(kwargs.values()) + a
+        f_full = lambda a, *args, **kwargs : a + sum(args) + sum(kwargs.values())
+        f_positional = lambda a, b, /, c : a + b + c
+        f_position_var = lambda a, /, b, *args : a + b + sum(args)
+        f_star = lambda a, *, b, c : a + b + c
+
+        hg = Hypergraph()
+        hg.add_edge(['A', 'B'], 'T1', f_normal)
+        hg.add_edge(['A', 'B', 'C'], 'T2', f_args)
+        hg.add_edge({'a': 'A', 'b': 'B'}, 'T3', f_var_args)
+        hg.add_edge(['A', 'B'], 'T4', f_var_args)
+        hg.add_edge({'a': 'A', 'b': 'B'}, 'T5', f_var_kwargs)
+        hg.add_edge({'a': 'A', 'b': 'B'}, 'T6', f_full)
+        hg.add_edge({'a': 'A', 'b': 'B', 'c': 'C'}, 'T7', f_positional)
+        hg.add_edge({'a': 'A', 'b': 'B', 'c': 'C'}, 'T8', f_position_var)
+        hg.add_edge({'a': 'A', 'b': 'B', 'c': 'C'}, 'T9', f_star)
+
+        inputs = {'A': 1, 'B': 9, 'C': 100}
+        t1 = hg.solve('T1', inputs)
+        assert t1.value == 10, "Did not map lists to positions."
+        t2 = hg.solve('T2', inputs)
+        assert t2.value == 110, "Did not assign inputs as variable arguments."
+        t3 = hg.solve('T3', inputs)
+        assert t3.value == 10, "Did not assign unused inputs to variable arguments."
+        t4 = hg.solve('T4', inputs)
+        assert t4.value == 10, "Did not assign unused inputs to labeled arguments."
+        t5 = hg.solve('T5', inputs)
+        assert t5.value == 10, "Did not assign unused inputs to keyword arguments."
+        t6 = hg.solve('T6', inputs)
+        assert t6.value == 10, "Did not handle positional and keyword variable arguments."
+        t7 = hg.solve('T7', inputs)
+        assert t7.value == 110, "Did not assign forced positional arguments."
+        t8 = hg.solve('T8', inputs)
+        assert t8.value == 110, "Did not assign forced positional arguments with variable arguments."
+        t9 = hg.solve('T9', inputs)
+        assert t9.value == 110, "Did not handle keyword only arguments."
+
+    def test_argument_filtering(self):
+        """Tests whether the solver can select the appropriate arguments
+        for a function."""
+        hg = Hypergraph()
+        hg.add_edge({'top':'A', 'bottom':'B', 'extra':'Z'}, 'C', self.divide)
+        C = hg.solve('C', {'A': 16, 'B': 8, 'Z': -10})
+        assert C.value == 2, "Extra value fouled solution."
+    
     def test_argument_reassignment(self):
+        """Tests whether the solver automatically takes unused inputs 
+        and assigns them to unpassed arguments."""
         hg = Hypergraph()
         hg.add_edge({'top':'A', 'denominator':'B'}, 'C', self.divide)
         C = hg.solve('C', {'A': 16, 'B': 8})
@@ -208,7 +261,7 @@ class TestHypergraphRelationProcessing:
         assert msg in caplog.text, "Warning for reassigned source node not logged."
 
     def test_unused_argument_warning(self, caplog):
-        """Tests whether a warning is raised for an reassigned arguments"""
+        """Tests whether a warning is raised for an reassigned arguments."""
         with caplog.at_level(logging.WARNING):
             hg = Hypergraph()
             hg.add_edge({'top':'A'}, 'C', self.divide, label='EDGE1')
@@ -219,3 +272,15 @@ class TestHypergraphRelationProcessing:
         
         msg = 'Argument "bottom" not passed to EDGE1.'
         assert msg in caplog.text, "Warning for unfound source node not logged."
+
+    def test_unpassed_argument(self, caplog):
+        """Tests whether a method had all its arguments correctly 
+        assigned."""
+        fh_slash = lambda a, /, b : a + b
+        hg = Hypergraph()
+        hg.add_edge(['A', 'B'], 'T1', fh_slash, label='SLASH_EDGE')
+        try:
+            hg.solve('T1', {'A': 1, 'B': 2})
+        except:
+            pass
+        assert '"a" not provided for SLASH_EDGE' in caplog.text

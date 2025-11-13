@@ -68,7 +68,7 @@ boarding = hg.add_node(Node('num boarding', description='number of persons board
 exiting = hg.add_node(Node('num exiting', description='number of persons exiting the carriage', units='persons'))
 
 # Custom relationships used to build edges
-def Rlowpassfilter(s1, s2, s3, **kwargs):
+def Rlowpassfilter(s1, s2, s3):
     """Filters s1, where s2 is the filter constant and s3 is previous
     filtered values.
     """
@@ -120,7 +120,7 @@ hg.add_edge(
     sources={'s1': height, 's2': gap, 's3': height_tolerance},
     target=current_floor, 
     rel=R.Rfloor_divide,
-    via=lambda s1, s2, s3, **kwargs : abs(s1 % s2) < s3,
+    via=lambda s1, s2, s3 : abs(s1 % s2) < s3,
     index_offset=1,
     label='(height,gap,height_tol)->current floor',
 )
@@ -152,14 +152,14 @@ hg.add_edge(
     sources={'s1': KI, 's2': error, 's3': I, 's4': step},
     target=I,
     rel=R.mult_and_sum(['s1', 's2', 's4'], 's3'),
-    index_via=lambda s2, s3, **kw : s2 == s3 + 1,
+    index_via=lambda s2, s3: s2 == s3 + 1,
     disposable=['s2', 's3'],
 )
 hg.add_edge(
     sources={'s1': error, 's2': alpha, 's3': error_f},
     target=error_f,
     rel=Rlowpassfilter, 
-    index_via=lambda s1, s3, **kw : s1 == s3 + 1,
+    index_via=lambda s1, s3: s1 == s3 + 1,
     disposable=['s1', 's3'],
     label='low_pass_filter->error_f',
 )
@@ -168,7 +168,7 @@ hg.add_edge(
     sources={'s1':error_f, 's2':error_f_prev},
     target='error_f_diff',
     rel=R.Rsubtract,
-    index_via=lambda s1, s2, **kw : s1 == s2 + 1,
+    index_via=lambda s1, s2: s1 == s2 + 1,
     edge_props=['DISPOSE_ALL'],
 )
 # hg.add_edge(
@@ -188,7 +188,7 @@ hg.add_edge(
     sources={'s1': KD, 's2': error_f, 's3': error_f_prev},
     target=D,
     rel=R.Rmultiply,
-    index_via=lambda s2, s3, **kw : s2 == s3 + 1,
+    index_via=lambda s2, s3: s2 == s3 + 1,
     disposable=['s2', 's3'],
     label='(KD, error_f, error_f_prev)->D',
 )
@@ -262,7 +262,7 @@ hg.add_edge(
     sources={'s1': acc, 's2': vel, 's3': step,},
     target=vel,
     rel=R.mult_and_sum(['s1', 's3'], 's2'),
-    index_via=lambda s1, s2, **kw : s1 == s2 + 1,
+    index_via=lambda s1, s2: s1 == s2 + 1,
     disposable=['s1', 's2'],
     label='(acc,vel,step)->vel',
 )
@@ -271,7 +271,7 @@ hg.add_edge(
     target=height,
     rel=R.mult_and_sum(['s1', 's3'], 's2'),
     label='(vel,height,step)->height',
-    index_via=lambda s1, s2, **kw : s1 == s2 + 1,
+    index_via=lambda s1, s2: s1 == s2 + 1,
     disposable=['s1', 's2'],
 )
 
@@ -291,7 +291,7 @@ def addPerson(label: str, goal_floor: int, start_floor: int, person_is_on: bool=
         sources={'s1': current_floor, 's2':onX, 's3':startX, 's4':goalX},
         target=onX,
         rel=Rset_status,
-        index_via=lambda s1, s2, **kw : s1 == s2 + 1,
+        index_via=lambda s1, s2: s1 == s2 + 1,
         disposable=['s1', 's2'],
         label=f'(curr_floor,{label}:is_on,start,goal)->{label} is on',
     )
@@ -299,7 +299,7 @@ def addPerson(label: str, goal_floor: int, start_floor: int, person_is_on: bool=
         sources={'s1': current_floor, 's2':onX, 's3':startX, 's4':goalX},
         target=is_boarding,
         rel=Ris_boarding,
-        index_via=lambda s1, s2, **kw : s1 == s2 + 1,
+        index_via=lambda s1, s2: s1 == s2 + 1,
         disposable=['s1', 's2'],
         label=f'(curr_floor,{label}:is_on,start,goal)->{label} is boarding',
     )
@@ -307,7 +307,7 @@ def addPerson(label: str, goal_floor: int, start_floor: int, person_is_on: bool=
         sources={'s1': current_floor, 's2':onX, 's3':goalX},
         target=is_exiting,
         rel=Ris_exiting,
-        index_via=lambda s1, s2, **kw : s1 == s2 + 1,
+        index_via=lambda s1, s2: s1 == s2 + 1,
         disposable=['s1', 's2'],
         label=f'(curr_floor,{label}:is_on,goal)->{label} is exiting',
     )
@@ -328,8 +328,8 @@ hg.insert_edge(exiting_edge)
 hg.add_edge(
     sources={'s1':occupancy, 's2':boarding, 's3':exiting},
     target=occupancy, 
-    rel=lambda s1, s2, s3, **kwargs : s1 + s2 - s3,
-    index_via=lambda s1, s2, s3, **kw : s2 == s3 and s2 == s1 + 1,
+    rel=lambda s1, s2, s3 : s1 + s2 - s3,
+    index_via=lambda s1, s2, s3: s2 == s3 and s2 == s1 + 1,
     edge_props=['DISPOSE_ALL'],
     label='(occ, boarding, exiting)->occupancy',
 )

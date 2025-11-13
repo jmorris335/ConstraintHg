@@ -523,9 +523,9 @@ class Edge:
             return {key: kwargs[key] for key in kwargs
                     if key in self.og_source_nodes}
 
-        def level_check(*args, **kwargs):
+        def level_check(**kwargs):
             """Returns true if all passed indices are equivalent."""
-            if not self.og_via(*args, **kwargs):
+            if not self.filtered_call(kwargs, self.og_via): #ffff00 Add caller
                 return False
             idxs = {val for key, val in kwargs.items() if key in tuple_idxs}
             return len(idxs) == 1
@@ -538,7 +538,7 @@ class Edge:
         """Returns keywords for any keyed, required arguments
         (non-default)."""
         out = set()
-        for method in methods:
+        for method in _enforce_list(methods):
             for p in signature(method).parameters.values():
                 if p.kind == p.POSITIONAL_OR_KEYWORD and p.default is p.empty:
                     out.add(p.name)
@@ -595,9 +595,8 @@ class Edge:
         """Returns a {str: node} dictionary where each string is the
         keyword label used in the rel and via methods."""
         arg_keys = self.get_named_arguments([via, rel])
-        arg_keys = arg_keys.union({f's{i+1}' for i in range(len(source_nodes)
-                                                            - len(arg_keys))})
-
+        num_unnamed_args = len(source_nodes) - len(arg_keys)
+        arg_keys = arg_keys.union({f's{i+1}' for i in range(num_unnamed_args)})
         out = dict(zip(arg_keys, source_nodes))
         return out
 
@@ -653,11 +652,49 @@ class Edge:
         indices."""
         if None in source_vals:
             return None
-        if source_indices is not None and not self.index_via(**source_indices):
+        if (source_indices is not None and
+            not self.filtered_call(source_indices, self.index_via)):
             return None
-        if self.via(**source_vals):
-            return self.rel(**source_vals)
+        if self.filtered_call(source_vals, self.via):
+            return self.filtered_call(source_vals, self.rel)
+        # if self.via(**source_vals):
+        #     return self.rel(**source_vals)
         return None
+    
+    def filtered_call(self, source_vals: dict, method: Callable):
+        """Calls the method after filtering the ``source_vals`` to only 
+        include arguments to the method, making sure to handle issues 
+        with `position <https://docs.python.org/3.5/library/inspect.html#inspect.Parameter.kind>`_."""
+        args, kwargs = [], {}
+        remaining_keys = list(source_vals.keys())
+        has_var_args, has_var_kwargs = False, False
+
+        for p in signature(method).parameters.values():
+            p_name, p_kind = p.name, p.kind
+
+            if p_name in source_vals:
+                if p_kind == p.POSITIONAL_ONLY:
+                    args.append(source_vals[p_name])
+                elif p_kind == p.POSITIONAL_OR_KEYWORD:
+                    args.append(source_vals[p_name])
+                elif p_kind == p.KEYWORD_ONLY:
+                    kwargs[p_name] = source_vals[p_name]
+                remaining_keys.remove(p_name)
+            else:
+                if p_kind == p.VAR_POSITIONAL:
+                    has_var_args = True
+                elif p_kind == p.VAR_KEYWORD:
+                    has_var_kwargs = True
+                else:
+                    logger.error(f'"{p_name}" not provided for {self.label}')            
+
+        if len(remaining_keys) != 0:
+            if has_var_kwargs:
+                kwargs.update({k: source_vals[k] for k in remaining_keys})
+            elif has_var_args:
+                args.extend([source_vals[k] for k in remaining_keys])
+
+        return method(*args, **kwargs)
 
     def dispose_solved_tnodes(self, source_tnodes: list):
         """Once a TNode has been processed, it is removed from the
