@@ -19,13 +19,11 @@ For the example above, we might write a lambda method as the following:
 
 .. code-block:: python
 
-    via=lambda l, *args, **kwargs : l != 0
+    via=lambda l : l != 0
 
 Note that the arguments for a ``via`` statement are the dict keys of the source nodes passed to an edge.
 
-.. important:: ``via`` statements act the same as relations, meaning that they have to have ``*args, **kwargs`` given as arguments.
-
-Conditional viability is a powerful concept that allows us to create relationships between only a subset of values in a variable. For instance, say you have a variable for whether a door is open, with possible values ``['is_open', 'is_closed']``, and another variable specifying whether the door is locked, with values ``['is_locked', 'is_unlocked']``. You want to indicate that the door is always unlocked if it is open. But you don't necessarily know if the door is locked if it's closed. In order to add the edge, you'll need to add a viability method that resolves to true only if the door is open. Such an edge might look like: ``lambda door_status, *args, **kwargs : door_status == 'is_open'``. Then, if the door is not open, the edge will not be solved.
+Conditional viability is a powerful concept that allows us to create relationships between only a subset of values in a variable. For instance, say you have a variable for whether a door is open, with possible values ``['is_open', 'is_closed']``, and another variable specifying whether the door is locked, with values ``['is_locked', 'is_unlocked']``. You want to indicate that the door is always unlocked if it is open. But you don't necessarily know if the door is locked if it's closed. In order to add the edge, you'll need to add a viability method that resolves to true only if the door is open. Such an edge might look like: ``lambda door_status : door_status == 'is_open'``. Then, if the door is not open, the edge will not be solved.
 
 Psuedo Nodes
 ------------
@@ -43,8 +41,8 @@ We can access any property defined for the `:ref:`Node <node_class>`` class: ``i
     hg.add_edge(
         sources={'x': x, 'i': ('x', 'index'), 'n': n}, #This must be a dict, with the pseudo node passed as a tuple
         target=xn,
-        rel=lambda x, *args, **kwargs : x
-        via=lambda i, n, *args, **kwargs : i >= n, #Here we access the node's index
+        rel=lambda x : x
+        via=lambda i, n : i >= n, #Here we access the node's index
         label='x_i, i -> x_n',
     )
 
@@ -61,8 +59,8 @@ An ``index_via`` statement works exactly the same as a ``via`` statement, except
     hg.add_edge(
         sources={'x': x},
         target=xn,
-        rel=lambda x, *args, **kwargs : x
-        index_via=lambda i, *args, **kwargs : i >= 4,
+        rel=lambda x : x
+        index_via=lambda i : i >= 4,
         label='x_i-> x_n',
     )
 
@@ -81,7 +79,7 @@ Add the following lines to your script:
         sources={'slope': alpha, 'initial_val': omega, 'step': time_step},
         target=omega,
         rel=Rintegrate,
-        index_via=lambda slope, initial_val, **kw: slope - 1 == initial_val,
+        index_via=lambda slope, initial_val: slope - 1 == initial_val,
         disposable=['slope', 'intial_val'],
         label='(alpha, omega, time_step)->omega',
     )
@@ -90,7 +88,7 @@ Add the following lines to your script:
         sources={'slope': omega, 'initial_val': theta, 'step': time_step},
         target=theta,
         rel=Rintegrate,
-        index_via=lambda slope, initial_val, **kw: slope - 1 == initial_val,
+        index_via=lambda slope, initial_val: slope - 1 == initial_val,
         disposable=['slope', 'intial_val'],
         label='(omega, theta, time_step)->theta',
     )

@@ -62,20 +62,22 @@ Each edge in a constraint hypergraph maps the values of its source set to the va
    2       2       0
 ======  ======  ======
 
-Note that every possible pair :math:`A` and :math:`B` need to be mapped to a corresponding value in :math:`C`. We'll see later on how to take a subset of values  in the relation only. Such a method could encode this table, or we could just note that :math:`C = A - B`. To pass this relationship into the hypergraph, we would just need to pass along a method that took in a value of :math:`A`, a value of :math:`B`, and returned the correct value of :math:`C`. 
-
-The package requires these methods to take in an arbitrary set of inputs specified by ``*args, **kwargs``, as well as any keywords for specific arguments. For the example above, we might write a method like the following:
+Note that every possible pair :math:`A` and :math:`B` need to be mapped to a corresponding value in :math:`C`. We'll see later on how to take a subset of values in the relation only. Such a method could encode this table, or we could just note that :math:`C = A - B`. To pass this relationship into the hypergraph, we would just need to pass along a method that took in a value of :math:`A`, a value of :math:`B`, and returned the correct value of :math:`C`. For the example above, we might write a method like the following:
 
 .. code-block:: python
 
-    def subtract_A_from_B(A, B, *args, **kwargs):
+    def subtract_A_from_B(A, B):
         return A - B
 
-To simplify coding, many relationships with the proper format have been specified in the :doc:`relations </api/relations>` module. These were imported into the script with ``import constrainthg.relations as R``, and then called as ``R.Rsubtract`` for example. We'll use mostly these provided relations in the demo, but we will need one custom function for the Eulerian integration. Let's define it now so we can pass it later on:
+Note that although we're writing these as methods in Python, they need to behave as functions in the strictest sense. For instance, we cannot modify any variables from the system inside the method--only the variable listed as the function's target (or codomain).
+
+.. note:: Previous versions of ConstraintHg required the variable specifiers ``*args`` and ``**kwargs`` to be given as arguments to any relation. This was updated in `version 0.3.0 <https://github.com/jmorris335/ConstraintHg/commit/5566fe3e00ebbcc2c95e10b88824757d881f595d>`_ to no longer be needed.
+
+To simplify coding, many relationships have been specified in the :doc:`relations </api/relations>` module. These were imported into the script with ``import constrainthg.relations as R``, and then called as ``R.Rsubtract`` for example. We'll use mostly these provided relations in the demo, but we will need one custom function for the Eulerian integration. Let's define it now so we can pass it later on:
 
 .. code-block:: python
 
-    def Rintegrate(step, slope, initial_val, *args, **kwargs):
+    def Rintegrate(step, slope, initial_val):
         """First order Eulerian integrator."""
         return step * slope + initial_val
 

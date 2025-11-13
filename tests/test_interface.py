@@ -55,7 +55,7 @@ class TestHypergraphInterface:
                     disposable=['a', 'b'])
         hg.add_edge('C', 'T', R.Rmean, via=lambda c : c is True)
         hg.add_edge({'a': 'A', 'a_idx': ('a', 'index')}, 'T', R.equal('a_idx'), 
-                    via=lambda a_idx, **kw : a_idx >= 5)
+                    via=lambda a_idx : a_idx >= 5)
         t = hg.solve('T', {'SA': True, 'SB': False})
         assert t.value != True, "Solver used an invalid combination to solve the C->T edge"
         assert t.value == 5, "Solver encountered some error and did not appropriately use the A->T edge"
@@ -70,8 +70,8 @@ class TestHypergraphInterface:
         hg.add_edge({'a':'A', 'a_idx': ('a', 'index'),
                      'b':'B', 'b_idx': ('b', 'index'),
                      'c':'C', 'c_idx': ('c', 'index')}, 'T', 
-                    rel=lambda a_idx, b_idx, c_idx, **kw : (a_idx, b_idx, c_idx), 
-                    via=lambda a_idx, **kw : a_idx >= 3,
+                    rel=lambda a_idx, b_idx, c_idx : (a_idx, b_idx, c_idx), 
+                    via=lambda a_idx : a_idx >= 3,
                     index_via=R.Rsame)
         t = hg.solve('T', {'S': 0})
         assert t.value == (3, 3, 3), "Index for each node should be the same."

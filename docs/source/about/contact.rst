@@ -12,4 +12,4 @@ The board also features more theoretical discussions, for instance how the softw
 
 You can also reach out to the developers directly by emailing `constrainthg@gmail.com <mailto:constrainthg@gmail.com>`_.
 
-:ref:`genindex` \| :ref:`modindex` \| :ref:`Search <search>`
+.. :ref:`genindex` \| :ref:`modindex` \| :ref:`Search <search>`

@@ -6,13 +6,20 @@ Very Simple Demonstration
 
 *Note that this demo is found in* `demos/demo_basic.py <https://github.com/jmorris335/ConstraintHg/blob/main/demos/demo_basic.py>`_
 
-Let's build a basic constraint hypergraph of the following equations:
+Let's build a basic constraint hypergraph of the following equations, visualized on the right:
+
+.. figure:: ./media/figures/basic-chg.png
+    :alt: Constraint hypergraph of 6 nodes related by algebraic relations.
+    :width: 300px
+    :align: right
 
 * :math:`A + B = C`
 * :math:`A = -D`
 * :math:`B = -E`
 * :math:`D + E = F`
 * :math:`F = -C`
+
+|
 
 First, import the classes. 
 
@@ -42,13 +49,13 @@ We can verify that the hypergraph was made correctly by tracing all possible pat
 This should give us the following output. Hyperedges are indicated with a `◯`, with the last source separated from other edges with a `●`. ::
 
     └──C, cost=1
-    ├◯─A, cost=0
-    ├●─B, cost=0
-    └──F, cost=3
-        ├◯─D, cost=1
-        │  └──A, cost=0
-        └●─E, cost=1
-            └──B, cost=0
+        ├◯─A, cost=0
+        ├●─B, cost=0
+        └──F, cost=3
+            ├◯─D, cost=1
+            │  └──A, cost=0
+            └●─E, cost=1
+                └──B, cost=0
 
 Compute the value of :math:`C` by picking a set of source nodes (inputs), such as :math:`A` and :math:`B` or :math:`A` and :math:`E`. Set values for the inputs and the solver will automatically calulate an optimized route to simulate :math:`C`. 
 
@@ -63,10 +70,10 @@ The output of the above should be::
 
     **Inputs A and E**  
     └──C= 10, cost=3  
-    └──F= -10, cost=2  
-        ├──D= -3, cost=1  
-        │  └──A= 3, cost=0  
-        └──E= -7, cost=0  
+        └──F= -10, cost=2  
+            ├──D= -3, cost=1  
+            │  └──A= 3, cost=0  
+            └──E= -7, cost=0  
 
     **Inputs A and B**  
     └──C= 10, cost=1  
@@ -75,4 +82,4 @@ The output of the above should be::
 
 .. end demo
 
-:ref:`genindex` \| :ref:`modindex` \| :ref:`Search <search>`
+.. :ref:`genindex` \| :ref:`modindex` \| :ref:`Search <search>`

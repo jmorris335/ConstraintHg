@@ -45,4 +45,4 @@ Name                    Organization                Contributions
 .. _Fergus Baker: https://sr.ht/~fjebaker/
 .. _George Simmons: https://github.com/GJHSimmons
 
-:ref:`genindex` \| :ref:`modindex` \| :ref:`Search <search>`
+.. :ref:`genindex` \| :ref:`modindex` \| :ref:`Search <search>`

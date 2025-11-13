@@ -19,11 +19,11 @@ Tutorial Steps
    viability
    simulation
 
-.. figure:: https://github.com/user-attachments/assets/c5a77507-bdca-432a-8d3d-b881bec5f26e
-    :alt: Pendulum free body diagram
+.. figure:: ../media/figures/simple-pend.png
+    :alt: Schematic for a simple pendulum.
     :width: 200px
     :align: center
-    :name: pend_fbd_intro
+    :name: tutorial-simple-pend
 
-    *Free body diagram of a planar pendulum.*
+    *Schematic for a simple pendulum.*
 

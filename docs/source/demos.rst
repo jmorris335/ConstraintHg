@@ -40,5 +40,5 @@ Note that many simple examples are available in the
 
 .. end demonstrations
 
-:ref:`genindex` \| :ref:`modindex` \| :ref:`Search <search>`
+.. :ref:`genindex` \| :ref:`modindex` \| :ref:`Search <search>`
 

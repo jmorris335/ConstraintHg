@@ -2,6 +2,8 @@ from constrainthg.hypergraph import Hypergraph
 from constrainthg import relations as R
 
 import pytest
+import numpy as np
+import math
 
 class TestHypergraphBehavior():
     def test_simple_add(self):
@@ -190,3 +192,16 @@ class TestHypergraphBehavior():
         assert i == 50, "Configurations may have been non-deterministic"
         assert t is not None, "Solution should always be discoverable"
         assert t.value == 5, "Graph calculation is incorrect"
+
+    def test_infinite_weights(self):
+        """Tests whether the solver ignores edges of infinite weight."""
+        hg = Hypergraph()
+        hg.add_edge('S', 'T', R.Rnegate, weight=float('inf'))
+        hg.add_edge('S', 'T', R.Rnegate, weight=np.inf)
+        hg.add_edge('S', 'T', R.Rnegate, weight=math.inf)
+        t = hg.solve('T', {'S': 10})
+        assert t is None, "No paths should be available."
+        hg.add_edge('S', 'T', R.Rincrement, weight=1000.0)
+        t = hg.solve('T', {'S': 10})
+        assert t.value == 11, "Incorrectly chose infinite path."
+

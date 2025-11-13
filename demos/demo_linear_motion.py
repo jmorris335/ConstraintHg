@@ -40,7 +40,7 @@ hg.add_edge(
     },
     target=xn,
     rel=R.equal('x'), #<- We're just setting xn equal to x
-    via=lambda i, n, **kw : i > n,
+    via=lambda i, n: i > n,
     label='x_i, i -> x_n',
 )
 

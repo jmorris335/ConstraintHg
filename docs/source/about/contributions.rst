@@ -61,4 +61,4 @@ If you have questions or ideas about constraint hypergraphs, especially the theo
 
 You can also learn more about these mathematical structures by going to our `overview <https://constrainthg.readthedocs.io/en/latest/CHGs/chg_overview.html>`__, which contains the most recent research and insights.
 
-:ref:`genindex` \| :ref:`modindex` \| :ref:`Search <search>`
+.. :ref:`genindex` \| :ref:`modindex` \| :ref:`Search <search>`

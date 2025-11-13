@@ -11,6 +11,7 @@
    :hidden:
    :includehidden:
 
+   Home <self>
    quickstart
    Tutorial <tutorial/tutorial>
    API <api/index>
@@ -41,6 +42,8 @@ Get Started
 
 For a walkthrough, check out the `tutorial <constrainthg_intro>`_ or `demonstrations <demos>`_
 
+.. image:: ./media/figures/demo.mov
+
 Quick Links
 -----------
 
@@ -56,6 +59,8 @@ Repository: `<https://github.com/jmorris335/ConstraintHg>`_
 PyPI Package Listing: `<https://pypi.org/project/constrainthg/>`_
    Listing on the Python Package Index
 
+:ref:`genindex`
+   General index of library methods
 
 
-:ref:`genindex` \| :ref:`modindex` \| :ref:`Search <search>`
+.. .. :ref:`genindex` \| :ref:`modindex` \| :ref:`Search <search>`
