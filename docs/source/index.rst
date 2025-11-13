@@ -11,10 +11,11 @@
    :hidden:
    :includehidden:
 
+   Home <self>
    quickstart
-   Tutorial <constrainthg_intro>
+   Tutorial <tutorial/tutorial>
    API <api/index>
-   about
+   about/about
    Demos <demos>
    Repository <https://github.com/jmorris335/ConstraintHg>
 
@@ -22,9 +23,9 @@
    :caption: Constraint Hypergraphs
    :hidden:
 
-   Overview <chg_overview>
-   Guide to CHGs <chg_intro>
-   research
+   CHG Overview <CHGs/chg_overview>
+   Learn About CHGs <CHGs/chg_intro>
+   CHGs/research
 
 .. include:: ../../README.md
    :start-after: ## About
@@ -41,13 +42,15 @@ Get Started
 
 For a walkthrough, check out the `tutorial <constrainthg_intro>`_ or `demonstrations <demos>`_
 
+.. image:: ./media/figures/demo.mov
+
 Quick Links
 -----------
 
-Demonstration of package: :doc:`constrainthg_intro`
+Demonstration of package: :doc:`tutorial/tutorial`
    Provides more indepth discussion on constraint hypergraphs and package usage.
 
-Overview of Constraint Hypergraphs: :doc:`chg_overview`
+Overview of Constraint Hypergraphs: :doc:`CHGs/chg_overview`
    Launchpad for resources for learning about Constraint Hypergraphs.
 
 Repository: `<https://github.com/jmorris335/ConstraintHg>`_
@@ -56,6 +59,8 @@ Repository: `<https://github.com/jmorris335/ConstraintHg>`_
 PyPI Package Listing: `<https://pypi.org/project/constrainthg/>`_
    Listing on the Python Package Index
 
+:ref:`genindex`
+   General index of library methods
 
 
-:ref:`genindex` \| :ref:`modindex` \| :ref:`Search <search>`
+.. .. :ref:`genindex` \| :ref:`modindex` \| :ref:`Search <search>`

@@ -3,6 +3,7 @@ dev/
 .vscode/
 logs/
 *_stats
+*.log
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

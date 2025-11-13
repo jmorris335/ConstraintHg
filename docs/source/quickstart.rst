@@ -25,4 +25,4 @@ Simple Demo
    :start-after: .. start demo
    :end-before: .. end demo
 
-:ref:`genindex` \| :ref:`modindex` \| :ref:`Search <search>`
+.. :ref:`genindex` \| :ref:`modindex` \| :ref:`Search <search>`

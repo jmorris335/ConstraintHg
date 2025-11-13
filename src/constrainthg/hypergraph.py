@@ -22,6 +22,7 @@ limitations under the License.
 
 from typing import Callable, List
 from inspect import signature
+from math import isinf
 import logging
 import itertools
 from enum import Enum
@@ -41,7 +42,7 @@ def _append_to_dict_list(d: dict, key, val):
     return d
 
 
-def _make_list(val) -> list:
+def _enforce_list(val) -> list:
     """Ensures that the value is a list, or else a list containing the
     value."""
     if isinstance(val, list):
@@ -54,7 +55,7 @@ def _make_list(val) -> list:
         return [val]
 
 
-def _make_set(val) -> list:
+def _enforce_set(val) -> list:
     """Ensures that the value is a set, or else a set containing the
     value."""
     if isinstance(val, set):
@@ -70,7 +71,11 @@ def _make_set(val) -> list:
 class TNode:
     """A basic tree node for printing tree structures."""
     class conn:
-        """A class of connectors used for indicating child nodes."""
+        """A class of connectors used for indicating child nodes.
+        
+        .. _conn_class:
+        
+        """
         elbow = "└──"
         pipe = "│  "
         tee = "├──"
@@ -140,7 +145,7 @@ class TNode:
         self.max_display_length = max_display_length
         self.cost = cost
 
-    def print_conn(self, last=True) -> str:
+    def get_conn(self, last=True) -> str:
         """Selecter function for the connector string on the tree
         print."""
         if last:
@@ -155,15 +160,15 @@ class TNode:
             return self.conn.tee_stop
         return self.conn.tee
 
-    def print_tree(self, last=True, header='',
+    def get_tree(self, last=True, header='',
                    checked_edges: list=None) -> str:
-        """Prints the tree centered at the TNode
+        """Returns the tree centered at the TNode as a str.
 
         Adapted from https://stackoverflow.com/a/76691030/15496939,
         PierreGtch, under CC BY-SA 4.0.
         """
         out = str()
-        out += header + self.print_conn(last) + str(self)
+        out += header + self.get_conn(last) + str(self)
         if checked_edges is None:
             checked_edges = []
         if self.gen_edge_label in checked_edges:
@@ -175,7 +180,7 @@ class TNode:
         for i, child in enumerate(self.children):
             c_header = header + (self.conn.blank if last else self.conn.pipe)
             c_last = i == len(self.children) - 1
-            out += child.print_tree(header=c_header,
+            out += child.get_tree(header=c_header,
                                     last=c_last,
                                     checked_edges=checked_edges)
         return out
@@ -232,7 +237,7 @@ class TNode:
             else:
                 out += f'={self.value}'[:self.max_display_length]
         out += f', index={self.index}'
-        if self.cost is not None:
+        if self.cost is not None and self.cost != 0:
             out += f', cost={self.cost:.4g}'
         return out
 
@@ -297,8 +302,8 @@ class Node:
         self.description = description
         self.units = units
         self.is_constant = static_value is not None
-        self.super_nodes = set() if super_nodes is None else _make_set(super_nodes)
-        self.sub_nodes = set() if sub_nodes is None else _make_set(sub_nodes)
+        self.super_nodes = set() if super_nodes is None else _enforce_set(super_nodes)
+        self.sub_nodes = set() if sub_nodes is None else _enforce_set(sub_nodes)
         for sup_node in self.super_nodes:
             if not isinstance(sup_node, tuple):
                 sup_node.sub_nodes.add(self)
@@ -341,6 +346,8 @@ class EdgeProperty(Enum):
     that can be passed during setup. Used as shorthand for common
     configurations.
 
+    .. _edge_prop_class:
+
     Members
     -------
     LEVEL : 1
@@ -361,7 +368,9 @@ class Edge:
                  weight: float=1.0, index_offset: int=0, disposable: list=None,
                  edge_props: EdgeProperty=None):
         """Creates a new `Edge` object. This should generally be called
-        from a Hypergraph object using the Hypergraph.addEdge method.
+        from a Hypergraph object using the Hypergraph.add_edge method.
+
+        .. _edge_init_method:
 
         Parameters
         ----------
@@ -416,6 +425,7 @@ class Edge:
             A dictionary of alternate node labels if a source node is a
             super set, format: {node_label : List[alt_node_label,]}
         """
+        self.label = label
         self.rel = rel
         self.via = self.via_true if via is None else via
         self.index_via = self.via_true if index_via is None else index_via
@@ -423,7 +433,6 @@ class Edge:
         self.create_found_tnodes_dict()
         self.target = target
         self.weight = abs(weight)
-        self.label = label
         self.index_offset = index_offset
         self.disposable = disposable
         self.edge_props = self.setup_edge_properties(edge_props)
@@ -467,7 +476,7 @@ class Edge:
         eps = []
         if inputs is None:
             return eps
-        inputs = _make_list(inputs)
+        inputs = _enforce_list(inputs)
         for ep in inputs:
             if isinstance(ep, EdgeProperty):
                 eps.append(ep)
@@ -515,9 +524,9 @@ class Edge:
             return {key: kwargs[key] for key in kwargs
                     if key in self.og_source_nodes}
 
-        def level_check(*args, **kwargs):
+        def level_check(**kwargs):
             """Returns true if all passed indices are equivalent."""
-            if not self.og_via(*args, **kwargs):
+            if not self.filtered_call(kwargs, self.og_via):
                 return False
             idxs = {val for key, val in kwargs.items() if key in tuple_idxs}
             return len(idxs) == 1
@@ -530,7 +539,7 @@ class Edge:
         """Returns keywords for any keyed, required arguments
         (non-default)."""
         out = set()
-        for method in methods:
+        for method in _enforce_list(methods):
             for p in signature(method).parameters.values():
                 if p.kind == p.POSITIONAL_OR_KEYWORD and p.default is p.empty:
                     out.add(p.name)
@@ -546,38 +555,50 @@ class Edge:
             via = self.via
         if isinstance(source_nodes, dict):
             return self.identify_labeled_source_nodes(source_nodes, rel, via)
-        source_nodes = _make_list(source_nodes)
+        source_nodes = _enforce_list(source_nodes)
         return self.identify_unlabeled_source_nodes(source_nodes, rel, via)
+    
+    def identify_labeled_source_nodes(self, source_nodes: dict, rel: Callable,
+                                      via: Callable) -> dict:
+        """Makes best effort to match each relational argument in rel
+        and via with a passed source node. Returns a {str: node}
+        dictionary."""
+        for arg_key in self.get_named_arguments([rel, via]):
+            if arg_key in source_nodes:
+                continue
+            else:
+                sn_key = self.find_mislabeled_source_node(source_nodes, rel, via)
+                msg = f'Argument "{arg_key}" not passed to {self.label}.'
+                if sn_key is None:
+                    logger.warning(msg)
+                    continue
+                msg += f' Supplying "{sn_key}" instead.'
+                logger.warning(msg)
+
+            source_nodes[arg_key] = source_nodes[sn_key]
+            del source_nodes[sn_key]
+
+        return source_nodes
+    
+    def find_mislabeled_source_node(self, source_nodes: dict,
+                                    rel: Callable, via: Callable) -> str:
+        """Returns the key of the first source nodes whose label is
+        unused for edge processing."""
+        arg_keys = self.get_named_arguments([rel, via])
+        for sn_key in source_nodes:
+            if sn_key in arg_keys:
+                continue
+            return sn_key
+        return None
 
     def identify_unlabeled_source_nodes(self, source_nodes: list,
                                         rel: Callable, via: Callable) -> dict:
         """Returns a {str: node} dictionary where each string is the
         keyword label used in the rel and via methods."""
         arg_keys = self.get_named_arguments([via, rel])
-        arg_keys = arg_keys.union({f's{i+1}' for i in range(len(source_nodes)
-                                                            - len(arg_keys))})
-
+        num_unnamed_args = len(source_nodes) - len(arg_keys)
+        arg_keys = arg_keys.union({f's{i+1}' for i in range(num_unnamed_args)})
         out = dict(zip(arg_keys, source_nodes))
-        return out
-
-    def identify_labeled_source_nodes(self, source_nodes: dict, rel: Callable,
-                                      via: Callable) -> dict:
-        """Returns a {str: node} dictionary where each string is the
-        keyword label used in the rel and via methods."""
-        out = {}
-        arg_keys = self.get_named_arguments([rel, via])
-        arg_keys = arg_keys.union({str(key) for key in source_nodes})
-
-        for arg_key in arg_keys:
-            if len(source_nodes) == 0:
-                return out
-            if arg_key in source_nodes:
-                sn_key = arg_key
-            else:
-                sn_key = list(source_nodes.keys())[0]
-            out[arg_key] = source_nodes[sn_key]
-            del source_nodes[sn_key]
-
         return out
 
     def process(self, source_tnodes: list):
@@ -632,11 +653,49 @@ class Edge:
         indices."""
         if None in source_vals:
             return None
-        if source_indices is not None and not self.index_via(**source_indices):
+        if (source_indices is not None and
+            not self.filtered_call(source_indices, self.index_via)):
             return None
-        if self.via(**source_vals):
-            return self.rel(**source_vals)
+        if self.filtered_call(source_vals, self.via):
+            return self.filtered_call(source_vals, self.rel)
+        # if self.via(**source_vals):
+        #     return self.rel(**source_vals)
         return None
+    
+    def filtered_call(self, source_vals: dict, method: Callable):
+        """Calls the method after filtering the ``source_vals`` to only 
+        include arguments to the method, making sure to handle issues 
+        with `position <https://docs.python.org/3.5/library/inspect.html#inspect.Parameter.kind>`_."""
+        args, kwargs = [], {}
+        remaining_keys = list(source_vals.keys())
+        has_var_args, has_var_kwargs = False, False
+
+        for p in signature(method).parameters.values():
+            p_name, p_kind = p.name, p.kind
+
+            if p_name in source_vals:
+                if p_kind == p.POSITIONAL_ONLY:
+                    args.append(source_vals[p_name])
+                elif p_kind == p.POSITIONAL_OR_KEYWORD:
+                    args.append(source_vals[p_name])
+                elif p_kind == p.KEYWORD_ONLY:
+                    kwargs[p_name] = source_vals[p_name]
+                remaining_keys.remove(p_name)
+            else:
+                if p_kind == p.VAR_POSITIONAL:
+                    has_var_args = True
+                elif p_kind == p.VAR_KEYWORD:
+                    has_var_kwargs = True
+                else:
+                    logger.error(f'"{p_name}" not provided for {self.label}')            
+
+        if len(remaining_keys) != 0:
+            if has_var_kwargs:
+                kwargs.update({k: source_vals[k] for k in remaining_keys})
+            elif has_var_args:
+                args.extend([source_vals[k] for k in remaining_keys])
+
+        return method(*args, **kwargs)
 
     def dispose_solved_tnodes(self, source_tnodes: list):
         """Once a TNode has been processed, it is removed from the
@@ -648,15 +707,17 @@ class Edge:
 
         Process
         -------
-        1. Get an identifier from the disposal list
-        2. Get the label for the source node corresponding to the
-        identifier
+
+        1. Get an identifier from the disposal list  
+        2. Get the label for the source node corresponding to the 
+           identifier  
         3. Find the tnode used in the solution (from source_tnodes) with
-        the matching node_label
+           the matching node_label  
         4. Find the set of found_tnodes from the edge corresponding to
-        the node label
+           the node label  
         5. Remove the tnode in found_tnodes with the same index as the
-        solved tnode
+           solved tnode  
+
         """
         if self.disposable is not None:
             count = 0
@@ -856,7 +917,7 @@ class Pathfinder:
                        f'Exploring {t.node_label}, index: {t.index}, '
                        + 'leading edges: '
                        + ', '.join(str(le) for le in leading_edges)
-                       + f'\n{t.print_tree()}')
+                       + f'\n{t.get_tree()}')
 
         for i, edge in enumerate(leading_edges):
             if edge.label not in self.explored_edges:
@@ -884,6 +945,7 @@ class Pathfinder:
         super_node_leading_edges = (sup_n.leading_edges for sup_n in n.super_nodes)
         leading_edges = list(n.leading_edges.union(*super_node_leading_edges))
         leading_edges.sort(key=lambda le: le.label)
+        leading_edges = filter(lambda l : not isinf(l.weight), leading_edges)
         return leading_edges
 
     def make_parent_tnode(self, source_tnodes: list, node: Node, edge: Edge):
@@ -988,6 +1050,8 @@ class Hypergraph:
                  logging_level=None, memory_mode: bool=False):
         """Initialize a Hypergraph.
 
+        .. _hypergraph_init:
+
         Parameters
         ----------
         no_weights : bool, default=False
@@ -1042,7 +1106,7 @@ class Hypergraph:
         """Prints a short list of the Hypergraph."""
         out = 'Hypergraph with'
         out += f' {len(self.nodes)} nodes'
-        out += f'and {len(self.edges)} edges'
+        out += f' and {len(self.edges)} edges'
         return out
 
     def check_if_logger_setup(self) -> bool:
@@ -1195,6 +1259,8 @@ class Hypergraph:
                  disposable=None, edge_props=None):
         """Adds an edge to the hypergraph.
 
+        .. _meth_add_edge:
+
         Parameters
         ----------
         sources : dict{str : Node | Tuple(Node, str)} | list[Node |
@@ -1293,7 +1359,7 @@ class Hypergraph:
                 inputs[key] = node
             return node_list, inputs
 
-        nodes = _make_list(nodes)
+        nodes = _enforce_list(nodes)
         node_list = [self.insert_node(n) for n in nodes]
         inputs = [self.get_node(node) for node in nodes
                   if not isinstance(node, tuple)]
@@ -1318,6 +1384,8 @@ class Hypergraph:
               logging_level=None, to_reset: bool=True):
         """Runs a BFS search to identify the first valid solution for
         `target`.
+
+        .. _solve_method:
 
         Parameters
         ----------
@@ -1395,7 +1463,7 @@ class Hypergraph:
             if logging_level is not None:
                 self.set_logging_level(prev_logging_level)
         if to_print:
-            print("No solutions found" if t is None else t.print_tree())
+            print("No solutions found" if t is None else t.get_tree())
         return t
 
     def process_source_nodes(self, inputs):
@@ -1419,20 +1487,21 @@ class Hypergraph:
                           if node.is_constant and node.label not in inputs]
         return constant_nodes
 
-    def print_paths(self, target, to_print: bool=False) -> str:
-        """Prints the hypertree of all paths to the target node."""
+    def summary(self, target, to_print: bool=False) -> str:
+        """Returns a str of the hypertree of all paths to the target
+        node."""
         try:
             target_node = self.get_node(target)
         except KeyError:
             msg = f'Target node {str(target)} not found in Hypergraph.'
             raise KeyError(msg)
-        target_tnode = self._print_paths_helper(target_node)
-        out = target_tnode.print_tree()
+        target_tnode = self._summary_helper(target_node)
+        out = target_tnode.get_tree()
         if to_print:
             print(out)
         return out
 
-    def _print_paths_helper(self, node: Node, join_status='none',
+    def _summary_helper(self, node: Node, join_status='none',
                            trace: list=None) -> TNode:
         """Recursive helper to print all paths to the target node."""
         if isinstance(node, tuple):
@@ -1450,7 +1519,7 @@ class Hypergraph:
             for i, child in enumerate(edge.source_nodes.values()):
                 c_join_status = self.get_join_status(i, len(edge.source_nodes))
                 c_trace = t.trace + [(t, edge)]
-                c_tnode = self._print_paths_helper(child, c_join_status, c_trace)
+                c_tnode = self._summary_helper(child, c_join_status, c_trace)
                 if c_tnode is None:
                     continue
                 child_cost += c_tnode.cost if c_tnode.cost is not None else 0.0

@@ -2,6 +2,8 @@ from constrainthg.hypergraph import Hypergraph
 from constrainthg import relations as R
 
 import pytest
+import numpy as np
+import math
 
 class TestHypergraphBehavior():
     def test_simple_add(self):
@@ -45,7 +47,7 @@ class TestHypergraphBehavior():
         hg.add_edge('H', 'J', R.Rincrement)
         hg.add_edge('H', 'G', R.Rincrement)
         hg.add_edge('H', 'T', R.Rincrement)
-        # hg.addEdge('G', 'T', R.Rincrement)
+        # hg.add_edge('G', 'T', R.Rincrement)
         t = hg.solve('T', {'A': 1})
         assert t.value == 6
         assert t.cost == 5
@@ -145,7 +147,7 @@ class TestHypergraphBehavior():
         hg.add_edge(['A', 'B'], 'T', R.Rsum, via=lambda s1, s2 : min(s1, s2) >= 5)
 
         t = hg.solve('T', {'S1': 1, 'S2': 4})
-        print(t.print_tree())
+        print(t.get_tree())
         assert t.value == 10
         assert t.cost == 6
 
@@ -190,3 +192,16 @@ class TestHypergraphBehavior():
         assert i == 50, "Configurations may have been non-deterministic"
         assert t is not None, "Solution should always be discoverable"
         assert t.value == 5, "Graph calculation is incorrect"
+
+    def test_infinite_weights(self):
+        """Tests whether the solver ignores edges of infinite weight."""
+        hg = Hypergraph()
+        hg.add_edge('S', 'T', R.Rnegate, weight=float('inf'))
+        hg.add_edge('S', 'T', R.Rnegate, weight=np.inf)
+        hg.add_edge('S', 'T', R.Rnegate, weight=math.inf)
+        t = hg.solve('T', {'S': 10})
+        assert t is None, "No paths should be available."
+        hg.add_edge('S', 'T', R.Rincrement, weight=1000.0)
+        t = hg.solve('T', {'S': 10})
+        assert t.value == 11, "Incorrectly chose infinite path."
+
