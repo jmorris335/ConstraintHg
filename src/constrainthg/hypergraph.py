@@ -525,7 +525,7 @@ class Edge:
 
         def level_check(**kwargs):
             """Returns true if all passed indices are equivalent."""
-            if not self.filtered_call(kwargs, self.og_via): #ffff00 Add caller
+            if not self.filtered_call(kwargs, self.og_via):
                 return False
             idxs = {val for key, val in kwargs.items() if key in tuple_idxs}
             return len(idxs) == 1
