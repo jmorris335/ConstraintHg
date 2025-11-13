@@ -22,6 +22,7 @@ limitations under the License.
 
 from typing import Callable, List
 from inspect import signature
+from math import isinf
 import logging
 import itertools
 from enum import Enum
@@ -944,6 +945,7 @@ class Pathfinder:
         super_node_leading_edges = (sup_n.leading_edges for sup_n in n.super_nodes)
         leading_edges = list(n.leading_edges.union(*super_node_leading_edges))
         leading_edges.sort(key=lambda le: le.label)
+        leading_edges = filter(lambda l : not isinf(l.weight), leading_edges)
         return leading_edges
 
     def make_parent_tnode(self, source_tnodes: list, node: Node, edge: Edge):
