@@ -38,8 +38,6 @@ ConstraintHg is listed on the Python Package Index. To install, paste the follow
    pip install constrainthg
 ```
 
-![](https://github.com/jhmrrs/constrainthg/media/demo.gif)
-
 ## Introduction
 Hypergraphs are normal graphs but without the constraint that edges must only link between two nodes. Because of this expanded generality, hypergraphs can be used to model more complex relationships. For instance, the relationship `A + B = C` is a multinodal relationship between three nodes, A, B, and C. You can think of all three nodes being linked by a 2D hyperedge, so that to move along that hyperedge you need at least two of three nodes. 
 
