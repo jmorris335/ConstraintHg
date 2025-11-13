@@ -15,7 +15,7 @@ project = 'ConstraintHg'
 copyright = '2024, John Morris'
 license = 'Apache 2.0'
 author = 'John Morris'
-release = '0.2.4'
+release = '0.3.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
