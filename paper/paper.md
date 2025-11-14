@@ -17,7 +17,7 @@ affiliations:
   - index: 1
     name: Deptartment of Mechanical Engineering, Clemson University, Clemson, South Carolina, United States
 
-date: 8 August 2025
+date: 13 November 2025
 bibliography: paper.bib
 ---
 
