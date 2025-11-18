@@ -11,13 +11,9 @@ Good Starting Points
 
 Brief Introduction with examples: :doc:`chg_intro`
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/Ph2yhaThex0?si=gpxri9GmnVeGeD1B" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+`Video <https://www.youtube.com/watch?v=Ph2yhaThex0>`__ overview of using CHGs with digital twins: 
 
-`Video <https://www.youtube.com/watch?v=Ph2yhaThex0>`_ overview of using CHGs with digital twins: 
-
-.. raw:: html
-    
-    <iframe width="560" height="315" src="https://www.youtube.com/embed/Ph2yhaThex0?si=cnhRVxP2oTeQ_4g6" title="CHGs used for Digital Twins" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+..  youtube:: Ph2yhaThex0
 
 More In-Depth
 =============
