@@ -13,7 +13,9 @@ Brief Introduction with examples: :doc:`chg_intro`
 
 `Video <https://www.youtube.com/watch?v=Ph2yhaThex0>`__ overview of using CHGs with digital twins: 
 
-..  youtube:: Ph2yhaThex0
+.. raw:: html
+    
+    <iframe width="560" height="315" src="https://www.youtube.com/embed/Ph2yhaThex0" title="CHGs used for Digital Twins" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 More In-Depth
 =============
