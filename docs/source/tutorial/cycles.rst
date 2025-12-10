@@ -22,7 +22,7 @@ Let's say for example, that we wanted to solve for the position :math:`x` of a c
 
 Such a modeling process is not only tedious, it lacks expressability. What we really want to model is the relationship :math:`x_{i+1} = x_i + v\Delta{}t`, rather than every incremental relation. The trick for adding the variables :math:`x_i` and :math:`x_{i+1}` to the hypergraph is to use cycles.
 
-Cycles enable arbitrary indexing of a variable, allowing us to express these recursive type expressions without have to explicitly map out every single instance of a variable, as shown in `Figure 2 <chg_nonsimple>`.
+Cycles enable arbitrary indexing of a variable, allowing us to express these recursive type expressions without have to explicitly map out every single instance of a variable, as shown in :ref:`Figure 2 <chg_nonsimple>`.
 
 .. figure:: https://github.com/user-attachments/assets/cb8387cc-e005-4ed9-9247-2599f76f323b
     :alt: Non-simple CHG with a cycle
