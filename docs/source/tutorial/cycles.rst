@@ -12,25 +12,25 @@ However, there are many instances where variables might represent multiple value
 
 Let's say for example, that we wanted to solve for the position :math:`x` of a car moving at constant velocity :math:`v`. The first step would be to set the starting position :math:`x_0` and add it to the hypergraph. We can then add another node for the position after :math:`\Delta{}t` seconds had gone by and call it :math:`x_1`. The relationship between :math:`x_1` and :math:`x_0` is :math:`x_1 = x_0 + v\Delta{}t`, which we can easily make into a hyperedge. We could repeat this process for the position after :math:`2\Delta{}t` seconds had gone by, noting that :math:`x_2 = x_1 + v\Delta{}t`. This results in a drawn out hypergraph similar to the one shown in :ref:`Figure 1 <chg_simple>`.
 
-.. figure:: https://github.com/user-attachments/assets/d42a03a5-9fd8-4e62-81bd-92a99c94b77e
+.. figure:: ../media/figures/unraveled-cycle.png
     :alt: Simple CHG
-    :width: 681px
+    :width: 500px
     :align: center
     :name: chg_simple
 
-    *A simple hypergraph explicitly mapping out the relationships between variables*
+    *A simple hypergraph explicitly mapping out the relationships between variables.*
 
 Such a modeling process is not only tedious, it lacks expressability. What we really want to model is the relationship :math:`x_{i+1} = x_i + v\Delta{}t`, rather than every incremental relation. The trick for adding the variables :math:`x_i` and :math:`x_{i+1}` to the hypergraph is to use cycles.
 
-Cycles enable arbitrary indexing of a variable, allowing us to express these recursive type expressions without have to explicitly map out every single instance of a variable, as shown in `Figure 2 <chg_nonsimple>`.
+Cycles enable arbitrary indexing of a variable, allowing us to express these recursive type expressions without have to explicitly map out every single instance of a variable, as shown in :ref:`Figure 2 <chg_nonsimple>`.
 
-.. figure:: https://github.com/user-attachments/assets/cb8387cc-e005-4ed9-9247-2599f76f323b
+.. figure:: ../media/figures/basic-cycle.png
     :alt: Non-simple CHG with a cycle
-    :width: 681px
+    :width: 600px
     :align: center
     :name: chg_nonsimple
     
-    *A non-simple hypergraph with a cycle*
+    *A non-simple hypergraph compressing* :ref:`Figure 1<chg_simple>` *with a cycle, where the cycle is terminated by a conditional edge when* :math:`i \geq n`.
 
 If you print the ``summary`` method on the `above constraint hypergraph <https://github.com/jmorris335/ConstraintHg/blob/main/demos/demo_linear_motion.py>`_, you'll get the following output:
 
