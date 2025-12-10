@@ -23,7 +23,7 @@ ConstraintHg enables the following functionalities:
 - Learn to use: [Get Started](https://constrainthg.readthedocs.io/en/latest/constrainthg_intro.html)
 - Learn about Constraint Hypergraphs: [Resources](https://constrainthg.readthedocs.io/en/latest/chg_overview.html)
 - API Documentation: [Read the Docs](https://constrainthg.readthedocs.io/en/latest/constrainthg.html)
-- Video overview: [YouTube](https://www.youtube.com/watch?v=Ph2yhaThex0)
+- Video overview: [YouTube](https://www.youtube.com/watch?v=nyw1qRwn4YI)
 - Papers:
   - [Introduction of Constraint Hypergraphs](https://doi.org/10.1115/1.4068375)
 

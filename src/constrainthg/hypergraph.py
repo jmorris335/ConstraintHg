@@ -1381,7 +1381,7 @@ class Hypergraph:
     def solve(self, target, inputs: dict=None, to_print: bool=False,
               min_index: int=0, debug_nodes: list=None, debug_edges: list=None,
               search_depth: int=100000, memory_mode: bool=False,
-              logging_level=None, to_reset: bool=True):
+              logging_level=None, to_reset: bool=True) -> TNode:
         """Runs a BFS search to identify the first valid solution for
         `target`.
 
@@ -1420,9 +1420,6 @@ class Hypergraph:
         -------
         TNode | None
             the TNode for the minimum-cost path found
-        dict | None
-            a dictionary of values found for each node in the search
-            path, as {label : List[value,]}
         """
         if logging_level is not None:
             prev_logging_level = logger.getEffectiveLevel()

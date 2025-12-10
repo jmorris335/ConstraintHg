@@ -2,11 +2,6 @@
 Introduction to Constraint Hypergraphs
 ======================================
 
-.. contents::
-   :local:
-   :depth: 2
-   :caption: Contents:
-
 A constraint hypergraph is a modeling framework for capturing and synthesizing information at a fundamental level. They can be used to describe different domains such as workplace personnel, project structures, aircraft carriers, and ecological systems. Their primary use is to represent a real system by a sequence of executable actions which can be read by a computer, allowing the computer to reason and predict about information anywhere in the system. In short, if something can be known, then it can be captured in a constraint hypergraph; if something is represented in a constraint hypergraph, then it can be understood by a computer.
 
 What are they made of
@@ -31,7 +26,7 @@ It helps to have a basic example to demonstrate the functionality of a constrain
 
     *Pendulum free body diagram*
 
-The angular acceleration (:math:`\alpha`) of the pendulum is given as :math:`\alpha = -\frac{g}{m}\sin\theta`. This is a relationship, or in other words a constraint–the values of :math:`\alpha` are determined by the combined values of :math:`g`, :math:`m`, and :math:`\theta`. We could put these all into a single edge, though it's better practice to break them up into many edges where each edge represents a single operation. This results with more edges, but this allows us to make connections with intermediate variables that we might otherwise hide. The hypergraph is shown in :ref:`Figure 2 <pend_simple>`, with these intermediate nodes in grey. A constraint hypergraph represents all the knowledge known about a system. In this case, the only thing we know about our pendulum is the original equation, though as seen in :ref:`Figure 2 <pend_simple>` we've broken that algebraic expression into 4 different relationships. 
+The angular acceleration (:math:`\alpha`) of the pendulum is given as :math:`\alpha = -\frac{g}{m}\sin\theta`. This is a relationship, or in other words a constraint-the values of :math:`\alpha` are determined by the combined values of :math:`g`, :math:`m`, and :math:`\theta`. We could put these all into a single edge, though it's better practice to break them up into many edges where each edge represents a single operation. This results with more edges, but this allows us to make connections with intermediate variables that we might otherwise hide. The hypergraph is shown in :ref:`Figure 2 <pend_simple>`, with these intermediate nodes in grey. A constraint hypergraph represents all the knowledge known about a system. In this case, the only thing we know about our pendulum is the original equation, though as seen in :ref:`Figure 2 <pend_simple>` we've broken that algebraic expression into 4 different relationships. 
 
 .. figure:: https://github.com/user-attachments/assets/86367294-e0cf-4de3-bfa2-6952529ae693
     :alt: Constraint hypergraph for a simple pendulum
@@ -53,7 +48,7 @@ However, we can describe more relationships in the system. For instance, if we k
 
 Take note that the :math:`\alpha` node in :ref:`Figure 3 <pend_damping>` has two edges leading to it, showing that there are two possible ways to constrain its values. This is a quirk of constraint hypergraphs that permits competing constraints–a normal constraint network would not allow a variable to be related by two different, overlapping constraints. But in this case by allowing the dual relationships we have indicated that there are at least two possible models that can be used to solve for :math:`\alpha` (in this case one with and one without damping). During simulation, if we have a damping coefficient, the solver has to select which model will be active at any given time. 
 
-The takeaway is that the constraint hypergraph shows not just a single way to simulate the system, it shows *every* way to simulate the system—every possible model we can construct [#]_. We could add more edges and nodes to the graph if we knew relationships between :math:`\alpha` and :math:`\omega`, or :math:`\omega` and :math:`\theta`, or any other variable we want to virtually observe. The constraint hypergraph captures them all and provides the solver the ability to distinguish between them, chain edges together (path finding), and select preferred models. For a full implementation see the `Pendulum demo <https://github.com/jmorris335/ConstraintHg/blob/main/demos/demo_pendulum.py>`_ in the package.
+The takeaway is that the constraint hypergraph shows not just a single way to simulate the system, it shows *every* way to simulate the system—every possible model we can construct [#]_. We could add more edges and nodes to the graph if we knew relationships between :math:`\alpha` and :math:`\omega`, or :math:`\omega` and :math:`\theta`, or any other variable we want to virtually observe. The constraint hypergraph captures them all and provides the solver the ability to distinguish between them, chain edges together (path finding), and select preferred models. For a full implementation see the `Pendulum demo <https://github.com/jmorris335/ConstraintHg/blob/main/demos/demo_pendulum.py>`__ in the package.
 
 What are they used for
 ======================
@@ -95,4 +90,4 @@ Footnotes
 =========
 .. [#] The definition of a model employed here is of a set of relationships between a set of variables. That means that every algebraic equation you have used is a model and every system of equations. CAD models fit this context as well, as they constrain the positions of geometric features relative to each other. This definition also covers flow charts, Markov processes, block diagrams, Petri nets, and really most modeling frameworks! We call the combination of known relationships and variables the *model space*.
 
-:doc:`Home </index>` \| :ref:`genindex` \| :ref:`Search <search>`
+.. :doc:`Home </index>` \| :ref:`genindex` \| :ref:`Search <search>`

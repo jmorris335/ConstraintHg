@@ -42,7 +42,7 @@ Get Started
 
 For a walkthrough, check out the `tutorial <constrainthg_intro>`_ or `demonstrations <demos>`_
 
-.. image:: ./media/figures/demo.mov
+.. image:: ./media/figures/demo.gif
 
 Quick Links
 -----------

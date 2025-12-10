@@ -191,7 +191,7 @@ def main():
     )
     print(output_tnode)
     # print(output_tnode.get_tree())
-    # plot()
+    plot()
 
 ########################################################################
 # 10. You can extract the results of the simulation from the TNode
@@ -199,14 +199,14 @@ def main():
 ########################################################################
 def plot():
     """Optional function for visualizing output."""
-    theta = hg.solve(theta, min_index=100)
-    thetas, omegas = theta.values['theta'], theta.values['omega']
-    time = hg.solve(time, min_index=100).values['time']
+    t = hg.solve(theta, min_index=100)
+    thetas, omegas = t.values['theta'], t.values['omega']
+    times = hg.solve(time, min_index=100).values['time']
 
     import matplotlib.pyplot as plt
-    length = min(len(time), len(thetas), len(omegas))
-    plt.plot(time[:length], thetas[:length])
-    plt.plot(time[:length], omegas[:length])
+    length = min(len(times), len(thetas), len(omegas))
+    plt.plot(times[:length], thetas[:length])
+    plt.plot(times[:length], omegas[:length])
     plt.legend(['theta', 'omega'])
     plt.xlabel('Time (s)')
     plt.ylabel('Rad, Rad/s')
