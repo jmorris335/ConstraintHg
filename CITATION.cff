@@ -1,29 +1,33 @@
-# This CITATION.cff file was generated with cffinit.
-# Visit https://bit.ly/cffinit to generate yours today!
-
-cff-version: 1.2.0
-title: ConstraintHg
-message: >-
-  If you use this software, please cite it using the  
-  metadata from this file, and let the authors know via
-  their GitHub profiles.
-type: software
+cff-version: "1.2.0"
 authors:
-  - given-names: John
-    family-names: Morris
-    email: jhmrrs@clemson.edu
-    orcid: 'https://orcid.org/0009-0005-6571-1959'
-    affiliation: PLM Center at Clemson University
-identifiers:
-  - type: doi
-    value: 10.5281/zenodo.15278018
-    description: DOI for repository (latest release)
-repository-code: 'https://github.com/jmorris335/ConstraintHg'
-url: 'https://constrainthg.readthedocs.io/en/latest/'
-abstract: >-
-  System modeling kernel enabling universal simulation of a
-  system representation structured using a constraint
-  hypergraph.
+- family-names: Morris
+  given-names: John
+  orcid: "https://orcid.org/0009-0005-6571-1959"
+  affiliation: PLM Center at Clemson University
+contact:
+- family-names: Morris
+  given-names: John
+  orcid: "https://orcid.org/0009-0005-6571-1959"
+  email: jhmrrs@clemson.edu
+doi: 10.5281/zenodo.18190055
+message: If you use this software, please cite the article in the
+  Journal of Open Source Software.
 license: Apache-2.0
-version: 0.2.2
-date-released: '2025-04-23'
+preferred-citation:
+  authors:
+  - family-names: Morris
+    given-names: John
+    orcid: "https://orcid.org/0009-0005-6571-1959"
+  date-published: 2026-01-19
+  doi: 10.21105/joss.09131
+  issn: 2475-9066
+  issue: 117
+  journal: Journal of Open Source Software
+  publisher:
+    name: Open Journals
+  start: 9131
+  title: "ConstraintHg: A Kernel for Systems Modeling and Simulation"
+  type: article
+  url: "https://joss.theoj.org/papers/10.21105/joss.09131"
+  volume: 11
+title: "ConstraintHg: A Kernel for Systems Modeling and Simulation"

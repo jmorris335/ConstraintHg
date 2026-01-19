@@ -2,9 +2,9 @@
 <img src="https://github.com/jmorris335/ConstraintHg/blob/14d9ea2db0e73d440dd4de1491ba0ffee0233d87/media/logo.svg?raw=true" width="300">
 </p>
 
-[![DOI](https://zenodo.org/badge/869248124.svg)](https://doi.org/10.5281/zenodo.15278018)
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.09131/status.svg)](https://doi.org/10.21105/joss.09131)
 [![Read the Docs](https://img.shields.io/readthedocs/constrainthg?link=https%3A%2F%2Fconstrainthg.readthedocs.io%2Fen%2Flatest%2Findex.html)](https://constrainthg.readthedocs.io/en/latest/)
-[![GitHub branch check runs](https://img.shields.io/github/check-runs/jmorris335/constrainthg/main?label=test%2Flinter&link=https%3A%2F%2Fgithub.com%2Fjmorris335%2FConstraintHg%2Factions%2Fworkflows%2Fpython-app.yml)](https://github.com/jmorris335/ConstraintHg/actions/workflows/python-app.yml)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/jmorris335/constrainthg/python-app.yml?label=test%2Flinter)
 ![GitHub Release](https://img.shields.io/github/v/release/jmorris335/ConstraintHg?include_prereleases&display_name=tag)
 ![GitHub last commit](https://img.shields.io/github/last-commit/jmorris335/ConstraintHg)
 
