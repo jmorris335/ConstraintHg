@@ -20,11 +20,13 @@ limitations under the License.
 | Purpose: Classes for storing and traversing a constraint hypergraph.
 """
 
+from asyncio.unix_events import SelectorEventLoop
 from typing import Callable, List
 from inspect import signature
 from math import isinf
 import logging
 import itertools
+import json
 from enum import Enum
 
 __all__ = ['Hypergraph', 'Node', 'Edge', 'TNode']
@@ -339,6 +341,24 @@ class Node:
             a.super_nodes = a.super_nodes.union(b.super_nodes)
             a.sub_nodes = a.sub_nodes.union(b.sub_nodes)
         return a
+        
+    def to_dict(self) -> dict:
+        """Returns a dict representation of the Node object."""
+        return {
+            'label': self.label,
+            'value': self.static_value,
+            'is_constant': self.is_constant,
+            'description': self.description,
+            'units': self.units,
+            # 'generating_edges': [edge.label for edge in self.generating_edges],
+            # 'leading_edges': [edge.label for edge in self.leading_edges],
+            # 'super_nodes': [node.label for node in self.super_nodes],
+            # 'sub_nodes': [node.label for node in self.sub_nodes]
+        }
+        
+    def to_json(self) -> str:
+        """Returns a JSON representation of the Node object."""
+        return json.dumps(self.to_dict(), indent=2)
 
 
 class EdgeProperty(Enum):
@@ -436,6 +456,22 @@ class Edge:
         self.index_offset = index_offset
         self.disposable = disposable
         self.edge_props = self.setup_edge_properties(edge_props)
+        
+    def to_dict(self) -> dict:
+        """Returns a dictionary representation of the Edge object."""
+        return {
+            'label': self.label,
+            'source_nodes': [node.label for node in self.source_nodes.values()],
+            'target': self.target.label,
+            'weight': self.weight,
+            'index_offset': self.index_offset,
+            'disposable': self.disposable,
+            'edge_props': [str(a) for a in self.edge_props],
+        }
+
+    def to_json(self) -> str:
+        """Returns a JSON representation of the Edge object."""
+        return json.dumps(self.to_dict(), indent=2)
 
     def create_found_tnodes_dict(self):
         """Creates the found_tnodes dictionary, accounting for super
@@ -653,8 +689,8 @@ class Edge:
         indices."""
         if None in source_vals:
             return None
-        if (source_indices is not None and
-            not self.filtered_call(source_indices, self.index_via)):
+        if ( source_indices is not None and
+             not self.filtered_call(source_indices, self.index_via)):
             return None
         if self.filtered_call(source_vals, self.via):
             return self.filtered_call(source_vals, self.rel)
@@ -663,9 +699,10 @@ class Edge:
         return None
     
     def filtered_call(self, source_vals: dict, method: Callable):
-        """Calls the method after filtering the ``source_vals`` to only 
-        include arguments to the method, making sure to handle issues 
-        with `position <https://docs.python.org/3.5/library/inspect.html#inspect.Parameter.kind>`_."""
+        """Calls the method after filtering the ``source_vals`` to only
+        include arguments to the method, making sure to handle issues
+        with `position <https://docs.python.org/3.5/library/inspect.html#inspect.Parameter.kind>`_.
+        """
         args, kwargs = [], {}
         remaining_keys = list(source_vals.keys())
         has_var_args, has_var_kwargs = False, False
@@ -687,7 +724,7 @@ class Edge:
                 elif p_kind == p.VAR_KEYWORD:
                     has_var_kwargs = True
                 else:
-                    logger.error(f'"{p_name}" not provided for {self.label}')            
+                    logger.error(f'"{p_name}" not provided for {self.label}')
 
         if len(remaining_keys) != 0:
             if has_var_kwargs:
@@ -945,7 +982,7 @@ class Pathfinder:
         super_node_leading_edges = (sup_n.leading_edges for sup_n in n.super_nodes)
         leading_edges = list(n.leading_edges.union(*super_node_leading_edges))
         leading_edges.sort(key=lambda le: le.label)
-        leading_edges = filter(lambda l : not isinf(l.weight), leading_edges)
+        leading_edges = filter(lambda le: not isinf(le.weight), leading_edges)
         return leading_edges
 
     def make_parent_tnode(self, source_tnodes: list, node: Node, edge: Edge):
@@ -1016,7 +1053,8 @@ class Pathfinder:
         """Prints a debugging report of the search."""
         out = f'\nDebugging Report for {self.target_node.label}:\n'
         out += f'\tFinal search counter: {self.search_counter}\n'
-        out += '\tExplored edges (# explored | # processed | # valid solution):\n'
+        out += '\tExplored edges'
+        out += '(# explored | # processed | # valid solution):\n'
         sorted_edges = list(self.explored_edges.items())
         sorted_edges.sort(key=lambda a: max(a[1]), reverse=True)
         for e, vals in sorted_edges:
@@ -1046,7 +1084,7 @@ class Hypergraph:
         Indicates whether the TNodes in the Hypergraph should be saved
         between calls.
     """
-    def __init__(self, no_weights: bool=False, setup_logger: bool=False,
+    def __init__(self, name: str=None, no_weights: bool=False, setup_logger: bool=False,
                  logging_level=None, memory_mode: bool=False):
         """Initialize a Hypergraph.
 
@@ -1054,6 +1092,8 @@ class Hypergraph:
 
         Parameters
         ----------
+        name : str, optional
+            Arbitrary name for the Hypergraph.
         no_weights : bool, default=False
             Optional run mode where weights aren't considered. This
             speeds up the simulation but prevents model switching.
@@ -1069,6 +1109,7 @@ class Hypergraph:
         memory_mode : bool, default=False
             Store every solved for TNode to the Hypergraph.
         """
+        self.name = 'null' if name is None else name
         self.nodes = {}
         self.edges = {}
         self.no_weights = no_weights
@@ -1079,6 +1120,37 @@ class Hypergraph:
             self.set_logging_level(logging_level)
         self.memory_mode = memory_mode
         self.solved_tnodes = []
+        self.frames = []
+        
+    def to_dict(self) -> dict:
+        """Returns a dict representation of the Hypergraph."""
+        return {
+            'name': self.name,
+            'no_weights': self.no_weights,
+            'memory_mode': self.memory_mode,
+            'nodes': [n.to_dict() for n in self.nodes.values()],
+            'edges': [e.to_dict() for e in self.edges.values()],
+        }
+        
+    def to_json(self) -> str:
+        """Returns a JSON representation of the Hypergraph."""   
+        frames = {}
+        for i, frame in enumerate(self.get_frames()):
+            frames[i] = frame
+
+        return json.dumps({
+            'hypergraph': self.to_dict(),
+            'frames': frames,
+        }, indent=2)
+        
+    def get_frames(self) -> list:
+        """
+        Returns a list of frames in the Hypergraph.
+        
+        Each frame is a set of values for the nodes in the Hypergraph,
+        with no more than one value for each node.
+        """
+        return [tn.values for tn in self.frames]        
 
     def __iadd__(self, o):
         """Merges the passed Hypergraph to self via a union operation."""
@@ -1101,7 +1173,7 @@ class Hypergraph:
         )
         self.union(new_hg, self)
         return new_hg
-    
+
     def __str__(self) -> str:
         """Prints a short list of the Hypergraph."""
         out = 'Hypergraph with'
@@ -1182,13 +1254,18 @@ class Hypergraph:
             return None
 
     def reset(self):
-        """Clears all values in the hypergraph."""
+        """Removes all values in the hypergraph."""
         for node in self.nodes.values():
             if not node.is_constant:
                 node.static_value = None
         for edge in self.edges.values():
             edge.create_found_tnodes_dict()
         self.solved_tnodes = []
+
+    def clear(self):
+        """Resets the Hypergraph and removes any saved runs."""
+        self.reset()
+        self.frames = []
 
     def request_node_label(self, requested_label=None) -> str:
         """Generates a unique label for a node in the hypergraph"""
@@ -1352,7 +1429,11 @@ class Hypergraph:
             for key, node in nodes.items():
                 if isinstance(node, tuple):
                     if node[0] not in nodes:
-                        raise Exception(f"Pseudo node identifier for '{node[0]}' not included in Edge.")
+                        m = (
+                            f"Pseudo node identifier for '{node[0]}'"
+                            "not included in Edge."
+                        )
+                        raise Exception(m)
                 else:
                     node = self.insert_node(node)
                     node_list.append(node)
@@ -1461,6 +1542,7 @@ class Hypergraph:
                 self.set_logging_level(prev_logging_level)
         if to_print:
             print("No solutions found" if t is None else t.get_tree())
+        self.frames.append(t)
         return t
 
     def process_source_nodes(self, inputs):
@@ -1499,7 +1581,7 @@ class Hypergraph:
         return out
 
     def _summary_helper(self, node: Node, join_status='none',
-                           trace: list=None) -> TNode:
+                        trace: list=None) -> TNode:
         """Recursive helper to print all paths to the target node."""
         if isinstance(node, tuple):
             return None
@@ -1525,12 +1607,12 @@ class Hypergraph:
 
         t.cost = min(branch_costs) if len(branch_costs) > 0 else 0.
         return t
-    
+
     def print_nodes(self) -> str:
         out = 'Nodes in Hypergraph:'
         out += ''.join([f'\n - {n}' for n in self.nodes.values()])
         return out
-        
+
     def edge_in_cycle(self, edge: Edge, t: TNode):
         """Returns true if the edge is part of a cycle in the tree rooted at
         the TNode."""

@@ -1,8 +1,9 @@
-from constrainthg.hypergraph import Hypergraph, Node
+from constrainthg.hypergraph import Hypergraph, Node, Edge
 from constrainthg import relations as R
 
 import logging
 import pytest
+import json
 
 class TestHypergraphInterface:
     def test_pseudonodes(self):
@@ -284,3 +285,47 @@ class TestHypergraphRelationProcessing:
         except:
             pass
         assert '"a" not provided for SLASH_EDGE' in caplog.text
+        
+    def test_node_to_json(self):
+        """Tests whether a node can be converted to JSON."""
+        a = Node('A', 1, description="test")
+        json_d = json.loads(a.to_json())
+        assert json_d['label'] == 'A'
+        assert json_d['value'] == 1
+        assert json_d['is_constant']
+        
+    def test_edge_to_json(self):
+        """Tests whether a edge can be converted to JSON."""
+        hg = Hypergraph()
+        hg.add_edge(['A', 'B'], 'C', R.Rsum, weight=3, label='EDGE1')
+        e1 = list(hg.edges.values())[0]
+        json_d = json.loads(e1.to_json())
+        assert json_d['label'] == 'EDGE1'
+        assert json_d['weight'] == 3
+        assert json_d['source_nodes'] == ['A', 'B']
+        assert json_d['target'] == 'C'
+
+    def test_hypergraph_to_json(self):
+        """Tests whether a hypergraph can be converted to JSON."""
+        hg = Hypergraph(name='HG1', memory_mode=True)
+        hg.add_edge(['A', 'B'], 'C', R.Rsum, label='EDGE1')
+        json_d = json.loads(hg.to_json())
+        assert json_d['hypergraph']['name'] == 'HG1'
+        assert len(json_d['hypergraph']['nodes']) == 3
+        assert json_d['hypergraph']['edges'][0]['label'] == 'EDGE1'
+
+    def test_hypergraph_to_frames(self):
+        """Tests whether frames are properly represented by the Hypergraph"""
+        hg = Hypergraph(name='HG1')
+        hg.add_edge(['A', 'B'], 'C', R.Rsum, label='EDGE1')
+        hg.solve('C', {'A': 1, 'B': 2})
+        hg.solve('C', {'A': 101, 'B': 102})
+        json_d = json.loads(hg.to_json())
+        assert len(json_d['frames']) == 2
+        assert json_d['frames']['0']['A'][0] == 1
+        assert json_d['frames']['0']['C'][0] == 3
+        assert json_d['frames']['1']['B'][0] == 102
+        assert json_d['frames']['1']['C'][0] == 203
+        
+        
+        
