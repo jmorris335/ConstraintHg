@@ -8,14 +8,19 @@ the mathematical framework undergirding `ConstraintHg <home_>`_.
 
 Good Starting Points
 ====================
+Brief introduction with examples :doc:`chg_intro`
 
-Brief Introduction with examples: :doc:`chg_intro`
-
-`Video <https://www.youtube.com/watch?v=Ph2yhaThex0>`__ overview of using CHGs with digital twins: 
+More thorough introduction: :download:`Read <../_static/files/introToCHGs.pdf>`
+    Accessible introduction to CHGs starting at the basics.
+    
+    Also available as a video presentation:
 
 .. raw:: html
     
-    <iframe width="560" height="315" src="https://www.youtube.com/embed/Ph2yhaThex0" title="CHGs used for Digital Twins" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    <iframe width="560" height="315" src="https://www.youtube.com/embed/nyw1qRwn4YI" title="Universal Systems Simulation via Constraint Hypergraphs with Applications to Digital Twins" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+Another `video <https://www.youtube.com/watch?v=Ph2yhaThex0>`__ overview
+more specifically focused on digital twins.
 
 More In-Depth
 =============
