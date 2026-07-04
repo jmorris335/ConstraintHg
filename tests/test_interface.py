@@ -185,6 +185,23 @@ class TestHypergraphInterface:
         hg.add_edge('B', 'C', R.Rmultiply)
         assert isinstance(str(hg), str)
 
+    def test_unsafe_mode(self):
+        """Tests whether unsafe mode prevents relational processing."""
+        def rel1(*args):
+            return sum(args)
+        hg1 = Hypergraph()
+        hg1.add_edge(['A', 'B'], 'C', rel1, label='EDGE1')
+        json_str = hg1.to_json()
+
+        hg2 = Hypergraph()
+        with pytest.raises(Exception, match="set to `unsafe_mode`") as exc_msg:
+            hg2.from_json(blob=json_str)
+
+        hg3 = Hypergraph(unsafe_mode=True) 
+        hg3.from_json(blob=json_str)
+        d = hg3.solve('C', {'A': 10, 'B': 25}).value
+        assert d == 35
+
 class TestHypergraphRelationProcessing:
     def divide(self, top, bottom):
         return top / bottom
@@ -297,12 +314,12 @@ class TestHypergraphRelationProcessing:
     def test_edge_to_json(self):
         """Tests whether a edge can be converted to JSON."""
         hg = Hypergraph()
-        hg.add_edge(['A', 'B'], 'C', R.Rsum, weight=3, label='EDGE1')
+        hg.add_edge({'a': 'A', 'b':'B'}, 'C', R.Rsum, weight=3, label='EDGE1')
         e1 = list(hg.edges.values())[0]
         json_d = json.loads(e1.to_json())
         assert json_d['label'] == 'EDGE1'
         assert json_d['weight'] == 3
-        assert json_d['source_nodes'] == ['A', 'B']
+        assert json_d['source_nodes'] == {'a': 'A', 'b':'B'}
         assert json_d['target'] == 'C'
 
     def test_hypergraph_to_json(self):
@@ -322,10 +339,33 @@ class TestHypergraphRelationProcessing:
         hg.solve('C', {'A': 101, 'B': 102})
         json_d = json.loads(hg.to_json())
         assert len(json_d['frames']) == 2
-        assert json_d['frames']['0']['A'][0] == 1
-        assert json_d['frames']['0']['C'][0] == 3
-        assert json_d['frames']['1']['B'][0] == 102
-        assert json_d['frames']['1']['C'][0] == 203
+        assert json_d['frames']['frame0']['A'][0] == 1
+        assert json_d['frames']['frame0']['C'][0] == 3
+        assert json_d['frames']['frame1']['B'][0] == 102
+        assert json_d['frames']['frame1']['C'][0] == 203
         
-        
+    def test_json_to_node(self):
+        """Tests whether a node can be read from a JSON file."""
+        hg1 = Hypergraph()
+        hg1.add_edge(['A', 'B'], 'C', R.Rsum, label='EDGE1')
+        json_str = hg1.to_json()
+        hg2 = Hypergraph(unsafe_mode=True)
+        hg2.from_json(blob=json_str)
+        assert 'A' in hg2.nodes
+        assert 'B' in hg2.nodes
+
+    def test_json_to_edge(self):
+        """Tests whether a edge can be read from a JSON file."""
+        hg1 = Hypergraph()
+        hg1.add_edge(['A', 'B'], 'C', R.Rsum, label='EDGE1')
+        hg1.add_edge(['C', 'B'], 'D', R.Rsum, label='EDGE2')
+        json_str = hg1.to_json()
+        hg2 = Hypergraph(unsafe_mode=True)
+        hg2.from_json(blob=json_str, module_names=['constrainthg.relations'])
+        assert 'EDGE1' in hg2.edges
+        d = hg2.solve('D', {'A': 10, 'B': 5}).value
+        assert d == 20
+
+
+
         

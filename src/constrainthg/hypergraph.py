@@ -20,9 +20,11 @@ limitations under the License.
 | Purpose: Classes for storing and traversing a constraint hypergraph.
 """
 
-from asyncio.unix_events import SelectorEventLoop
 from typing import Callable, List
-from inspect import signature
+from inspect import signature, getsource
+import textwrap
+import importlib
+import ast
 from math import isinf
 import logging
 import itertools
@@ -68,6 +70,24 @@ def _enforce_set(val) -> list:
         return set(val)
     except TypeError:
         return {val}
+
+
+def _load_json(file_path: str=None, blob: str=None):
+    """Loads a JSON file or blob."""
+    if file_path is not None:
+        with open(file_path, "r") as file:
+            json_data = json.load(file)
+    else:
+        json_data = json.loads(blob)
+    return json_data
+
+
+def _create_from_dict(O, data: dict):
+    """Converts the dict into an instance of an arbitrary class."""
+    sig = signature(O.__init__)
+    param_names = set(sig.parameters.keys()) - {"self"}
+    filtered_args = {k: v for k, v in data.items() if k in param_names}
+    return O(**filtered_args)
 
 
 class TNode:
@@ -340,21 +360,22 @@ class Node:
             a.leading_edges = a.leading_edges.union(b.leading_edges)
             a.super_nodes = a.super_nodes.union(b.super_nodes)
             a.sub_nodes = a.sub_nodes.union(b.sub_nodes)
-        return a
-        
+        return a     
+
     def to_dict(self) -> dict:
         """Returns a dict representation of the Node object."""
-        return {
+        out = {
             'label': self.label,
-            'value': self.static_value,
             'is_constant': self.is_constant,
-            'description': self.description,
-            'units': self.units,
-            # 'generating_edges': [edge.label for edge in self.generating_edges],
-            # 'leading_edges': [edge.label for edge in self.leading_edges],
-            # 'super_nodes': [node.label for node in self.super_nodes],
-            # 'sub_nodes': [node.label for node in self.sub_nodes]
         }
+        if self.static_value is not None:
+            out['value'] = self.static_value
+        if self.description is not None and len(self.description) > 0:
+            out['description'] = self.description
+        if self.units is not None and len(self.units) > 0:
+            out['units'] = self.units
+
+        return out
         
     def to_json(self) -> str:
         """Returns a JSON representation of the Node object."""
@@ -454,24 +475,41 @@ class Edge:
         self.target = target
         self.weight = abs(weight)
         self.index_offset = index_offset
-        self.disposable = disposable
+        self.disposable = [] if disposable is None else disposable
         self.edge_props = self.setup_edge_properties(edge_props)
         
     def to_dict(self) -> dict:
         """Returns a dictionary representation of the Edge object."""
-        return {
-            'label': self.label,
-            'source_nodes': [node.label for node in self.source_nodes.values()],
+        out = {
+           'label': self.label,
+            'rel': self.get_method_source(self.rel),
+            'source_nodes': {k: n.label for k,n in self.source_nodes.items()},
             'target': self.target.label,
             'weight': self.weight,
-            'index_offset': self.index_offset,
-            'disposable': self.disposable,
-            'edge_props': [str(a) for a in self.edge_props],
         }
+        if self.via is not self.via_true:
+            out['via'] = self.get_method_source(self.via)
+        if self.index_via is not self.via_true:
+            out['index_via'] = self.get_method_source(self.index_via)
+        if self.index_offset != 0:
+            out['index_offset'] = self.index_offset
+        if len(self.disposable) > 0:
+            out['disposable'] = self.disposable
+        if len(self.edge_props) > 0:
+            out['edge_props'] = [str(a) for a in self.edge_props]
+        return out
 
     def to_json(self) -> str:
         """Returns a JSON representation of the Edge object."""
         return json.dumps(self.to_dict(), indent=2)
+    
+    def get_method_source(self, func) -> str:
+        """Returns the formatted source code of a method."""
+        try:
+            source = getsource(func)
+            return textwrap.dedent(source)
+        except (OSError, TypeError) as e:
+            raise ValueError(f"Cannot retrieve source for {func}: {e}")
 
     def create_found_tnodes_dict(self):
         """Creates the found_tnodes dictionary, accounting for super
@@ -756,23 +794,22 @@ class Edge:
            solved tnode  
 
         """
-        if self.disposable is not None:
-            count = 0
-            for identifier in self.disposable:
-                sn = self.source_nodes.get(identifier, None)
-                if sn is None or isinstance(sn, tuple):
-                    continue
-                node_label = sn.label
+        count = 0
+        for identifier in self.disposable:
+            sn = self.source_nodes.get(identifier, None)
+            if sn is None or isinstance(sn, tuple):
+                continue
+            node_label = sn.label
 
-                for st in source_tnodes:
-                    if st.node_label == node_label:
-                        index = st.index
-                        break
-                else:
-                    continue
+            for st in source_tnodes:
+                if st.node_label == node_label:
+                    index = st.index
+                    break
+            else:
+                continue
 
-                count += self.dispose_of_tnodes_with_index(node_label, index)
-            logger.debug(f'(Disposed of {count} nodes in {self.label})')
+            count += self.dispose_of_tnodes_with_index(node_label, index)
+        logger.debug(f'(Disposed of {count} nodes in {self.label})')
 
     def dispose_of_tnodes_with_index(self, node_label: str,
                                      index: int) -> int:
@@ -1083,9 +1120,15 @@ class Hypergraph:
     memory_mode : bool
         Indicates whether the TNodes in the Hypergraph should be saved
         between calls.
+    unsafe_mode : bool
+        Indicates whether the Hypergraph is allowed to execute foreign 
+        methods passed as static inputs. This is only recommended for 
+        trusted environments where the Hypergraph must be constructed 
+        from a static file (such as a JSON input). 
     """
-    def __init__(self, name: str=None, no_weights: bool=False, setup_logger: bool=False,
-                 logging_level=None, memory_mode: bool=False):
+    def __init__(self, name: str=None, no_weights: bool=False,
+                 setup_logger: bool=False, logging_level=None,
+                 memory_mode: bool=False, unsafe_mode: bool=False):
         """Initialize a Hypergraph.
 
         .. _hypergraph_init:
@@ -1108,6 +1151,9 @@ class Hypergraph:
             by passing `setup_logger` as True.
         memory_mode : bool, default=False
             Store every solved for TNode to the Hypergraph.
+        unsafe_mode : bool, default=False
+            Allows the hypergraph to execute foreign methods passed as 
+            static inputs (such as from JSON files).
         """
         self.name = 'null' if name is None else name
         self.nodes = {}
@@ -1119,8 +1165,10 @@ class Hypergraph:
         if logging_level is not None:
             self.set_logging_level(logging_level)
         self.memory_mode = memory_mode
+        self.unsafe_mode = unsafe_mode
         self.solved_tnodes = []
         self.frames = []
+        self.processed_rule = False
         
     def to_dict(self) -> dict:
         """Returns a dict representation of the Hypergraph."""
@@ -1136,13 +1184,125 @@ class Hypergraph:
         """Returns a JSON representation of the Hypergraph."""   
         frames = {}
         for i, frame in enumerate(self.get_frames()):
-            frames[i] = frame
+            frames[f'frame{i}'] = frame
 
         return json.dumps({
             'hypergraph': self.to_dict(),
             'frames': frames,
         }, indent=2)
+    
+    def from_json(self, file_path: str=None, blob: str=None,
+                  module_names: list=[], to_reset: bool=False):
+        """Amends the hypergraph from the given JSON data given in 
+        either the file at `file_path` or as a string in `blob`.
+
+        Note that one of either `file_path` or `blob` must be passed.
         
+        Parameters
+        ----------
+        file_path : str, Optional
+            The path to a JSON file containing the hypergraph definition.
+        blob: str, Optional
+            A JSON string containing the hypergraph definition. This can
+            be generated by calling `Hypergraph.to_json()`
+        module_name: list, Optional
+            A list of names of a module to be loaded to support 
+            relations.
+        to_reset: bool, default=False
+            Resets the current Hypergraph to only include the given JSON
+            data.
+        """
+        data = _load_json(file_path, blob)
+        if 'hypergraph' in data:
+            data = data['hypergraph']
+
+        if to_reset:
+            self = _create_from_dict(self, data)
+        
+        if 'nodes' in data:
+            for node_dict in data['nodes']:
+                self.process_json_node(node_dict)
+
+        namespace_modules = []
+        for name in module_names:
+            n_module = importlib.import_module(name)
+            namespace_modules.append(n_module)
+
+        if 'edges' in data:
+            for edge_dict in data['edges']:
+                self.process_json_edge(edge_dict, namespace_modules)
+
+    def process_json_node(self, data: dict):
+        """Adds a node to the Hypergraph loaded from a static dict."""
+        try:
+            new_node = _create_from_dict(Node, data)
+        except Exception as e:
+            logger.error(f"Unable to create Node from JSON data: \n{data}")
+            raise e
+        self.insert_node(new_node)
+
+    def process_json_edge(self, data: dict, namespace_modules: list=None):
+        """Adds an edge to the Hypergraph loaded from a static dict."""
+        for x in ['rel', 'via', 'index_via']:
+            if x in data:
+                data[x] = self.process_json_rule(data[x], namespace_modules)
+
+        for k, n in data['source_nodes'].items():
+            data['source_nodes'][k] = self.get_node(n)
+        data['target'] = self.get_node(data['target'])
+        
+        try:
+            new_edge = _create_from_dict(Edge, data)
+        except Exception as e:
+            logger.error(f"Unable to create Edge from JSON data: \n{data}")
+            raise e
+        self.insert_edge(new_edge)
+
+    def process_json_rule(self, source: str, namespace_modules: list=None):
+        """Processes a relational rule passed in a JSON string,
+        returning the name of the method."""
+        if 'def' in source:
+            return self.process_method(source, namespace_modules)
+        elif source in globals():
+            return globals()[source]
+        elif source in locals():
+            return locals()[source]
+
+    def process_method(self, source: str, namespace_modules: list=None):
+        """
+        Processes and returns a `def` method passed as a string.
+        
+        `source` can be obtained by calling `inspect.getsource(handle).
+        """
+        if not self.unsafe_mode:
+            raise Exception(f"Foreign method processing not allowed \
+                            unless set to `unsafe_mode`.")
+        if 'def' not in source:
+            raise Exception(f"Method {source} must be `def` defined.")
+        if not self.processed_rule:
+            logger.warning("Arbitrary Python code was executed to " \
+            "construct an foreign function.")
+        self.processed_rule = True
+        logger.info(f"`exec` method called, executing <{source}>")
+        exec_globals = {}
+        for module in namespace_modules:
+            exec_globals.update(**vars(module))
+        exec_locals = {}
+        exec(source, exec_globals, exec_locals)
+        name = self.get_method_name(source)
+        return exec_locals[name]
+    
+    def get_method_name(self, source: str):
+        """Uses the Python abstract syntax tree module to find the name
+        of a method from a string."""
+        tree = ast.parse(source)
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
+                return node.name
+            
+        raise ValueError(f"No function definition found in source: {source}.")
+            
     def get_frames(self) -> list:
         """
         Returns a list of frames in the Hypergraph.
@@ -1150,7 +1310,7 @@ class Hypergraph:
         Each frame is a set of values for the nodes in the Hypergraph,
         with no more than one value for each node.
         """
-        return [tn.values for tn in self.frames]        
+        return [tn.values for tn in self.frames]    
 
     def __iadd__(self, o):
         """Merges the passed Hypergraph to self via a union operation."""
@@ -1400,6 +1560,8 @@ class Hypergraph:
         if not isinstance(edge, Edge):
             raise TypeError('edge must be of type `Edge`')
         self.edges[edge.label] = edge
+        for sn in edge.source_nodes.values():
+            sn.leading_edges.add(edge)
         tn = self.insert_node(edge.target)
         tn.generating_edges.add(edge)
 
