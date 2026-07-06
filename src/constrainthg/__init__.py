@@ -5,7 +5,7 @@ ConstraintHg
 A kernel for systems modeling and simulation.
 '''
 
-__copyright__ = 'Copyright (c) 2025 John Morris'
+__copyright__ = 'Copyright (c) 2026 John Morris'
 __license__ = 'Licensed under the Apache License, Version 2.0'
 __title__ = 'constrainthg'
 __all__ = ['hypergraph', 'relations']
