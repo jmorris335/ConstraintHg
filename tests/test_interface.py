@@ -249,6 +249,13 @@ class TestHypergraphRelationProcessing:
         t9 = hg.solve('T9', inputs)
         assert t9.value == 110, "Did not handle keyword only arguments."
 
+    def test_psuedo_node_solving(self):
+        "Tests whether psuedo nodes can be solved."
+        hg = Hypergraph()
+        hg.add_edge({'s1': ('s2', 'node_label'), 's2': 'a'}, 'b', R.Rfirst)
+        B = hg.solve('b', {'a': None})
+        assert B.value == 'a'
+
     def test_argument_filtering(self):
         """Tests whether the solver can select the appropriate arguments
         for a function."""
@@ -322,6 +329,15 @@ class TestHypergraphRelationProcessing:
         assert json_d['source_nodes'] == {'a': 'A', 'b':'B'}
         assert json_d['target'] == 'C'
 
+    def test_psuedo_node_to_json(self):
+        """Tests whether psuedo nodes convert to JSON."""
+        hg = Hypergraph()
+        hg.add_edge({'s1': ('s2', 'node_label'), 's2': 'a'}, 'b', R.Rfirst)
+        B = hg.solve('b', {'a': None})
+        assert B.value == 'a', "Did not correctly solve psuedo-node."
+        json = hg.to_json()
+        assert "('s2', 'node_label')" in json, "Tuple string not stored."
+
     def test_hypergraph_to_json(self):
         """Tests whether a hypergraph can be converted to JSON."""
         hg = Hypergraph(name='HG1', memory_mode=True)
@@ -365,6 +381,21 @@ class TestHypergraphRelationProcessing:
         assert 'EDGE1' in hg2.edges
         d = hg2.solve('D', {'A': 10, 'B': 5}).value
         assert d == 20
+
+    def test_json_to_psuedo_node(self):
+        """Tests whether an edge with a psuedo-node can be reconstructed
+        from a JSON file."""
+        hg1 = Hypergraph()
+        def get_s1(s1, s2):
+            return s1
+        
+        hg1.add_edge({'s1': ('s2', 'node_label'), 's2': 'a'}, 'b', get_s1)
+        json = hg1.to_json()
+        print(json)
+        hg2 = Hypergraph(unsafe_mode=True)
+        hg2.from_json(blob=json)
+        B = hg2.solve('b', {'a': None})
+        assert B.value == 'a', "Hypergraph failed to add psuedo-node."
 
 
 

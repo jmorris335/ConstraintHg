@@ -204,4 +204,3 @@ class TestHypergraphBehavior():
         hg.add_edge('S', 'T', R.Rincrement, weight=1000.0)
         t = hg.solve('T', {'S': 10})
         assert t.value == 11, "Incorrectly chose infinite path."
-

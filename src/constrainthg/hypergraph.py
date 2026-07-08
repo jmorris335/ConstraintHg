@@ -480,10 +480,15 @@ class Edge:
         
     def to_dict(self) -> dict:
         """Returns a dictionary representation of the Edge object."""
+        def get_node_label(n):
+            try:
+                return n.label
+            except:
+                return str(n)
         out = {
            'label': self.label,
             'rel': self.get_method_source(self.rel),
-            'source_nodes': {k: n.label for k,n in self.source_nodes.items()},
+            'source_nodes': {k: get_node_label(n) for k,n in self.source_nodes.items()},
             'target': self.target.label,
             'weight': self.weight,
         }
@@ -1247,8 +1252,8 @@ class Hypergraph:
             if x in data:
                 data[x] = self.process_json_rule(data[x], namespace_modules)
 
-        for k, n in data['source_nodes'].items():
-            data['source_nodes'][k] = self.get_node(n)
+        for k, sn in data['source_nodes'].items():
+            data['source_nodes'][k] = self.process_json_source_node(sn)
         data['target'] = self.get_node(data['target'])
         
         try:
@@ -1257,6 +1262,17 @@ class Hypergraph:
             logger.error(f"Unable to create Edge from JSON data: \n{data}")
             raise e
         self.insert_edge(new_edge)
+
+    def process_json_source_node(self, sn: str):
+        """Process a source node including correct handling of a pseudo-
+        node saved as a string tuple: "('identifer', 'attribute')" """
+        if isinstance(sn, str) and '(' in sn:
+            try: #probable psuedo_node
+                psuedo_node_val = ast.literal_eval(sn)
+                return psuedo_node_val
+            except:
+                pass
+        return self.get_node(sn)
 
     def process_json_rule(self, source: str, namespace_modules: list=None):
         """Processes a relational rule passed in a JSON string,
@@ -1561,7 +1577,9 @@ class Hypergraph:
             raise TypeError('edge must be of type `Edge`')
         self.edges[edge.label] = edge
         for sn in edge.source_nodes.values():
-            sn.leading_edges.add(edge)
+            sn = self.insert_node(sn)
+            if sn is not None:
+                sn.leading_edges.add(edge)
         tn = self.insert_node(edge.target)
         tn.generating_edges.add(edge)
 
