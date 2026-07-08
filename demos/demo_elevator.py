@@ -340,13 +340,18 @@ inputs = {
 }
 
 def main():
-    t = hg.solve(
-        target=height,
-        inputs=inputs,
-        min_index=100,
-    )
-    print(t)
-    # visualize(t)
+    try:
+        t = hg.solve(
+            target=height,
+            inputs=inputs,
+            min_index=100,
+        )
+        print(t)
+        # visualize(t)
+    except Exception:
+        import traceback
+        traceback.print_exc()
+        raise
 
 def visualize(t: TNode):
     """Optional function for ploting results."""
@@ -371,7 +376,7 @@ def visualize(t: TNode):
         plt.xlabel('Time (s)')
         plt.title('Hybrid Elevator Simulation')
         plt.show()
-        
+
     except Exception:
         print("matplotlib not available or backend failed — skipping visualization")
         return
