@@ -202,16 +202,22 @@ def plot():
     t = hg.solve(theta, min_index=100)
     thetas, omegas = t.values['theta'], t.values['omega']
     times = hg.solve(time, min_index=100).values['time']
-
-    import matplotlib.pyplot as plt
     length = min(len(times), len(thetas), len(omegas))
-    plt.plot(times[:length], thetas[:length])
-    plt.plot(times[:length], omegas[:length])
-    plt.legend(['theta', 'omega'])
-    plt.xlabel('Time (s)')
-    plt.ylabel('Rad, Rad/s')
-    plt.title('Pendulum Simulation')
-    plt.show()
+
+    try: # Import matplotlib if GUI plotting available
+        import matplotlib.pyplot as plt
+
+        plt.plot(times[:length], thetas[:length])
+        plt.plot(times[:length], omegas[:length])
+        plt.legend(['theta', 'omega'])
+        plt.xlabel('Time (s)')
+        plt.ylabel('Rad, Rad/s')
+        plt.title('Pendulum Simulation')
+        plt.show()
+
+    except Exception:
+        print("matplotlib not available or backend failed — skipping visualization")
+        return
 
 
 if __name__ == '__main__':

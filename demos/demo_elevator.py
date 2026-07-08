@@ -11,8 +11,6 @@ A visual overview of the hypergraph is available
 from constrainthg.hypergraph import Hypergraph, Node, Edge, TNode
 import constrainthg.relations as R
 
-import matplotlib.pyplot as plt #For visualization, not necessary for simulation
-
 hg = Hypergraph()
 
 # Nodes
@@ -358,18 +356,25 @@ def visualize(t: TNode):
     dashes = ['--', ':', '-.']
     legend = []
 
-    for node in nodes:
-        dash = dashes[nodes.index(node) % len(dashes)]
-        legend_label = node.label + f', ({node.units})' if node.units is not None else ''
-        values = t.values[node.label]
-        plt.plot(times[:len(values)], values[:len(times)], 'k', lw=2, linestyle=dash) 
-        legend.append(legend_label)
+    try: # Import matplotlib if GUI plotting available
+        import matplotlib.pyplot as plt
 
-    plt.legend(legend)
-    plt.ylabel('Variables')
-    plt.xlabel('Time (s)')
-    plt.title('Hybrid Elevator Simulation')
-    plt.show()
+        for node in nodes:
+            dash = dashes[nodes.index(node) % len(dashes)]
+            legend_label = node.label + f', ({node.units})' if node.units is not None else ''
+            values = t.values[node.label]
+            plt.plot(times[:len(values)], values[:len(times)], 'k', lw=2, linestyle=dash) 
+            legend.append(legend_label)
+
+        plt.legend(legend)
+        plt.ylabel('Variables')
+        plt.xlabel('Time (s)')
+        plt.title('Hybrid Elevator Simulation')
+        plt.show()
+        
+    except Exception:
+        print("matplotlib not available or backend failed — skipping visualization")
+        return
 
 
 if __name__ == '__main__':

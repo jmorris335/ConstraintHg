@@ -4,6 +4,7 @@ dev/
 logs/
 *_stats
 *.log
+*.chg
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
