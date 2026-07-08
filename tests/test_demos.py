@@ -33,7 +33,7 @@ class TestDemos():
     def test_elevator(self):
         """Tests the elevator demonstration."""
         stdout = self.run_demo('demo_elevator.py')
-        assert "height=5.695" in stdout
+        assert "height=7.151" in stdout
     
     def test_pendulum(self):
         """Tests the pendulum demonstration."""

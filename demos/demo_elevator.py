@@ -340,18 +340,13 @@ inputs = {
 }
 
 def main():
-    try:
-        t = hg.solve(
-            target=height,
-            inputs=inputs,
-            min_index=100,
-        )
-        print(t)
-        # visualize(t)
-    except Exception:
-        import traceback
-        traceback.print_exc()
-        raise
+    t = hg.solve(
+        target=height,
+        inputs=inputs,
+        min_index=50,
+    )
+    print(t)
+    # visualize(t)
 
 def visualize(t: TNode):
     """Optional function for ploting results."""
