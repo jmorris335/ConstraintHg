@@ -9,7 +9,7 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/jmorris335/ConstraintHg)
 
 ## About
-ConstraintHg is a systems modeling kernel written in Python that enables general definition and universal simulation of any system. The kernel breaks a system down into the informational values (nodes) and functional relationships (hyperedges), providing robust simulation through pathfinding operations. This repository is under active development (no official release yet), and is therefore subject to change without warning.
+ConstraintHg is a systems modeling kernel written in Python that enables general definition and universal simulation of any system. The kernel breaks a system down into the informational values (nodes) and functional relationships (hyperedges), providing robust simulation through pathfinding operations. This repository is under active development (official release coming soon!), and is therefore subject to change without warning.
 
 ## Uses
 ConstraintHg enables the following functionalities:
@@ -21,6 +21,7 @@ ConstraintHg enables the following functionalities:
 ## Links and More Information
 - Homepage: [Link](https://constrainthg.readthedocs.io/en/latest/index.html)
 - Learn to use: [Get Started](https://constrainthg.readthedocs.io/en/latest/constrainthg_intro.html)
+- Online Playground: [VisualCHG](https://visualchg.searchlaboratory.org)
 - Learn about Constraint Hypergraphs: [Resources](https://constrainthg.readthedocs.io/en/latest/chg_overview.html)
 - API Documentation: [Read the Docs](https://constrainthg.readthedocs.io/en/latest/constrainthg.html)
 - Video overview: [YouTube](https://www.youtube.com/watch?v=nyw1qRwn4YI)
