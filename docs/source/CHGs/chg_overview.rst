@@ -21,7 +21,7 @@ More thorough introduction: :download:`Read <../_static/files/introToCHGs.pdf>`
 
 Play around with CHGs with our browser-based tool `VisualCHG <visualchg.searchlaboratory.org>`_, which includes several demos.
 
-.. image:: ./media/figures/visualchg.png
+.. image:: ../media/figures/visualchg.png
     :width: 560px
     :target: visualchg.searchlaboratory.org
 
