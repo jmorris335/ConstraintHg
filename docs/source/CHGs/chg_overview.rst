@@ -19,6 +19,12 @@ More thorough introduction: :download:`Read <../_static/files/introToCHGs.pdf>`
     
     <iframe width="560" height="315" src="https://www.youtube.com/embed/nyw1qRwn4YI" title="Universal Systems Simulation via Constraint Hypergraphs with Applications to Digital Twins" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
+Play around with CHGs with our browser-based tool `VisualCHG <visualchg.searchlaboratory.org>`_, which includes several demos.
+
+.. image:: ./media/figures/visualchg.png
+    :width: 560px
+    :target: visualchg.searchlaboratory.org
+
 Another `video <https://www.youtube.com/watch?v=Ph2yhaThex0>`__ overview
 more specifically focused on digital twins.
 
