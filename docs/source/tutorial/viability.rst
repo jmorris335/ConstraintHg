@@ -11,9 +11,9 @@ Via Statements
 --------------
 How do we represent this in our model? What we're trying to do is say that our equation is only applicable for a subset of values in the function's domain. But rather than creating a whole new set of variables to represent :math:`g`, :math:`l`, and :math:`\theta` except for when :math:`l` is 0, we can add what's called a ``via`` statement.
 
-A :ref:`via <edge_init_method>` statement is a boolean method that takes in the values for the edge's source nodes, and returns ``True`` if the values are part of the relations valid subdomain. ``via`` statements are typically given using a ``lambda`` method. 
+A :ref:`via <edge_init_method>` statement is a boolean method that takes in the values for the edge's source nodes, and returns ``True`` if the values are part of the relations valid subdomain.
 
-.. hint:: If you're not familiar with ``lambda`` methods, you can read more about them `here <https://www.w3schools.com/python/python_lambda.asp>`_.
+.. note:: ``via`` statements can be given using a ``lambda`` method, however this interferes with outputting the JSON version of the CHG. For this reason, it's often better to use the standard ``def`` for defining relations. We use lambda methods here for convenience only, as they don't need to be renamed. If you're not familiar with ``lambda`` methods, you can read more about them `here <https://www.w3schools.com/python/python_lambda.asp>`_.
 
 For the example above, we might write a lambda method as the following:
 
@@ -21,7 +21,7 @@ For the example above, we might write a lambda method as the following:
 
     via=lambda l : l != 0
 
-Note that the arguments for a ``via`` statement are the dict keys of the source nodes passed to an edge.
+This method returns ``True`` if and only if :math:`l` is not equal to 0 (which is when the actual relation is valid). Note that the arguments for a ``via`` statement are the dict keys of the source nodes passed to an edge.
 
 Conditional viability is a powerful concept that allows us to create relationships between only a subset of values in a variable. For instance, say you have a variable for whether a door is open, with possible values ``['is_open', 'is_closed']``, and another variable specifying whether the door is locked, with values ``['is_locked', 'is_unlocked']``. You want to indicate that the door is always unlocked if it is open. But you don't necessarily know if the door is locked if it's closed. In order to add the edge, you'll need to add a viability method that resolves to true only if the door is open. Such an edge might look like: ``lambda door_status : door_status == 'is_open'``. Then, if the door is not open, the edge will not be solved.
 
@@ -39,7 +39,11 @@ We can access any property defined for the `:ref:`Node <node_class>`` class: ``i
 .. code-block:: python
 
     hg.add_edge(
-        sources={'x': x, 'i': ('x', 'index'), 'n': n}, #This must be a dict, with the pseudo node passed as a tuple
+        sources={ #This must be a dict, with the pseudo node passed as a tuple
+            'x': x,
+            'i': ('x', 'index'), #format is label: (node_label, property_name)
+            'n': n,
+        },
         target=xn,
         rel=lambda x : x
         via=lambda i, n : i >= n, #Here we access the node's index
@@ -50,7 +54,7 @@ We can access any property defined for the `:ref:`Node <node_class>`` class: ``i
 Index Via Statements
 --------------------
 
-Because the index of a node is called so many times, ConstraintHg has a shortcut to make it easier to reference it. These are called ``index_via`` statements, are they are syntactic sugar for the ``(<node_key, 'index'>)`` pseudo-node call.
+It can be arduous to repeatedly specify a node's index. Because the index of a node is called so many times, ConstraintHg has a shortcut to make it easier to reference it. These are called ``index_via`` statements, which is just syntactic sugar for the ``(<node_key, 'index'>)`` pseudo-node call.
 
 An ``index_via`` statement works exactly the same as a ``via`` statement, except when instead of the value of a node being passed to the Boolean method, the index of the node is passed. For example, the above edge could be rewritten as:
 
@@ -60,11 +64,11 @@ An ``index_via`` statement works exactly the same as a ``via`` statement, except
         sources={'x': x},
         target=xn,
         rel=lambda x : x
-        index_via=lambda i : i >= 4,
+        index_via=lambda x : x >= 4,
         label='x_i-> x_n',
     )
 
-Note that we no longer have to define a ``via`` statement, because we were only working with the node's index value in the first place.
+Here the ``index_via`` statement specifies that the edge is only valid when the index of :math:`x` is greater than or equal to 4. This is the same as before, but now easier to both read and write. Also, note that we no longer have to define a ``via`` statement (though we could if we wanted to), because we were only working with the node's index value.
 
 Closing the Pendulum Cycle
 --------------------------
