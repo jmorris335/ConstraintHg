@@ -1,5 +1,5 @@
 """
-Copyright 2025 John Morris
+Copyright 2026 John Morris
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@ limitations under the License.
 
 | File: relations.py
 | Author: John Morris
-|   jhmrrs@clemson.edu
-|   https://orcid.org/0009-0005-6571-1959
+|   - john.h.morris@uah.edu
+|   - https://orcid.org/0009-0005-6571-1959
 | Purpose: A list of basic relations employable with edges in the
 |   hypergraph.
 

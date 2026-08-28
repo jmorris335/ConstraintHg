@@ -1,5 +1,5 @@
 """
-Copyright 2025 John Morris
+Copyright 2026 John Morris
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@ limitations under the License.
 
 | File: hypergraph.py
 | Author: John Morris
-|   - jhmrrs@clemson.edu
+|   - john.h.morris@uah.edu
 |   - https://orcid.org/0009-0005-6571-1959
 | Purpose: Classes for storing and traversing a constraint hypergraph.
 """
