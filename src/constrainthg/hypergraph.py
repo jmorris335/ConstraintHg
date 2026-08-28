@@ -611,7 +611,10 @@ class Edge:
             return len(idxs) == 1
 
         self.via = level_check
-        self.rel = lambda *args, **kwargs: self.og_rel(*args, **og_kwargs(**kwargs))
+        def og_rel_wrapper(*args, **kwargs):
+            return self.og_rel(*args, **og_kwargs(**kwargs))
+        self.rel = og_rel_wrapper
+
 
     @staticmethod
     def get_named_arguments(methods: List[Callable]) -> set:
