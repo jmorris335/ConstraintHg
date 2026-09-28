@@ -70,7 +70,7 @@ The object returned by ``Hypergraph.solve`` is a :ref:`TNode <tnode_class>`, whi
 
 This time with values specified for the nodes. To find this path, the solver runs a Breadth-First Search, which starts from all the inputs defined for the system and iteratively searches all possible paths until one is found leading to the output. This is shown in the animation below:
 
-.. figure:: https://github.com/user-attachments/assets/cb8387cc-e005-4ed9-9247-2599f76f323b
+.. figure:: https://github.com/user-attachments/assets/8e810bf0-1263-4808-aa64-8beaf729a13b
     :alt: Animation of solving a constraint hypergraph
     :width: 681px
     :align: center
