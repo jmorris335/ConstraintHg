@@ -440,9 +440,11 @@ class Edge:
             returns a boolean condition relating the indices of each.
             Defaults to unconditionally true if not set, meaning any
             index of source node is valid.
-        weight : float > 0.0, default=1.0
+        weight : float > 0.0, Callable, default=1.0
             The quanitified cost of traversing the edge. Must be
-            positive, akin to a distance measurement.
+            positive, akin to a distance measurement. Can also be a
+            method that takes in the same arguments as rel/via and
+            returns a float > 0.0.
         index_offset : int, default=0
             Offset to apply to the target once solved for. Akin to
             iterating to the next level of a cycle.
@@ -455,7 +457,6 @@ class Edge:
             A list of enumerated types that are used to configure the
             edge.
 
-
         Properties
         ----------
         found_tnodes : dict
@@ -465,6 +466,9 @@ class Edge:
         subset_alt_labels : dict
             A dictionary of alternate node labels if a source node is a
             super set, format: {node_label : List[alt_node_label,]}
+        uses_static_weights : bool
+            Describes whether the edge uses a static or dynamic weight
+            setting.
         """
         self.label = label
         self.rel = rel
@@ -473,10 +477,51 @@ class Edge:
         self.source_nodes = self.identify_source_nodes(source_nodes, self.rel, self.via)
         self.create_found_tnodes_dict()
         self.target = target
-        self.weight = abs(weight)
+        self.__weight = None
+        self.weight_rel = None
+        self.weight = weight
         self.index_offset = index_offset
         self.disposable = [] if disposable is None else disposable
         self.edge_props = self.setup_edge_properties(edge_props)
+
+    @property
+    def weight(self):
+        """Returns the weight of the edge."""
+        return self.__weight
+    
+    @weight.setter
+    def weight(self, weight):
+        """Assigns the weight of the edge and the method for
+        calculating it dynamically. Ensures that the weight
+        is a positive float.
+
+        Parameters
+        ----------
+        weight : float, Callable
+            The weight of the edge, either given as a float
+            or a method that returns a float. Must be
+            positive. If a method, then it must take in the
+            same arguments as the rel/via methods.
+
+        Returns
+        -------
+        Callable
+            The method for calculating the weight of the edge
+            dynamically.
+        """
+        self.uses_static_weights = False
+        if callable(weight):
+            self.weight_rel = weight
+            self.__weight = 1.0
+        elif isinstance(weight, (int, float)):
+            weight = float(weight)
+            if weight < 0:
+                raise ValueError(f"Weight must be positive, got {weight}")
+            self.__weight = float(weight)
+            self.weight_rel = self.calc_static_weight_rel(weight)
+            self.uses_static_weights = True
+        else:
+            raise TypeError(f"Weight must be a number, got {type(weight)}")        
         
     def to_dict(self) -> dict:
         """Returns a dictionary representation of the Edge object."""
@@ -490,7 +535,7 @@ class Edge:
             'rel': self.get_method_source(self.rel),
             'source_nodes': {k: get_node_label(n) for k,n in self.source_nodes.items()},
             'target': self.target.label,
-            'weight': self.weight,
+            'weight': self.weight, # TODO: Update to get method for #24
         }
         if self.via is not self.via_true:
             out['via'] = self.get_method_source(self.via)
@@ -615,6 +660,13 @@ class Edge:
             return self.og_rel(*args, **og_kwargs(**kwargs))
         self.rel = og_rel_wrapper
 
+    @staticmethod
+    def calc_static_weight_rel(weight: float):
+        """Returns a method for calculating the weight of
+        the edge dynamically, given a static weight."""
+        def weight_rel(*args, **kwargs):
+            return float(weight)
+        return weight_rel
 
     @staticmethod
     def get_named_arguments(methods: List[Callable]) -> set:
@@ -681,7 +733,7 @@ class Edge:
         num_unnamed_args = len(source_nodes) - len(arg_keys)
         arg_keys = arg_keys.union({f's{i+1}' for i in range(num_unnamed_args)})
         out = dict(zip(arg_keys, source_nodes))
-        return out
+        return out       
 
     def process(self, source_tnodes: list):
         """Processes the tnodes to get the value of the target."""
@@ -740,9 +792,22 @@ class Edge:
             return None
         if self.filtered_call(source_vals, self.via):
             return self.filtered_call(source_vals, self.rel)
-        # if self.via(**source_vals):
-        #     return self.rel(**source_vals)
         return None
+
+    def process_weight(self, source_tnodes: list):
+        """Returns the weight of the edge based on the source tnodes."""
+        if self.uses_static_weights:
+            return self.weight
+        source_vals, source_idxs = self.get_source_vals_and_idxs(source_tnodes)
+        if None in source_vals:
+            return None
+        dynamic_weight = self.filtered_call(source_vals, self.weight_rel)
+        if not isinstance(dynamic_weight, (int, float)):
+            raise TypeError(f"Weight function must return a number, got {type(dynamic_weight)}")
+        if dynamic_weight < 0:
+            raise ValueError(f"Weight function must return a positive number, got {dynamic_weight}")
+
+        return dynamic_weight
     
     def filtered_call(self, source_vals: dict, method: Callable):
         """Calls the method after filtering the ``source_vals`` to only
@@ -1040,6 +1105,7 @@ class Pathfinder:
         gen_edge_label = edge.label + '#' + str(self.search_counter)
         label = f'{node_label}#{self.search_counter + 1}'
         cost = 0.0 if self.no_weights else None
+        edge_weight = edge.process_weight(source_tnodes)
 
         parent_t = TNode(label,
                          node_label,
@@ -1047,7 +1113,7 @@ class Pathfinder:
                          children,
                          cost=cost,
                          gen_edge_label=gen_edge_label,
-                         gen_edge_cost=edge.weight)
+                         gen_edge_cost=edge_weight)
         parent_t.values = self.merge_found_values(parent_val,
                                                   node.label,
                                                   source_tnodes)

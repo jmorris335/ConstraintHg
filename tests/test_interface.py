@@ -397,6 +397,37 @@ class TestHypergraphRelationProcessing:
         B = hg2.solve('b', {'a': None})
         assert B.value == 'a', "Hypergraph failed to add psuedo-node."
 
+    def test_dynamic_edge_weights(self):
+        """Tests whether dynamic edge weights are properly processed."""
+        hg = Hypergraph()
+        hg.add_edge(['A', 'B'], 'C', R.Rmultiply, weight=R.Rsum)
+        c = hg.solve('C', {'A': 3, 'B': 5})
+        assert c.cost == 8, "Dynamic edge weight not properly processed."
+        hg.add_edge(['C', 'B'], 'T', R.Rmultiply, weight=100.0)
+        t = hg.solve('T', {'A': 3, 'B': 5})
+        assert t.cost == 108, "Dynamic edge weight not added with static weight."
 
+    def test_dynamic_model_selection(self):
+        """Tests whether dynamic model selection is properly processed."""
+        hg = Hypergraph()
+        hg.add_edge('A', 'T', R.Rfirst, weight=lambda *args : args[0] + 2)
+        hg.add_edge('B', 'T', R.Rfirst, weight=lambda *args : args[0] ** 2)
+        summ = hg.summary('T')
+        assert 'T, index=1, cost=1' in summ, "Default weight not set to 1."
+        t1 = hg.solve('T', {'A': 10, 'B': 2})
+        assert t1.value == 2, "Dynamic model selection did not select path from B."
+        assert t1.cost == 4, "Dynamic weighting not applied to path from B."
+        t2 = hg.solve('T', {'A': 3, 'B': 10})
+        assert t2.value == 3, "Dynamic model selection did not select path from A."
+        assert t2.cost == 5, "Dynamic weighting not applied to path from A."
 
-        
+    def test_bad_weights(self):
+        """Tests whether bad weights are properly rejected."""
+        hg = Hypergraph()
+        with pytest.raises(TypeError):
+            hg.add_edge('A', 'B', R.Rfirst, weight='bad')
+        with pytest.raises(ValueError):
+            hg.add_edge('A', 'B', R.Rfirst, weight=-1)
+        hg.add_edge('A', 'B', R.Rfirst, weight=R.Rnegate)
+        with pytest.raises(ValueError):
+            hg.solve('B', {'A': 10})
