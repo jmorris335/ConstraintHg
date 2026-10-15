@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "constrainthg"
-version = "0.3.4"
+version = "0.4.0"
 dependencies = [
     "numpy"
 ]
@@ -18,7 +18,7 @@ license = "Apache-2.0"
 license-files = ["LICENSE*"]
 keywords = ["hypergraphs", "systems engineering", "modeling", "simulation"]
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 4 - Beta",
   "Programming Language :: Python"
 ]
 
