@@ -355,4 +355,4 @@ As a best practice to debugging: use the debugging report, tracing the lines, be
 What Next?
 ----------
 
-This tutorial covers all the basics of using ConstraintHg. To see more complex examples, check out the :doc:`demonstrations </demos>`. You can also leave comments, ask questions, or show how you're using the software on our :doc:`discussion board </about/contact>`.
+This tutorial covers all the basics of using ConstraintHg. You can continue to read about more :doc:`advanced features <advanced>`. Or, for more complex examples, check out the :doc:`demonstrations </demos>`. You can also leave comments, ask questions, or show how you're using the software on our :doc:`discussion board </about/contact>`.

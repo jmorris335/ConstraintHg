@@ -18,6 +18,7 @@ Tutorial Steps
    cycles
    viability
    simulation
+   advanced
 
 .. figure:: ../media/figures/simple-pend.png
     :alt: Schematic for a simple pendulum.

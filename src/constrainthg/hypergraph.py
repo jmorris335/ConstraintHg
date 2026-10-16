@@ -273,6 +273,8 @@ class Node:
                  description: str=None, units: str=None):
         """Creates a new `Node` object.
 
+        .. _node:
+
         Parameters
         ----------
         label : str
@@ -403,7 +405,23 @@ class EdgeProperty(Enum):
 
 class Edge:
     """A relationship along a set of nodes (the source) that produces a
-    single value."""
+    single value.
+    
+    .. _edge:  
+
+    Properties
+    ----------
+    found_tnodes : dict
+        A dict of lists of source_tnodes that are viable trees to a
+        source node, with each sub_dict referenced by index. format:
+        {node_label : list[TNode,]}
+    subset_alt_labels : dict
+        A dictionary of alternate node labels if a source node is a
+        super set, format: {node_label : List[alt_node_label,]}
+    uses_static_weights : bool
+        Describes whether the edge uses a static or dynamic weight
+        setting.
+    """
     def __init__(self, label: str, source_nodes: dict, target: Node,
                  rel: Callable, via: Callable=None, index_via: Callable=None,
                  weight: float=1.0, index_offset: int=0, disposable: list=None,
@@ -456,19 +474,6 @@ class Edge:
         edge_props : List(EdgeProperty) | EdgeProperty | str | int, optional
             A list of enumerated types that are used to configure the
             edge.
-
-        Properties
-        ----------
-        found_tnodes : dict
-            A dict of lists of source_tnodes that are viable trees to a
-            source node, with each sub_dict referenced by index. format:
-            {node_label : list[TNode,]}
-        subset_alt_labels : dict
-            A dictionary of alternate node labels if a source node is a
-            super set, format: {node_label : List[alt_node_label,]}
-        uses_static_weights : bool
-            Describes whether the edge uses a static or dynamic weight
-            setting.
         """
         self.label = label
         self.rel = rel
@@ -1176,6 +1181,8 @@ class Pathfinder:
 class Hypergraph:
     """Builder class for a hypergraph. See demos for examples on how to
     use.
+
+    .. _hypergraph:
 
 
     Properties
