@@ -1357,7 +1357,7 @@ class Hypergraph:
         """
         Processes and returns a `def` method passed as a string.
         
-        `source` can be obtained by calling `inspect.getsource(handle).
+        `source` can be obtained by calling `inspect.getsource(handle)`.
         """
         if not self.unsafe_mode:
             raise Exception(f"Foreign method processing not allowed \
