@@ -44,7 +44,7 @@ For a walkthrough, check out the `tutorial <constrainthg_intro>`_ or `demonstrat
 
 .. image:: ./media/figures/demo.gif
 
-You can also play around with a visual editor with our browser-based tool `VisualCHG <visualchg.searchlaboratory.org>`_
+You can also play around with a visual editor with our browser-based tool `VisualCHG <https://visualchg.searchlaboratory.org>`_
 
 .. image:: ./media/figures/visualchg.png
    :target: https://visualchg.searchlaboratory.org
